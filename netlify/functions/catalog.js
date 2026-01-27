@@ -1,5 +1,5 @@
 exports.handler = async function () {
-  const EXEC_URL = "https://script.google.com/macros/s/AKfycbwMkpBHO-pShCbr2bLhKWa7RPN_4m_qILzUcESaEph7iE8yLQDP44bBmUEFkHDeX6iA/exec";
+  const EXEC_URL = "https://script.google.com/macros/s/AKfycbwF2IqDTG0F5acy4K1mtBRMZg1AOp3RMHzYwHEtZcZmRV8Jbpb2_ETe4Mpnkgp-lxmy/exec";
   // Example: https://script.google.com/macros/s/AKfycbXXXX/exec
 
   try {
@@ -22,3 +22,4 @@ exports.handler = async function () {
     };
   }
 };
+
