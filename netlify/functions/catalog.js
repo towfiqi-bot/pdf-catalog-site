@@ -11,7 +11,7 @@ exports.handler = async function () {
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
-        "Cache-Control": "no-store"
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"
       },
       body
     };
@@ -22,4 +22,5 @@ exports.handler = async function () {
     };
   }
 };
+
 
