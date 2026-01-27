@@ -11,61 +11,56 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
 
-<style>
-  body {
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  }
-  .line-clamp-4 {
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  /* New: styles for brand title + tagline */
-  .brand-title {
-    font-family: 'Playfair Display', serif;
-    letter-spacing: 0.03em;
-  }
-  .brand-tagline {
-    font-size: 0.7rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-  }
-
-.tooltip-summary {
-  pointer-events: none;
-}
-.group:hover .tooltip-summary {
-  pointer-events: auto;
-}
-
-</style>
-
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    .line-clamp-4 {
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .brand-title {
+      font-family: 'Playfair Display', serif;
+      letter-spacing: 0.03em;
+    }
+    .brand-tagline {
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .tooltip-summary {
+      pointer-events: none;
+    }
+    .group:hover .tooltip-summary {
+      pointer-events: auto;
+    }
+  </style>
 </head>
 
 <body class="bg-gray-50">
   <!-- Header -->
-<header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-  <div class="max-w-6xl mx-auto px-4 py-4">
-    <div class="flex items-center gap-4">
-      <!-- Logo + title as you already have -->
-      <a href="#top" class="block">
-        <img src="logo.png"
-             alt="Global Reports Library logo"
-             class="h-12 w-12 md:h-16 md:w-16 rounded-full object-cover shadow-md">
-      </a>
+  <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-4">
+      <div class="flex items-center gap-4">
+        <a href="#top" class="block">
+          <img src="logo.png"
+               alt="Global Reports Library logo"
+               class="h-12 w-12 md:h-16 md:w-16 rounded-full object-cover shadow-md">
+        </a>
 
-      <div>
-        <h1 class="brand-title text-2xl md:text-3xl font-semibold text-gray-900">
-          Global Reports Library
-        </h1>
-        <p class="brand-tagline text-amber-600 mt-1">
-          curated by Towfiq
-        </p>
+        <div>
+          <h1 class="brand-title text-2xl md:text-3xl font-semibold text-gray-900">
+            Global Reports Library
+          </h1>
+          <p class="brand-tagline text-amber-600 mt-1">
+            curated by Towfiq
+          </p>
+        </div>
       </div>
     </div>
-  </div>
-</header>
+  </header>
 
   <!-- Main layout -->
   <main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-12 gap-6">
@@ -86,7 +81,7 @@
         </div>
       </section>
 
-      <!-- User refresh (safe: re-fetch latest index, not rebuild Drive) -->
+      <!-- User refresh (this now triggers rebuild via Netlify function) -->
       <section class="bg-white rounded-lg border border-gray-200 p-4">
         <button id="userRefreshBtn"
                 class="w-full px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
@@ -125,13 +120,15 @@
     </section>
   </main>
 
-  <script>
-    // Netlify function endpoint (DO NOT change)
-    const DATA_URL = "/.netlify/functions/catalog";
+  <button id="backToTop"
+          class="hidden fixed bottom-4 right-4 z-40 rounded-full bg-amber-600 text-white shadow-lg p-3 hover:bg-amber-700 transition">
+    ↑
+  </button>
 
-    // Browser cache for speed
-    const CACHE_KEY = "pdf_catalog_cache_v1";
-    const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+  <script>
+    // Netlify function endpoints (DO NOT change)
+    const DATA_URL = "/.netlify/functions/catalog";
+    const REBUILD_URL = "/.netlify/functions/catalog?refresh=1";
 
     const state = {
       allItems: [],
@@ -139,8 +136,6 @@
       selectedCategories: new Set(),
       selectedYears: new Set(),
       searchQuery: '',
-
-      // Pagination
       page: 1,
       pageSize: 50
     };
@@ -164,32 +159,16 @@
       return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
     }
 
-    // Load data with browser-side caching
-    async function loadData(forceFresh, rebuild = false) {
-  const url = rebuild
-    ? "/.netlify/functions/catalog?refresh=1"
-    : "/.netlify/functions/catalog";
+    // Load data from Netlify function
+    async function loadData(forceFresh = false, rebuild = false) {
+      const base = rebuild ? REBUILD_URL : DATA_URL;
+      const url = forceFresh
+        ? base + (base.includes("?") ? "&" : "?") + "cb=" + Date.now()
+        : base;
 
-  const res = await fetch(url, {
-    cache: forceFresh ? "no-store" : "default",
-  });
-
-  if (!res.ok) throw new Error("Failed to load catalog");
-  return await res.json();
-}
-
-      // 2) Fetch fresh JSON from Netlify function
-      const r = await fetch(DATA_URL + "?cb=" + Date.now(), { cache: "no-store" });
-      if (!r.ok) throw new Error("Fetch failed: " + r.status);
-
-      const data = await r.json();
-
-      // 3) Store for next time
-      try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ time: Date.now(), data }));
-      } catch (e) {}
-
-      return data;
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error(`Failed to load catalog (${res.status})`);
+      return await res.json();
     }
 
     function buildFacetFilters() {
@@ -272,84 +251,68 @@
         return matchesText && matchesCat && matchesYear;
       });
 
-      // reset pagination whenever filters change
       state.page = 1;
-
       render();
     }
 
-  function renderCard(item) {
-  const thumb = item.thumbUrl || 'https://via.placeholder.com/260x360?text=PDF';
-  const title = escapeHtml(item.title);
-  const summary = escapeHtml(item.summary || "");
-  const year = item.year || "";
-  const pdfUrl = item.pdfUrl || "#";
+    function renderCard(item) {
+      const thumb = item.thumbUrl || 'https://via.placeholder.com/260x360?text=PDF';
+      const title = escapeHtml(item.title);
+      const summary = escapeHtml(item.summary || "");
+      const year = item.year || "";
+      const pdfUrl = item.pdfUrl || "#";
 
-  const cats = (item.categories || []).map(c =>
-    `<span class="px-2 py-0.5 border rounded-full bg-gray-50">${escapeHtml(c)}</span>`
-  ).join("");
+      const cats = (item.categories || []).map(c =>
+        `<span class="px-2 py-0.5 border rounded-full bg-gray-50">${escapeHtml(c)}</span>`
+      ).join("");
 
-  return `
-    <article class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow transition">
-      <div class="grid grid-cols-1 sm:grid-cols-[160px,1fr] gap-4">
-        
-        <!-- Thumbnail + hover description -->
-        <div class="w-full">
-  <div class="relative border border-gray-200 bg-white rounded group">
-    <a href="${pdfUrl}" target="_blank" rel="noopener">
-      <img
-        src="${thumb}"
-        alt="${title}"
-        class="w-full h-auto object-cover cursor-pointer group-hover:opacity-80 transition"
-      >
-    </a>
+      return `
+        <article class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow transition">
+          <div class="grid grid-cols-1 sm:grid-cols-[160px,1fr] gap-4">
+            <div class="w-full">
+              <div class="relative border border-gray-200 bg-white rounded group">
+                <a href="${pdfUrl}" target="_blank" rel="noopener">
+                  <img
+                    src="${thumb}"
+                    alt="${title}"
+                    class="w-full h-auto object-cover cursor-pointer group-hover:opacity-80 transition"
+                  >
+                </a>
 
-    ${
-      summary
-        ? `
-    <div
-      class="tooltip-summary absolute left-0 top-0 z-20 w-80 md:w-96 bg-white/95
-             text-xs text-gray-800 p-3 opacity-0 group-hover:opacity-100
-             transition-opacity duration-200 shadow-lg ring-1 ring-black/10"
-    >
-      <div class="font-semibold mb-1">Summary</div>
-      <div class="leading-snug whitespace-normal">
-        ${summary}
-      </div>
-    </div>
-        `
-        : ""
+                ${summary ? `
+                  <div class="tooltip-summary absolute left-0 top-0 z-20 w-80 md:w-96 bg-white/95
+                              text-xs text-gray-800 p-3 opacity-0 group-hover:opacity-100
+                              transition-opacity duration-200 shadow-lg ring-1 ring-black/10">
+                    <div class="font-semibold mb-1">Summary</div>
+                    <div class="leading-snug whitespace-normal">${summary}</div>
+                  </div>
+                ` : ""}
+              </div>
+            </div>
+
+            <div class="flex flex-col">
+              <div class="text-xs text-gray-500 mb-1">${year}</div>
+
+              <a href="${pdfUrl}" target="_blank"
+                class="text-base md:text-lg font-semibold text-amber-700 hover:underline">
+                ${title}
+              </a>
+
+              <div class="mt-3 flex flex-wrap gap-2 text-xs text-gray-500">
+                ${cats}
+              </div>
+
+              <div class="mt-3">
+                <a href="${pdfUrl}" target="_blank"
+                  class="inline-flex items-center px-4 py-1.5 text-xs font-semibold uppercase tracking-wide bg-amber-600 text-white rounded hover:bg-amber-700">
+                  Download
+                </a>
+              </div>
+            </div>
+          </div>
+        </article>
+      `;
     }
-  </div>
-</div>
-
-        <!-- Text block -->
-        <div class="flex flex-col">
-          <div class="text-xs text-gray-500 mb-1">${year}</div>
-
-          <a href="${pdfUrl}" target="_blank"
-             class="text-base md:text-lg font-semibold text-amber-700 hover:underline">
-            ${title}
-          </a>
-
-          <!-- Optional short snippet under title (2 lines only) -->
-          
-          <div class="mt-3 flex flex-wrap gap-2 text-xs text-gray-500">
-            ${cats}
-          </div>
-
-          <div class="mt-3">
-            <a href="${pdfUrl}" target="_blank"
-               class="inline-flex items-center px-4 py-1.5 text-xs font-semibold uppercase tracking-wide bg-amber-600 text-white rounded hover:bg-amber-700">
-              Download
-            </a>
-          </div>
-        </div>
-      </div>
-    </article>
-  `;
-}
-
 
     function render() {
       const container = document.getElementById("cardsContainer");
@@ -361,10 +324,8 @@
       const itemsToShow = state.filteredItems.slice(0, maxShown);
 
       info.textContent = `${total} publication(s) found`;
-
       container.innerHTML = itemsToShow.map(renderCard).join("");
 
-      // Load more button
       loadMoreWrap.innerHTML = "";
       if (maxShown < total) {
         const btn = document.createElement("button");
@@ -388,23 +349,21 @@
       const refreshStatus = document.getElementById("userRefreshStatus");
       const backToTopBtn = document.getElementById('backToTop');
 
+      // Search (button)
+      searchBtn.addEventListener('click', () => {
+        state.searchQuery = searchInput.value.trim();
+        applyFilters();
+      });
 
-    // Search (button still works)
-    searchBtn.addEventListener('click', () => {
-   state.searchQuery = searchInput.value.trim();
-   applyFilters();
-   });
-
-// Live search while typing (debounced)
-let searchTimeout = null;
-searchInput.addEventListener('input', () => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    state.searchQuery = searchInput.value.trim();
-    applyFilters();
-  }, 300); // 300ms delay after last keypress
-});
-
+      // Live search (debounced)
+      let searchTimeout = null;
+      searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          state.searchQuery = searchInput.value.trim();
+          applyFilters();
+        }, 300);
+      });
 
       // Clear filters
       clearBtn.addEventListener('click', () => {
@@ -420,36 +379,32 @@ searchInput.addEventListener('input', () => {
         applyFilters();
       });
 
-      // User refresh list (safe)
-refreshBtn.addEventListener("click", async () => {
-  refreshStatus.textContent = "Refreshing…";
-  try {
-    const data = await loadData(true, true); // force fresh + rebuild
-    state.allItems = data;
-    buildFacetFilters();
-    applyFilters();
-    refreshStatus.textContent = "Last updated: " + formatTime(Date.now());
-  } catch (e) {
-    refreshStatus.textContent = e.message;
-  }
-});
-
-      // Back-to-top button behaviour
-      window.addEventListener('scroll', () => {
-        if (window.scrollY > 300) {
-          backToTopBtn.classList.remove('hidden');
-        } else {
-          backToTopBtn.classList.add('hidden');
+      // Refresh list (NOW triggers rebuild + fetch)
+      refreshBtn.addEventListener("click", async () => {
+        refreshStatus.textContent = "Refreshing…";
+        try {
+          const data = await loadData(true, true); // force fresh + rebuild
+          state.allItems = data;
+          buildFacetFilters();
+          applyFilters();
+          refreshStatus.textContent = "Last updated: " + formatTime(Date.now());
+        } catch (e) {
+          refreshStatus.textContent = e.message;
         }
       });
 
+      // Back-to-top behavior
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) backToTopBtn.classList.remove('hidden');
+        else backToTopBtn.classList.add('hidden');
+      });
       backToTopBtn.addEventListener('click', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
 
       // Initial load
       try {
-        const data = await loadData(false);
+        const data = await loadData(true, false);
         state.allItems = data;
         buildFacetFilters();
         applyFilters();
@@ -459,11 +414,5 @@ refreshBtn.addEventListener("click", async () => {
       }
     });
   </script>
- <button id="backToTop"
-          class="hidden fixed bottom-4 right-4 z-40 rounded-full bg-amber-600 text-white shadow-lg p-3 hover:bg-amber-700 transition">
-    ↑
-  </button>
 </body>
 </html>
-
-
