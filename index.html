@@ -421,18 +421,18 @@ searchInput.addEventListener('input', () => {
       });
 
       // User refresh list (safe)
-      refreshBtn.addEventListener("click", async () => {
-        refreshStatus.textContent = "Refreshing…";
-        try {
-          const data = await loadData(true, true); // force fresh + rebuild
-          state.allItems = data;
-          buildFacetFilters();
-          applyFilters();
-          refreshStatus.textContent = "Last updated: " + formatTime(Date.now());
-        } catch (e) {
-          refreshStatus.textContent = e.message;
-        }
-      });
+refreshBtn.addEventListener("click", async () => {
+  refreshStatus.textContent = "Refreshing…";
+  try {
+    const data = await loadData(true, true); // force fresh + rebuild
+    state.allItems = data;
+    buildFacetFilters();
+    applyFilters();
+    refreshStatus.textContent = "Last updated: " + formatTime(Date.now());
+  } catch (e) {
+    refreshStatus.textContent = e.message;
+  }
+});
 
       // Back-to-top button behaviour
       window.addEventListener('scroll', () => {
@@ -465,4 +465,5 @@ searchInput.addEventListener('input', () => {
   </button>
 </body>
 </html>
+
 
