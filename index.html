@@ -165,21 +165,18 @@
     }
 
     // Load data with browser-side caching
-    async function loadData(forceFresh = false) {
-      // 1) Try localStorage cache first (unless forcing fresh)
-      if (!forceFresh) {
-        try {
-          const cachedRaw = localStorage.getItem(CACHE_KEY);
-          if (cachedRaw) {
-            const cached = JSON.parse(cachedRaw);
-            if (Date.now() - cached.time < CACHE_TTL_MS && Array.isArray(cached.data)) {
-              return cached.data;
-            }
-          }
-        } catch (e) {
-          // ignore cache errors
-        }
-      }
+    async function loadData(forceFresh, rebuild = false) {
+  const url = rebuild
+    ? "/.netlify/functions/catalog?refresh=1"
+    : "/.netlify/functions/catalog";
+
+  const res = await fetch(url, {
+    cache: forceFresh ? "no-store" : "default",
+  });
+
+  if (!res.ok) throw new Error("Failed to load catalog");
+  return await res.json();
+}
 
       // 2) Fetch fresh JSON from Netlify function
       const r = await fetch(DATA_URL + "?cb=" + Date.now(), { cache: "no-store" });
@@ -427,7 +424,7 @@ searchInput.addEventListener('input', () => {
       refreshBtn.addEventListener("click", async () => {
         refreshStatus.textContent = "Refreshing…";
         try {
-          const data = await loadData(true); // force fresh
+          const data = await loadData(true, true); // force fresh + rebuild
           state.allItems = data;
           buildFacetFilters();
           applyFilters();
@@ -468,3 +465,4 @@ searchInput.addEventListener('input', () => {
   </button>
 </body>
 </html>
+
