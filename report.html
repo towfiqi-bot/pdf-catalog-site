@@ -21,53 +21,100 @@
   <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-4 py-4">
       <div class="flex items-center gap-4">
-        <a href="./index.html" class="block">
+        <a href="./" class="block">
           <img src="logo.png" alt="DocDock logo"
                class="h-12 w-12 md:h-16 md:w-16 rounded-full object-cover shadow-md border border-gray-200 bg-white">
         </a>
-        <div class="flex-1">
-          <h1 class="brand-title text-2xl md:text-3xl font-semibold text-gray-900">DocDock</h1>
-          <p class="brand-tagline text-amber-600 mt-1">REPORT</p>
+
+        <div class="min-w-0">
+          <div class="flex items-baseline gap-3 flex-wrap">
+            <h1 class="brand-title text-2xl md:text-3xl font-semibold text-gray-900">DocDock</h1>
+            <span class="brand-tagline text-amber-600">Report</span>
+          </div>
+          <p class="text-sm text-gray-500 mt-1 truncate" id="reportTitleTop">Loading…</p>
         </div>
 
-        <div class="flex gap-2">
-          <a id="openDriveBtn" href="#" target="_blank" rel="noopener"
-             class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">
-            Open in Drive
+        <div class="ml-auto flex gap-2 flex-wrap">
+          <a href="./" class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">
+            ← Back
           </a>
-          <a id="downloadBtn" href="#" target="_blank" rel="noopener"
-             class="px-3 py-2 text-sm bg-amber-600 text-white rounded hover:bg-amber-700">
-            Download file
+          <a id="openPdfBtn" href="#" target="_blank" rel="noopener"
+             class="px-3 py-1.5 text-sm bg-amber-600 text-white rounded hover:bg-amber-700">
+            Open PDF (new tab)
           </a>
+          <button id="copyLinkBtn"
+                  class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">
+            Copy link
+          </button>
         </div>
       </div>
     </div>
   </header>
 
   <main class="max-w-6xl mx-auto px-4 py-6">
-    <div id="status" class="text-sm text-gray-600 mb-4">Loading…</div>
+    <div id="errorBox" class="hidden bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-4"></div>
 
-    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-4">
-      <div class="text-xs text-gray-500" id="meta"></div>
-      <div class="text-xl font-semibold text-gray-900 mt-1" id="title">—</div>
-      <div class="text-sm text-gray-700 mt-3 whitespace-pre-wrap" id="summary"></div>
-    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Left info -->
+      <aside class="lg:col-span-4 space-y-4">
+        <section class="bg-white rounded-lg border border-gray-200 p-4">
+          <div class="flex gap-4">
+            <img id="coverImg" src="" alt="" class="w-28 h-auto rounded border border-gray-200 bg-gray-50 hidden">
+            <div class="min-w-0">
+              <h2 id="reportTitle" class="text-lg font-semibold text-gray-900 leading-snug">Loading…</h2>
+              <div class="mt-2 flex flex-wrap gap-2 text-xs text-gray-600" id="chips"></div>
+              <div class="mt-3 text-xs text-gray-500" id="updatedText"></div>
+            </div>
+          </div>
+        </section>
 
-    <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-      <iframe id="viewer" class="w-full" style="height: 80vh;" title="PDF viewer" loading="lazy"></iframe>
-    </div>
+        <section id="summaryCard" class="hidden bg-white rounded-lg border border-gray-200 p-4">
+          <h3 class="text-sm font-semibold text-gray-700 mb-2">Summary</h3>
+          <p id="summaryText" class="text-sm text-gray-700 leading-relaxed"></p>
+        </section>
 
-    <div class="mt-4">
-      <a href="./index.html" class="text-sm text-blue-700 hover:underline">← Back to library</a>
+        <section class="bg-white rounded-lg border border-gray-200 p-4">
+          <h3 class="text-sm font-semibold text-gray-700 mb-3">Share</h3>
+          <div class="flex flex-wrap gap-2" id="shareButtons"></div>
+          <div class="text-xs text-gray-500 mt-2">
+            Tip: share this page (not the Drive URL) so the preview stays on DocDock.
+          </div>
+        </section>
+      </aside>
+
+      <!-- PDF viewer -->
+      <section class="lg:col-span-8">
+        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+          <iframe id="pdfFrame" class="w-full" style="height: 78vh;" title="PDF viewer" src="" loading="lazy"></iframe>
+        </div>
+      </section>
     </div>
   </main>
 
 <script>
   const DATA_URL = "https://script.google.com/macros/s/AKfycbwF2IqDTG0F5acy4K1mtBRMZg1AOp3RMHzYwHEtZcZmRV8Jbpb2_ETe4Mpnkgp-lxmy/exec";
-  const CACHE_KEY = "docdock_catalog_cache_v3";
 
-  function qs(name) {
-    return new URLSearchParams(location.search).get(name);
+  const CACHE_KEY = "pdf_catalog_cache_v3";
+  const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+
+  function cacheGet() {
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed?.time || !parsed?.data) return null;
+      if (Date.now() - parsed.time > CACHE_TTL_MS) return null;
+      return parsed.data;
+    } catch (e) { return null; }
+  }
+
+  function escapeHtml(str) {
+    return String(str || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
   function drivePreviewUrl(fileId) {
@@ -76,71 +123,128 @@
   function driveViewUrl(fileId) {
     return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view`;
   }
-  function driveDownloadUrl(fileId) {
-    return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
+
+  function showError(msg) {
+    const box = document.getElementById("errorBox");
+    box.textContent = msg;
+    box.classList.remove("hidden");
   }
 
-  function cacheGet() {
-    try {
-      const raw = localStorage.getItem(CACHE_KEY);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      return parsed?.data || null;
-    } catch(e) { return null; }
-  }
-
-  async function loadCatalog() {
-    const res = await fetch(DATA_URL + (DATA_URL.includes("?") ? "&" : "?") + "cb=" + Date.now(), { cache: "no-store" });
+  async function fetchCatalogFresh() {
+    const url = DATA_URL + (DATA_URL.includes("?") ? "&" : "?") + "cb=" + Date.now();
+    const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error("Failed to load catalog");
     return await res.json();
   }
 
-  function render(item) {
-    document.getElementById("title").textContent = item.title || "(Untitled)";
-    document.getElementById("summary").textContent = item.summary || "";
-    document.getElementById("meta").textContent =
-      [item.year ? `Year: ${item.year}` : "", (item.categories||[]).length ? `Categories: ${(item.categories||[]).join(", ")}` : ""]
-      .filter(Boolean).join(" • ");
+  function renderShareButtons(title) {
+    const url = window.location.href;
+    const text = `${title} — via DocDock`;
+    const encUrl = encodeURIComponent(url);
+    const encText = encodeURIComponent(text);
 
-    document.getElementById("viewer").src = drivePreviewUrl(item.id);
-    document.getElementById("openDriveBtn").href = driveViewUrl(item.id);
-    document.getElementById("downloadBtn").href = driveDownloadUrl(item.id);
+    const items = [
+      { name: "LinkedIn", href: `https://www.linkedin.com/sharing/share-offsite/?url=${encUrl}` },
+      { name: "X",        href: `https://twitter.com/intent/tweet?url=${encUrl}&text=${encText}` },
+      { name: "Facebook", href: `https://www.facebook.com/sharer/sharer.php?u=${encUrl}` },
+      { name: "Email",    href: `mailto:?subject=${encodeURIComponent(title)}&body=${encUrl}` },
+    ];
 
-    document.getElementById("status").textContent = "";
-    document.title = `DocDock — ${item.title || "Report"}`;
+    const wrap = document.getElementById("shareButtons");
+    wrap.innerHTML = items.map(i => `
+      <a class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50"
+         href="${i.href}" target="_blank" rel="noopener">${i.name}</a>
+    `).join("");
   }
 
-  (async () => {
-    const id = qs("id");
-    const status = document.getElementById("status");
-
+  async function main() {
+    const params = new URLSearchParams(location.search);
+    const id = params.get("id");
     if (!id) {
-      status.textContent = "Error: missing report id.";
+      showError("Missing report id.");
       return;
     }
 
-    // Try cache first for speed
     const cached = cacheGet();
-    if (cached) {
-      const item = cached.find(x => String(x.id) === String(id));
-      if (item) {
-        status.textContent = "Loaded from cache.";
-        render(item);
-        return; // fast path
+    let catalog = null;
+
+    // 1) Try cached first (fast)
+    if (cached && Array.isArray(cached)) catalog = cached;
+
+    // 2) Fetch fresh in background (or immediately if no cache)
+    try {
+      const fresh = await fetchCatalogFresh();
+      catalog = fresh;
+      // refresh cache (same key as index.html uses)
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify({ time: Date.now(), data: fresh })); } catch(e){}
+    } catch (e) {
+      if (!catalog) {
+        showError("Failed to load catalog");
+        return;
       }
     }
 
-    // Fallback: fetch full catalog
-    try {
-      status.textContent = "Fetching catalog…";
-      const list = await loadCatalog();
-      const item = list.find(x => String(x.id) === String(id));
-      if (!item) throw new Error("Report not found.");
-      render(item);
-    } catch (e) {
-      status.textContent = "Error: " + e.message;
+    const item = Array.isArray(catalog)
+      ? catalog.find(x => String(x.id) === String(id))
+      : null;
+
+    if (!item) {
+      showError("Report not found in catalog (yet). Try refreshing the home page once, then open this again.");
+      return;
     }
-  })();
+
+    const title = item.title || "Report";
+    document.title = `DocDock — ${title}`;
+    document.getElementById("reportTitleTop").textContent = title;
+    document.getElementById("reportTitle").textContent = title;
+
+    // Chips: year + categories
+    const chips = [];
+    if (item.year) chips.push(`<span class="px-2 py-0.5 border rounded-full bg-gray-50">Year: ${escapeHtml(item.year)}</span>`);
+    (item.categories || []).forEach(c => chips.push(`<span class="px-2 py-0.5 border rounded-full bg-gray-50">${escapeHtml(c)}</span>`));
+    document.getElementById("chips").innerHTML = chips.join("");
+
+    // Updated
+    if (item.modified) {
+      const d = new Date(item.modified);
+      document.getElementById("updatedText").textContent = "Last updated: " + d.toLocaleString();
+    }
+
+    // Cover
+    if (item.thumbUrl) {
+      const img = document.getElementById("coverImg");
+      img.src = item.thumbUrl;
+      img.alt = title;
+      img.classList.remove("hidden");
+    }
+
+    // Summary (if exists)
+    if (item.summary && String(item.summary).trim()) {
+      document.getElementById("summaryText").textContent = item.summary;
+      document.getElementById("summaryCard").classList.remove("hidden");
+    }
+
+    // PDF viewer
+    document.getElementById("pdfFrame").src = drivePreviewUrl(item.id);
+
+    // Open PDF new tab (NOT forced download)
+    document.getElementById("openPdfBtn").href = driveViewUrl(item.id);
+
+    // Copy link
+    document.getElementById("copyLinkBtn").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        document.getElementById("copyLinkBtn").textContent = "Copied!";
+        setTimeout(() => document.getElementById("copyLinkBtn").textContent = "Copy link", 1200);
+      } catch (e) {
+        alert("Copy failed. You can copy the address bar URL.");
+      }
+    });
+
+    renderShareButtons(title);
+  }
+
+  main();
 </script>
 </body>
 </html>
