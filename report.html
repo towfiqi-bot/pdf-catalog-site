@@ -11,122 +11,136 @@
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
-    body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+    body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     .brand-title { font-family: 'Playfair Display', serif; letter-spacing: 0.03em; }
+    .brand-tagline { font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; }
   </style>
 </head>
 
 <body class="bg-gray-50">
   <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center gap-3">
-      <a href="/" class="flex items-center gap-3">
-        <img src="logo.png" alt="DocDock logo"
-             class="h-10 w-10 rounded-full object-cover shadow-sm border border-gray-200 bg-white">
-        <div>
-          <div class="brand-title text-xl font-semibold text-gray-900">DocDock</div>
-          <div class="text-xs tracking-[0.18em] uppercase text-amber-600">Report</div>
+    <div class="max-w-6xl mx-auto px-4 py-4">
+      <div class="flex items-center gap-4">
+        <a href="./index.html" class="block">
+          <img src="logo.png" alt="DocDock logo"
+               class="h-12 w-12 md:h-16 md:w-16 rounded-full object-cover shadow-md border border-gray-200 bg-white">
+        </a>
+        <div class="flex-1">
+          <h1 class="brand-title text-2xl md:text-3xl font-semibold text-gray-900">DocDock</h1>
+          <p class="brand-tagline text-amber-600 mt-1">REPORT</p>
         </div>
-      </a>
 
-      <div class="ml-auto flex gap-2">
-        <a id="openDriveLink" href="#" target="_blank" rel="noopener"
-           class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">
-          Open in Drive
-        </a>
-        <a id="downloadLink" href="#" target="_blank" rel="noopener"
-           class="px-3 py-1.5 text-sm bg-amber-600 text-white rounded hover:bg-amber-700">
-          Download
-        </a>
+        <div class="flex gap-2">
+          <a id="openDriveBtn" href="#" target="_blank" rel="noopener"
+             class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">
+            Open in Drive
+          </a>
+          <a id="downloadBtn" href="#" target="_blank" rel="noopener"
+             class="px-3 py-2 text-sm bg-amber-600 text-white rounded hover:bg-amber-700">
+            Download file
+          </a>
+        </div>
       </div>
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto px-4 py-5">
-    <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
-      <h1 id="reportTitle" class="text-lg md:text-xl font-semibold text-gray-900">Loading…</h1>
-      <p id="reportMeta" class="text-sm text-gray-600 mt-1"></p>
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    <div id="status" class="text-sm text-gray-600 mb-4">Loading…</div>
+
+    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm mb-4">
+      <div class="text-xs text-gray-500" id="meta"></div>
+      <div class="text-xl font-semibold text-gray-900 mt-1" id="title">—</div>
+      <div class="text-sm text-gray-700 mt-3 whitespace-pre-wrap" id="summary"></div>
     </div>
 
-    <div class="mt-4 bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-      <div id="errorBox" class="hidden p-4 text-sm text-red-700 bg-red-50 border-b border-red-200"></div>
+    <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+      <iframe id="viewer" class="w-full" style="height: 80vh;" title="PDF viewer" loading="lazy"></iframe>
+    </div>
 
-      <iframe id="pdfFrame"
-              title="PDF Viewer"
-              class="w-full"
-              style="height: calc(100vh - 220px);"
-              src=""
-              loading="lazy">
-      </iframe>
+    <div class="mt-4">
+      <a href="./index.html" class="text-sm text-blue-700 hover:underline">← Back to library</a>
     </div>
   </main>
 
-  <script>
-    const DATA_URL = "/.netlify/functions/catalog";
+<script>
+  const DATA_URL = "https://script.google.com/macros/s/AKfycbwF2IqDTG0F5acy4K1mtBRMZg1AOp3RMHzYwHEtZcZmRV8Jbpb2_ETe4Mpnkgp-lxmy/exec";
+  const CACHE_KEY = "docdock_catalog_cache_v3";
 
-    function getParam(name) {
-      return new URL(window.location.href).searchParams.get(name);
+  function qs(name) {
+    return new URLSearchParams(location.search).get(name);
+  }
+
+  function drivePreviewUrl(fileId) {
+    return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
+  }
+  function driveViewUrl(fileId) {
+    return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view`;
+  }
+  function driveDownloadUrl(fileId) {
+    return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
+  }
+
+  function cacheGet() {
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return parsed?.data || null;
+    } catch(e) { return null; }
+  }
+
+  async function loadCatalog() {
+    const res = await fetch(DATA_URL + (DATA_URL.includes("?") ? "&" : "?") + "cb=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to load catalog");
+    return await res.json();
+  }
+
+  function render(item) {
+    document.getElementById("title").textContent = item.title || "(Untitled)";
+    document.getElementById("summary").textContent = item.summary || "";
+    document.getElementById("meta").textContent =
+      [item.year ? `Year: ${item.year}` : "", (item.categories||[]).length ? `Categories: ${(item.categories||[]).join(", ")}` : ""]
+      .filter(Boolean).join(" • ");
+
+    document.getElementById("viewer").src = drivePreviewUrl(item.id);
+    document.getElementById("openDriveBtn").href = driveViewUrl(item.id);
+    document.getElementById("downloadBtn").href = driveDownloadUrl(item.id);
+
+    document.getElementById("status").textContent = "";
+    document.title = `DocDock — ${item.title || "Report"}`;
+  }
+
+  (async () => {
+    const id = qs("id");
+    const status = document.getElementById("status");
+
+    if (!id) {
+      status.textContent = "Error: missing report id.";
+      return;
     }
 
-    function drivePreviewUrl(fileId) {
-      return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
-    }
-    function driveViewUrl(fileId) {
-      return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view`;
-    }
-    function driveDownloadUrl(fileId) {
-      return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
-    }
-
-    async function loadCatalog() {
-      const r = await fetch(DATA_URL, { cache: "no-store" });
-      if (!r.ok) throw new Error("Failed to load catalog");
-      return await r.json();
-    }
-
-    (async function init() {
-      const id = getParam("id");
-      const titleEl = document.getElementById("reportTitle");
-      const metaEl = document.getElementById("reportMeta");
-      const frame = document.getElementById("pdfFrame");
-      const errorBox = document.getElementById("errorBox");
-      const openDriveLink = document.getElementById("openDriveLink");
-      const downloadLink = document.getElementById("downloadLink");
-
-      if (!id) {
-        errorBox.classList.remove("hidden");
-        errorBox.textContent = "Missing ?id=FILE_ID in the URL.";
-        titleEl.textContent = "Report not found";
-        frame.style.display = "none";
-        return;
+    // Try cache first for speed
+    const cached = cacheGet();
+    if (cached) {
+      const item = cached.find(x => String(x.id) === String(id));
+      if (item) {
+        status.textContent = "Loaded from cache.";
+        render(item);
+        return; // fast path
       }
+    }
 
-      try {
-        const data = await loadCatalog();
-        const item = data.find(x => String(x.id) === String(id));
-
-        if (!item) {
-          errorBox.classList.remove("hidden");
-          errorBox.textContent = "This report ID was not found in the catalog.";
-          titleEl.textContent = "Report not found";
-          frame.style.display = "none";
-          return;
-        }
-
-        titleEl.textContent = item.title || "Untitled report";
-        metaEl.textContent = [item.year, (item.categories || []).join(", ")].filter(Boolean).join(" • ");
-
-        openDriveLink.href = driveViewUrl(id);
-        downloadLink.href = driveDownloadUrl(id);
-
-        // iframe keeps YOUR URL in the address bar
-        frame.src = drivePreviewUrl(id);
-      } catch (e) {
-        errorBox.classList.remove("hidden");
-        errorBox.textContent = e.message || String(e);
-        titleEl.textContent = "Error";
-        frame.style.display = "none";
-      }
-    })();
-  </script>
+    // Fallback: fetch full catalog
+    try {
+      status.textContent = "Fetching catalog…";
+      const list = await loadCatalog();
+      const item = list.find(x => String(x.id) === String(id));
+      if (!item) throw new Error("Report not found.");
+      render(item);
+    } catch (e) {
+      status.textContent = "Error: " + e.message;
+    }
+  })();
+</script>
 </body>
 </html>
