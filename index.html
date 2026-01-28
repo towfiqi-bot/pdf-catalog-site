@@ -282,8 +282,8 @@
       const title = escapeHtml(item.title);
       const summary = escapeHtml(item.summary || "");
       const year = item.year || "";
-      const pdfUrl = item.pdfUrl || "#";
-
+      const reportUrl = `/report.html?id=${encodeURIComponent(item.id)}`;
+      const downloadUrl = `https://drive.google.com/uc?export=download&id=${encodeURIComponent(item.id)}`;
       const cats = (item.categories || []).map(c =>
         `<span class="px-2 py-0.5 border rounded-full bg-gray-50">${escapeHtml(c)}</span>`
       ).join("");
@@ -293,13 +293,13 @@
           <div class="grid grid-cols-1 sm:grid-cols-[160px,1fr] gap-4">
             <div class="w-full">
               <div class="relative border border-gray-200 bg-white rounded group">
-                <a href="${pdfUrl}" target="_blank" rel="noopener">
-                  <img
-                    src="${thumb}"
-                    alt="${title}"
-                    class="w-full h-auto object-cover cursor-pointer group-hover:opacity-80 transition"
-                  >
-                </a>
+                <button type="button" onclick="openPdfModalById('${item.id}')" class="block w-full text-left">
+  <img
+    src="${thumb}"
+    alt="${title}"
+    class="w-full h-auto object-cover cursor-pointer group-hover:opacity-80 transition"
+  >
+</button>
 
                 ${summary ? `
                   <div class="tooltip-summary absolute left-0 top-0 z-20 w-80 md:w-96 bg-white/95
@@ -325,7 +325,7 @@
               </div>
 
               <div class="mt-3">
-                <a href="${pdfUrl}" target="_blank"
+                <a href="${downloadUrl}" target="_blank" rel="noopener"
                   class="inline-flex items-center px-4 py-1.5 text-xs font-semibold uppercase tracking-wide bg-amber-600 text-white rounded hover:bg-amber-700">
                   Download
                 </a>
@@ -488,6 +488,10 @@ function closePdfModal() {
   modal.classList.add("hidden");
   document.body.style.overflow = "";
 }
+    function openPdfModalById(id) {
+  const item = state.allItems.find(x => String(x.id) === String(id));
+  if (item) openPdfModal(item);
+}
   </script>
   <!-- PDF Modal -->
 <div id="pdfModal" class="hidden fixed inset-0 z-50">
@@ -522,6 +526,7 @@ function closePdfModal() {
 </div>
 </body>
 </html>
+
 
 
 
