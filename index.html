@@ -81,7 +81,7 @@
         </div>
       </section>
 
-      <!-- User refresh (this now triggers rebuild via Netlify function) -->
+      <!-- User refresh (this triggers rebuild via Netlify function) -->
       <section class="bg-white rounded-lg border border-gray-200 p-4">
         <button id="userRefreshBtn"
                 class="w-full px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
@@ -129,6 +129,29 @@
     // Netlify function endpoints (DO NOT change)
     const DATA_URL = "/.netlify/functions/catalog";
     const REBUILD_URL = "/.netlify/functions/catalog?refresh=1";
+
+    // Instant-load cache (browser)
+    const CACHE_KEY = "pdf_catalog_cache_v2";
+    const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+
+    function cacheSet(data) {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ time: Date.now(), data }));
+      } catch (e) {}
+    }
+
+    function cacheGet() {
+      try {
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed?.time || !parsed?.data) return null;
+        if (Date.now() - parsed.time > CACHE_TTL_MS) return null;
+        return parsed;
+      } catch (e) {
+        return null;
+      }
+    }
 
     const state = {
       allItems: [],
@@ -379,12 +402,13 @@
         applyFilters();
       });
 
-      // Refresh list (NOW triggers rebuild + fetch)
+      // Refresh list (triggers rebuild + fetch, and updates cache)
       refreshBtn.addEventListener("click", async () => {
         refreshStatus.textContent = "Refreshing…";
         try {
           const data = await loadData(true, true); // force fresh + rebuild
           state.allItems = data;
+          cacheSet(data);
           buildFacetFilters();
           applyFilters();
           refreshStatus.textContent = "Last updated: " + formatTime(Date.now());
@@ -402,15 +426,28 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
 
-      // Initial load
+      // ✅ Instant-load: show cached results immediately (if available)
+      const cached = cacheGet();
+      if (cached) {
+        state.allItems = cached.data;
+        buildFacetFilters();
+        applyFilters();
+        document.getElementById("resultsInfo").textContent =
+          "Showing cached results… updating";
+      }
+
+      // Then fetch fresh in background
       try {
         const data = await loadData(true, false);
         state.allItems = data;
+        cacheSet(data);
         buildFacetFilters();
         applyFilters();
       } catch (e) {
-        document.getElementById("resultsInfo").textContent =
-          "Error loading data: " + e.message;
+        if (!cached) {
+          document.getElementById("resultsInfo").textContent =
+            "Error loading data: " + e.message;
+        }
       }
     });
   </script>
