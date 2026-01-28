@@ -7,198 +7,269 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
-    body { font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif; }
+    body { font-family: 'Inter', system-ui, -apple-system, Segoe UI, sans-serif; }
     .brand-title { font-family: 'Playfair Display', serif; letter-spacing: 0.03em; }
+    .brand-tagline { font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; }
   </style>
 </head>
 
 <body class="bg-gray-50">
-  <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
-    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center gap-4">
-      <a href="index.html" class="flex items-center gap-3">
-        <img src="logo.png" alt="DocDock logo" class="h-10 w-10 rounded-full border border-gray-200 bg-white shadow-sm" />
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-4">
+      <div class="flex items-center gap-4">
+        <a href="index.html" class="block">
+          <img src="logo.png" alt="DocDock logo"
+               class="h-12 w-12 md:h-16 md:w-16 rounded-full object-cover shadow-md border border-gray-200 bg-white">
+        </a>
         <div>
-          <div class="brand-title text-xl font-semibold text-gray-900">DocDock</div>
-          <div class="text-[11px] uppercase tracking-[0.18em] text-amber-600">Report</div>
+          <h1 class="brand-title text-2xl md:text-3xl font-semibold text-gray-900">DocDock</h1>
+          <p class="brand-tagline text-amber-600 mt-1">Report</p>
         </div>
-      </a>
-
-      <div class="ml-auto flex gap-2">
-        <a id="btnViewer" target="_blank" rel="noopener"
-           class="px-3 py-1.5 text-sm bg-amber-600 text-white rounded hover:bg-amber-700">Open PDF</a>
-        <button id="btnCopy" class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">
-          Copy share link
-        </button>
       </div>
     </div>
   </header>
 
   <main class="max-w-6xl mx-auto px-4 py-6">
-    <div id="errorBox" class="hidden bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-4"></div>
+    <!-- Top row -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5">
+      <div>
+        <div id="rTitle" class="text-xl md:text-2xl font-semibold text-gray-900">Loading…</div>
+        <div id="rMetaLine" class="text-sm text-gray-600 mt-1"></div>
+      </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-      <div class="md:col-span-4">
+      <!-- Share (kept, since report page is for sharing) -->
+      <div id="shareWrap" class="flex flex-wrap gap-2">
+        <button id="copyLinkBtn" class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">
+          Copy link
+        </button>
+        <a id="shareX" target="_blank" rel="noopener"
+           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">X</a>
+        <a id="shareLI" target="_blank" rel="noopener"
+           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">LinkedIn</a>
+        <a id="shareFB" target="_blank" rel="noopener"
+           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">Facebook</a>
+        <a id="shareWA" target="_blank" rel="noopener"
+           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">WhatsApp</a>
+        <a id="shareEmail" class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">Email</a>
+      </div>
+    </div>
+
+    <!-- Content grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Left: cover + details -->
+      <section id="detailsWrap" class="lg:col-span-5 space-y-4">
+        <div class="bg-white border border-gray-200 rounded-lg p-4">
+          <div class="flex gap-4">
+            <img id="rThumb" src="" alt="Cover"
+                 class="w-28 h-40 object-cover rounded border border-gray-200 bg-gray-100"
+                 onerror="this.style.display='none'; document.getElementById('thumbFallback').classList.remove('hidden');">
+            <div id="thumbFallback" class="hidden w-28 h-40 rounded border border-gray-200 bg-gray-100 flex items-center justify-center text-xs text-gray-500">
+              No cover
+            </div>
+
+            <div class="flex-1">
+              <table class="w-full text-sm border border-gray-200">
+                <tbody id="metaTableBody"></tbody>
+              </table>
+              <div class="mt-3">
+                <!-- This is your “download” replacement: opens inside DocDock, not a PC download -->
+                <a id="viewBtn" target="_blank" rel="noopener"
+                   class="inline-flex items-center px-4 py-2 text-sm font-semibold bg-amber-600 text-white rounded hover:bg-amber-700">
+                  View PDF (new tab)
+                </a>
+              </div>
+              <div id="statusLine" class="text-xs text-gray-500 mt-2"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right: embedded PDF -->
+      <section class="lg:col-span-7">
         <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-          <img id="cover" alt="Cover" class="w-full h-auto" />
+          <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+            <div class="text-sm font-semibold text-gray-800">Reader</div>
+            <a href="index.html" class="text-sm text-amber-700 hover:underline">Back to catalog</a>
+          </div>
+
+          <iframe id="pdfFrame"
+                  class="w-full"
+                  style="height: 75vh;"
+                  title="PDF viewer"
+                  src=""
+                  loading="lazy"></iframe>
         </div>
+      </section>
+    </div>
 
-        <div class="mt-4 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-          <div class="text-sm font-semibold text-gray-800 mb-3">Share</div>
-          <div class="flex flex-wrap gap-2">
-            <a id="shareX" target="_blank" rel="noopener" class="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50">X</a>
-            <a id="shareLI" target="_blank" rel="noopener" class="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50">LinkedIn</a>
-            <a id="shareFB" target="_blank" rel="noopener" class="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50">Facebook</a>
-            <a id="shareWA" target="_blank" rel="noopener" class="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50">WhatsApp</a>
-            <a id="shareMail" class="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50">Email</a>
-          </div>
-          <div class="text-xs text-gray-500 mt-3">
-            Note: social platforms often don’t run JavaScript when generating previews, so link previews may be generic. The share buttons still work.
-          </div>
-        </div>
-      </div>
-
-      <div class="md:col-span-8">
-        <div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-          <h1 id="title" class="text-2xl md:text-3xl font-bold text-gray-900"></h1>
-          <div id="sub" class="text-sm text-gray-500 mt-2"></div>
-
-          <div class="mt-5 overflow-x-auto">
-            <table class="w-full text-sm border border-gray-200">
-              <tbody>
-                <tr class="border-b">
-                  <th class="text-left bg-gray-50 p-3 w-40">Year</th>
-                  <td class="p-3" id="yearCell"></td>
-                </tr>
-                <tr class="border-b">
-                  <th class="text-left bg-gray-50 p-3">Categories</th>
-                  <td class="p-3" id="catCell"></td>
-                </tr>
-                <tr class="border-b">
-                  <th class="text-left bg-gray-50 p-3">Updated</th>
-                  <td class="p-3" id="updatedCell"></td>
-                </tr>
-                <tr class="border-b">
-                  <th class="text-left bg-gray-50 p-3">Summary</th>
-                  <td class="p-3" id="summaryCell"></td>
-                </tr>
-                <tr>
-                  <th class="text-left bg-gray-50 p-3">Link</th>
-                  <td class="p-3">
-                    <a id="selfLink" class="text-amber-700 hover:underline" href="#"></a>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="mt-6 bg-gray-50 border border-gray-200 rounded-lg overflow-hidden" style="height: 70vh;">
-            <iframe id="frame" class="w-full h-full" title="PDF viewer" loading="lazy"></iframe>
-          </div>
-        </div>
-      </div>
+    <div id="errorBox" class="hidden mt-6 bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
+      <div class="font-semibold">Error</div>
+      <div id="errorText" class="mt-1 text-sm"></div>
     </div>
   </main>
 
 <script>
-  // ✅ Must match index.html
+  // ✅ MUST be the Apps Script URL (GitHub Pages has no Netlify functions)
   const DATA_URL = "https://script.google.com/macros/s/AKfycbwF2IqDTG0F5acy4K1mtBRMZg1AOp3RMHzYwHEtZcZmRV8Jbpb2_ETe4Mpnkgp-lxmy/exec";
 
-  function qs(name){ return new URLSearchParams(location.search).get(name) || ""; }
-  function esc(s){ return String(s || ""); }
+  const CACHE_KEY = "pdf_catalog_cache_v2";
+  const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
-  function drivePreviewUrl(fileId){
+  function cacheGet() {
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed?.time || !parsed?.data) return null;
+      if (Date.now() - parsed.time > CACHE_TTL_MS) return null;
+      return parsed.data;
+    } catch {
+      return null;
+    }
+  }
+
+  function drivePreviewUrl(fileId) {
     return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
   }
-  function viewerUrl(fileId){
-    return `view.html?id=${encodeURIComponent(fileId)}`;
+
+  // ✅ “Download” behavior requested: open in new tab INSIDE DocDock
+  function viewInDocDockUrl(fileId) {
+    return `report.html?id=${encodeURIComponent(fileId)}&view=1`;
   }
 
-  function fmtDate(v){
-    if (!v) return "";
-    // v might be millis, ISO, or string. Handle common cases:
-    const n = Number(v);
-    const d = Number.isFinite(n) ? new Date(n) : new Date(v);
-    if (isNaN(d.getTime())) return esc(v);
-    return d.toLocaleString();
+  function esc(s) {
+    return String(s ?? "")
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
   }
 
-  async function loadCatalog(){
-    const res = await fetch(DATA_URL + (DATA_URL.includes("?") ? "&" : "?") + "cb=" + Date.now(), { cache: "no-store" });
-    if (!res.ok) throw new Error("Failed to load catalog");
+  function setError(msg) {
+    document.getElementById("errorBox").classList.remove("hidden");
+    document.getElementById("errorText").textContent = msg;
+  }
+
+  function setShareLinks(pageUrl, title) {
+    const text = `${title} — via DocDock`;
+    document.getElementById("shareX").href =
+      `https://twitter.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(text)}`;
+    document.getElementById("shareLI").href =
+      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`;
+    document.getElementById("shareFB").href =
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
+    document.getElementById("shareWA").href =
+      `https://wa.me/?text=${encodeURIComponent(text + " " + pageUrl)}`;
+    document.getElementById("shareEmail").href =
+      `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(pageUrl)}`;
+  }
+
+  function setMetaTable(item) {
+    const rows = [];
+
+    const year = item.year ? esc(item.year) : "—";
+    const cats = (item.categories || []).length ? esc(item.categories.join(", ")) : "—";
+    const updated = item.modified ? new Date(item.modified).toLocaleString() : "—";
+    const summary = item.summary ? esc(item.summary) : "—";
+
+    rows.push(`<tr><td class="border border-gray-200 px-3 py-2 font-semibold w-32">Year</td><td class="border border-gray-200 px-3 py-2">${year}</td></tr>`);
+    rows.push(`<tr><td class="border border-gray-200 px-3 py-2 font-semibold">Category</td><td class="border border-gray-200 px-3 py-2">${cats}</td></tr>`);
+    rows.push(`<tr><td class="border border-gray-200 px-3 py-2 font-semibold">Updated</td><td class="border border-gray-200 px-3 py-2">${esc(updated)}</td></tr>`);
+    rows.push(`<tr><td class="border border-gray-200 px-3 py-2 font-semibold">Summary</td><td class="border border-gray-200 px-3 py-2">${summary}</td></tr>`);
+
+    document.getElementById("metaTableBody").innerHTML = rows.join("");
+  }
+
+  function renderItem(item) {
+    const title = item.title || "Untitled report";
+    document.getElementById("rTitle").textContent = title;
+    document.title = `DocDock — ${title}`;
+
+    const metaLine = [
+      item.year ? String(item.year) : null,
+      (item.categories || [])[0] || null
+    ].filter(Boolean).join(" • ");
+    document.getElementById("rMetaLine").textContent = metaLine;
+
+    if (item.thumbUrl) {
+      document.getElementById("rThumb").src = item.thumbUrl;
+    }
+
+    // Embed PDF
+    document.getElementById("pdfFrame").src = drivePreviewUrl(item.id);
+
+    // “View PDF” (new tab) opens DocDock URL, not Drive URL
+    document.getElementById("viewBtn").href = viewInDocDockUrl(item.id);
+
+    setMetaTable(item);
+
+    const pageUrl = window.location.href.split("#")[0];
+    setShareLinks(pageUrl, title);
+  }
+
+  async function fetchCatalogFresh() {
+    const url = DATA_URL + (DATA_URL.includes("?") ? "&" : "?") + "cb=" + Date.now();
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to load catalog (" + res.status + ")");
     return await res.json();
   }
 
-  function setShareLinks(titleText){
-    const url = location.href;
-    const text = `${titleText} — via DocDock`;
-
-    document.getElementById("shareX").href =
-      `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
-    document.getElementById("shareLI").href =
-      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
-    document.getElementById("shareFB").href =
-      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
-    document.getElementById("shareWA").href =
-      `https://wa.me/?text=${encodeURIComponent(text + " " + url)}`;
-    document.getElementById("shareMail").href =
-      `mailto:?subject=${encodeURIComponent(titleText)}&body=${encodeURIComponent(text + "\n\n" + url)}`;
-  }
-
-  (async function init(){
-    const id = qs("id");
-    const err = document.getElementById("errorBox");
+  (async function init() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+    const viewOnly = params.get("view") === "1";
 
     if (!id) {
-      err.textContent = "Missing report id.";
-      err.classList.remove("hidden");
+      setError("Missing report id in URL.");
       return;
     }
 
-    document.getElementById("btnViewer").href = viewerUrl(id);
-    document.getElementById("selfLink").href = location.href;
-    document.getElementById("selfLink").textContent = location.href;
+    // View-only mode: hide share + details (fast “reader” mode)
+    if (viewOnly) {
+      document.getElementById("shareWrap").classList.add("hidden");
+      document.getElementById("detailsWrap").classList.add("hidden");
+      document.getElementById("statusLine").textContent = "";
+    }
 
-    document.getElementById("btnCopy").addEventListener("click", async () => {
+    // Fast render from cache first
+    const cached = cacheGet();
+    if (cached) {
+      const cachedItem = cached.find(x => String(x.id) === String(id));
+      if (cachedItem) {
+        renderItem(cachedItem);
+        document.getElementById("statusLine").textContent = "Loaded from cache… updating";
+      }
+    }
+
+    // Copy link
+    document.getElementById("copyLinkBtn").addEventListener("click", async () => {
       try {
-        await navigator.clipboard.writeText(location.href);
-        document.getElementById("btnCopy").textContent = "Copied!";
-        setTimeout(() => document.getElementById("btnCopy").textContent = "Copy share link", 1200);
-      } catch(e) {
-        alert("Copy failed. You can copy from the address bar.");
+        await navigator.clipboard.writeText(window.location.href.split("#")[0]);
+        document.getElementById("copyLinkBtn").textContent = "Copied!";
+        setTimeout(() => (document.getElementById("copyLinkBtn").textContent = "Copy link"), 1200);
+      } catch {
+        // ignore
       }
     });
 
+    // Then load fresh
     try {
-      const data = await loadCatalog();
+      const data = await fetchCatalogFresh();
       const item = data.find(x => String(x.id) === String(id));
-      if (!item) throw new Error("Report not found in catalog.");
-
-      const titleText = item.title || "Report";
-      document.title = `DocDock — ${titleText}`;
-      document.getElementById("title").textContent = titleText;
-
-      const yr = item.year ? String(item.year) : "";
-      const cats = (item.categories || []).join(", ");
-      document.getElementById("sub").textContent = [yr, cats].filter(Boolean).join(" • ");
-
-      document.getElementById("yearCell").textContent = yr || "—";
-      document.getElementById("catCell").textContent = cats || "—";
-      document.getElementById("updatedCell").textContent = fmtDate(item.modified || item.modifiedTime || item.updated) || "—";
-      document.getElementById("summaryCell").textContent = item.summary || "—";
-
-      document.getElementById("cover").src = item.thumbUrl || "https://via.placeholder.com/600x800?text=PDF";
-      document.getElementById("frame").src = drivePreviewUrl(item.id);
-
-      setShareLinks(titleText);
+      if (!item) {
+        setError("This report was not found in the latest catalog.");
+        return;
+      }
+      renderItem(item);
+      document.getElementById("statusLine").textContent = "Updated";
     } catch (e) {
-      err.textContent = e.message || String(e);
-      err.classList.remove("hidden");
+      if (!cached) setError(e.message || "Failed to load catalog.");
     }
   })();
 </script>
+
 </body>
 </html>
