@@ -65,7 +65,10 @@
       <section id="detailsWrap" class="lg:col-span-5 space-y-4">
         <div class="bg-white border border-gray-200 rounded-lg p-4">
           <div class="flex gap-4">
-            <img id="rThumb" src="" alt="Cover"
+            <!-- Use a tiny placeholder to avoid the browser's broken-image icon before we set a real thumbnail -->
+            <img id="rThumb"
+                 src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
+                 alt="Cover" loading="lazy" decoding="async" referrerpolicy="no-referrer"
                  class="w-28 h-40 object-cover rounded border border-gray-200 bg-gray-100"
                  onerror="this.style.display='none'; document.getElementById('thumbFallback').classList.remove('hidden');">
             <div id="thumbFallback" class="hidden w-28 h-40 rounded border border-gray-200 bg-gray-100 flex items-center justify-center text-xs text-gray-500">
@@ -212,9 +215,26 @@
 
   async function fetchCatalogFresh() {
     const url = DATA_URL + (DATA_URL.includes("?") ? "&" : "?") + "cb=" + Date.now();
-    const res = await fetch(url, { cache: "no-store" });
+    const res = await fetch(url, {
+      cache: "no-store",
+      mode: "cors",
+      credentials: "omit",
+      redirect: "follow",
+    });
     if (!res.ok) throw new Error("Failed to load catalog (" + res.status + ")");
-    return await res.json();
+
+    // Be defensive: if Apps Script ever returns HTML (login page/error), res.json() will throw.
+    const text = await res.text();
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      throw new Error("Catalog returned non-JSON content.");
+    }
+
+    if (Array.isArray(json)) return json;
+    if (json && Array.isArray(json.items)) return json.items;
+    throw new Error("Catalog JSON format unexpected.");
   }
 
   (async function init() {
@@ -227,19 +247,28 @@
       return;
     }
 
-    // View-only mode: hide share + details (fast “reader” mode)
+	    // Always show the PDF reader immediately (works even if the catalog fetch fails).
+	    document.getElementById("pdfFrame").src = drivePreviewUrl(id);
+	    document.getElementById("viewBtn").href = viewInDocDockUrl(id);
+
+	    // View-only mode: hide share + details (fast “reader” mode)
     if (viewOnly) {
       document.getElementById("shareWrap").classList.add("hidden");
       document.getElementById("detailsWrap").classList.add("hidden");
       document.getElementById("statusLine").textContent = "";
+	      document.title = "DocDock — Viewer";
+	      // No need to fetch the full catalog in reader-only mode.
+	      return;
     }
 
     // Fast render from cache first
-    const cached = cacheGet();
+	    const cached = cacheGet();
+	    let renderedFromCache = false;
     if (cached) {
       const cachedItem = cached.find(x => String(x.id) === String(id));
       if (cachedItem) {
         renderItem(cachedItem);
+	        renderedFromCache = true;
         document.getElementById("statusLine").textContent = "Loaded from cache… updating";
       }
     }
@@ -256,18 +285,22 @@
     });
 
     // Then load fresh
-    try {
-      const data = await fetchCatalogFresh();
-      const item = data.find(x => String(x.id) === String(id));
-      if (!item) {
-        setError("This report was not found in the latest catalog.");
-        return;
-      }
-      renderItem(item);
-      document.getElementById("statusLine").textContent = "Updated";
-    } catch (e) {
-      if (!cached) setError(e.message || "Failed to load catalog.");
-    }
+	    try {
+	      const data = await fetchCatalogFresh();
+	      const item = data.find(x => String(x.id) === String(id));
+	      if (!item) {
+	        // Keep the reader working even if the catalog index is temporarily stale.
+	        document.getElementById("statusLine").textContent = "Not in catalog yet — showing reader only.";
+	        return;
+	      }
+	      renderItem(item);
+	      document.getElementById("statusLine").textContent = "Updated";
+	    } catch (e) {
+	      console.warn("Catalog fetch failed:", e);
+	      document.getElementById("statusLine").textContent = renderedFromCache
+	        ? "Loaded from cache (update unavailable)."
+	        : "Catalog unavailable — showing reader only.";
+	    }
   })();
 </script>
 
