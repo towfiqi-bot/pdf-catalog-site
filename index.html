@@ -264,6 +264,8 @@
           </label>
         `;
         const checkbox = row.querySelector("input");
+	        // Preserve UI state when rebuilding facets (e.g., after Refresh list)
+	        checkbox.checked = state.selectedCategories.has(cat);
         checkbox.addEventListener("change", () => {
           checkbox.checked ? state.selectedCategories.add(cat) : state.selectedCategories.delete(cat);
           applyFilters();
@@ -288,6 +290,8 @@
           </label>
         `;
         const checkbox = row.querySelector("input");
+	        // Preserve UI state when rebuilding facets (e.g., after Refresh list)
+	        checkbox.checked = state.selectedYears.has(String(year));
         checkbox.addEventListener("change", () => {
           checkbox.checked ? state.selectedYears.add(String(year)) : state.selectedYears.delete(String(year));
           applyFilters();
@@ -335,7 +339,8 @@
           <div class="w-full">
             <div class="relative border border-gray-200 bg-white rounded group">
               <button type="button" onclick="openPdfModalById('${item.id}')" class="block w-full text-left">
-                <img src="${thumb}" alt="${title}"
+                <img src="${thumb}" alt="${title}" loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                     onerror="this.onerror=null;this.src='https://via.placeholder.com/260x360?text=PDF';"
                      class="w-full h-auto object-cover cursor-pointer group-hover:opacity-80 transition">
               </button>
 
