@@ -450,8 +450,40 @@
       }
     });
   </script>
+  <!-- PDF Modal -->
+<div id="pdfModal" class="hidden fixed inset-0 z-50">
+  <div class="absolute inset-0 bg-black/60" id="pdfModalBackdrop"></div>
+
+  <div class="relative max-w-6xl mx-auto h-full p-3 md:p-6 flex flex-col">
+    <div class="bg-white rounded-lg shadow-xl overflow-hidden flex flex-col h-full">
+      <div class="flex items-center gap-3 px-4 py-3 border-b border-gray-200">
+        <div class="font-semibold text-gray-900 truncate" id="pdfModalTitle">Report</div>
+        <div class="ml-auto flex gap-2">
+          <a id="pdfModalOpenPage" href="#" class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">
+            Open report page
+          </a>
+          <a id="pdfModalDownload" href="#" target="_blank" rel="noopener"
+             class="px-3 py-1.5 text-sm bg-amber-600 text-white rounded hover:bg-amber-700">
+            Download
+          </a>
+          <button id="pdfModalClose"
+                  class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">
+            Close
+          </button>
+        </div>
+      </div>
+
+      <iframe id="pdfModalFrame"
+              class="w-full flex-1"
+              title="PDF viewer"
+              src=""
+              loading="lazy"></iframe>
+    </div>
+  </div>
+</div>
 </body>
 </html>
+
 
 
 
