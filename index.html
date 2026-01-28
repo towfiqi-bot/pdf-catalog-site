@@ -370,7 +370,12 @@
       const refreshBtn = document.getElementById("userRefreshBtn");
       const refreshStatus = document.getElementById("userRefreshStatus");
       const backToTopBtn = document.getElementById('backToTop');
-
+// Modal close handlers
+document.getElementById("pdfModalClose").addEventListener("click", closePdfModal);
+document.getElementById("pdfModalBackdrop").addEventListener("click", closePdfModal);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closePdfModal();
+});
       // Search (button)
       searchBtn.addEventListener('click', () => {
         state.searchQuery = searchInput.value.trim();
@@ -449,6 +454,40 @@
         }
       }
     });
+ function drivePreviewUrl(fileId) {
+  return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
+}
+function driveDownloadUrl(fileId) {
+  return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
+}
+function reportPageUrl(fileId) {
+  return `/report.html?id=${encodeURIComponent(fileId)}`;
+}
+
+function openPdfModal(item) {
+  const modal = document.getElementById("pdfModal");
+  const frame = document.getElementById("pdfModalFrame");
+  const title = document.getElementById("pdfModalTitle");
+  const openPage = document.getElementById("pdfModalOpenPage");
+  const download = document.getElementById("pdfModalDownload");
+
+  title.textContent = item.title || "Report";
+  frame.src = drivePreviewUrl(item.id);
+
+  openPage.href = reportPageUrl(item.id);
+  download.href = driveDownloadUrl(item.id);
+
+  modal.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+
+function closePdfModal() {
+  const modal = document.getElementById("pdfModal");
+  const frame = document.getElementById("pdfModalFrame");
+  frame.src = ""; // stop the PDF
+  modal.classList.add("hidden");
+  document.body.style.overflow = "";
+}
   </script>
   <!-- PDF Modal -->
 <div id="pdfModal" class="hidden fixed inset-0 z-50">
@@ -483,6 +522,7 @@
 </div>
 </body>
 </html>
+
 
 
 
