@@ -438,7 +438,7 @@
 
       // Then fetch fresh in background
       try {
-        const data = await loadData(true, false);
+        const data = await loadData(false, false);
         state.allItems = data;
         cacheSet(data);
         buildFacetFilters();
@@ -453,3 +453,4 @@
   </script>
 </body>
 </html>
+
