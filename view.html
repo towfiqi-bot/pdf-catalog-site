@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DocDock — Viewer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+  <header class="bg-white border-b border-gray-200">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
+      <a href="index.html" class="text-sm font-semibold text-amber-700 hover:underline">← Back to library</a>
+      <div class="ml-auto flex gap-2">
+        <a id="openReport" class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50" href="#">Report page</a>
+        <button id="copyLink" class="px-3 py-1.5 text-sm bg-amber-600 text-white rounded hover:bg-amber-700">Copy link</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-4">
+    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm" style="height: calc(100vh - 110px);">
+      <iframe id="frame" class="w-full h-full" title="PDF viewer" loading="lazy"></iframe>
+    </div>
+  </main>
+
+<script>
+  function qs(name){ return new URLSearchParams(location.search).get(name) || ""; }
+  function drivePreviewUrl(fileId){ return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`; }
+  function reportUrl(fileId){ return `report.html?id=${encodeURIComponent(fileId)}`; }
+
+  const id = qs("id");
+  const frame = document.getElementById("frame");
+  const openReport = document.getElementById("openReport");
+  const copyBtn = document.getElementById("copyLink");
+
+  if (!id) {
+    document.body.innerHTML = "<div class='p-6 text-red-700'>Missing id</div>";
+  } else {
+    frame.src = drivePreviewUrl(id);
+    openReport.href = reportUrl(id);
+  }
+
+  copyBtn.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(location.href);
+      copyBtn.textContent = "Copied!";
+      setTimeout(() => copyBtn.textContent = "Copy link", 1200);
+    } catch (e) {
+      alert("Copy failed. You can copy from the address bar.");
+    }
+  });
+</script>
+</body>
+</html>
