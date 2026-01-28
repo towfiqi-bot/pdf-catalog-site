@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>DocDock — Where inquisitive minds find the latest reports</title>
 
+  <!-- Font + Tailwind CDN -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
@@ -19,7 +20,7 @@
   </style>
 </head>
 
-<body class="bg-gray-50" id="top">
+<body class="bg-gray-50">
   <!-- Header -->
   <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-4 py-4">
@@ -38,40 +39,48 @@
     </div>
   </header>
 
+  <!-- Main layout -->
   <main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-12 gap-6">
     <!-- Sidebar -->
     <aside class="md:col-span-3 space-y-6 md:sticky md:top-28 self-start">
+      <!-- Keyword search -->
       <section class="bg-white rounded-lg border border-gray-200 p-4">
         <h2 class="text-sm font-semibold text-gray-700 mb-2">Keywords</h2>
         <div class="flex flex-col sm:flex-row gap-2">
-          <input id="searchInput" type="text" class="flex-1 border rounded px-2 py-1 text-sm w-full" placeholder="Title, summary..." />
-          <button id="searchBtn" class="shrink-0 px-3 py-1 text-sm bg-amber-600 text-white rounded hover:bg-amber-700 w-full sm:w-auto sm:min-w-[84px]">
+          <input id="searchInput" type="text"
+                 class="flex-1 border rounded px-2 py-1 text-sm w-full"
+                 placeholder="Title, summary..." />
+          <button id="searchBtn"
+                  class="shrink-0 px-3 py-1 text-sm bg-amber-600 text-white rounded hover:bg-amber-700 w-full sm:w-auto sm:min-w-[84px]">
             Search
           </button>
         </div>
       </section>
 
+      <!-- Refresh list -->
       <section class="bg-white rounded-lg border border-gray-200 p-4">
-        <button id="userRefreshBtn" class="w-full px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
+        <button id="userRefreshBtn"
+                class="w-full px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
           Refresh list
         </button>
         <div id="userRefreshStatus" class="text-xs text-gray-500 mt-2"></div>
-        <div class="text-[11px] text-gray-400 mt-2 leading-snug">
-          Tip: if renames don’t appear yet, your catalog may not have rebuilt. (Optional) <b>Shift+click</b> Refresh to force rebuild (admin).
-        </div>
       </section>
 
+      <!-- Category filters -->
       <section class="bg-white rounded-lg border border-gray-200 p-4">
         <h2 class="text-sm font-semibold text-gray-700 mb-3">Filter By Category</h2>
         <div id="categoryFilters" class="space-y-1 text-sm max-h-64 overflow-y-auto"></div>
       </section>
 
+      <!-- Year filters -->
       <section class="bg-white rounded-lg border border-gray-200 p-4">
         <h2 class="text-sm font-semibold text-gray-700 mb-3">Filter By Year</h2>
         <div id="yearFilters" class="space-y-1 text-sm max-h-64 overflow-y-auto"></div>
       </section>
 
-      <button id="clearFilters" class="w-full text-sm border border-gray-300 rounded-md py-1.5 bg-white hover:bg-gray-50">
+      <!-- Clear filters -->
+      <button id="clearFilters"
+              class="w-full text-sm border border-gray-300 rounded-md py-1.5 bg-white hover:bg-gray-50">
         Clear all filters
       </button>
     </aside>
@@ -85,7 +94,9 @@
   </main>
 
   <button id="backToTop"
-    class="hidden fixed bottom-4 right-4 z-40 rounded-full bg-amber-600 text-white shadow-lg p-3 hover:bg-amber-700 transition">↑</button>
+          class="hidden fixed bottom-4 right-4 z-40 rounded-full bg-amber-600 text-white shadow-lg p-3 hover:bg-amber-700 transition">
+    ↑
+  </button>
 
   <!-- PDF Modal -->
   <div id="pdfModal" class="hidden fixed inset-0 z-50">
@@ -96,32 +107,34 @@
         <div class="flex items-center gap-3 px-4 py-3 border-b border-gray-200">
           <div class="font-semibold text-gray-900 truncate" id="pdfModalTitle">Report</div>
           <div class="ml-auto flex gap-2">
-            <a id="pdfModalOpenTab" href="#" target="_blank" rel="noopener"
+            <!-- Note: no "Open report page" button (title already does that) -->
+            <a id="pdfModalDownload" href="#" target="_blank" rel="noopener"
                class="px-3 py-1.5 text-sm bg-amber-600 text-white rounded hover:bg-amber-700">
-              Open PDF in new tab
+              View PDF (new tab)
             </a>
-            <button id="pdfModalClose" class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">
+            <button id="pdfModalClose"
+                    class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">
               Close
             </button>
           </div>
         </div>
 
-        <iframe id="pdfModalFrame" class="w-full flex-1" title="PDF viewer" src="" loading="lazy"></iframe>
+        <iframe id="pdfModalFrame"
+                class="w-full flex-1"
+                title="PDF viewer"
+                src=""
+                loading="lazy"></iframe>
       </div>
     </div>
   </div>
 
 <script>
-  // ✅ Apps Script JSON endpoint
+  // ✅ GitHub Pages: use Apps Script JSON
   const DATA_URL = "https://script.google.com/macros/s/AKfycbwF2IqDTG0F5acy4K1mtBRMZg1AOp3RMHzYwHEtZcZmRV8Jbpb2_ETe4Mpnkgp-lxmy/exec";
 
-  // Optional admin rebuild (only works if your Apps Script supports refresh=1&key=YOURKEY)
-  // Shift+Click Refresh will attempt it.
-  const ENABLE_ADMIN_REBUILD = true;
-
-  // Instant-load cache (browser)
-  const CACHE_KEY = "docdock_catalog_cache_v3";
-  const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+  // Browser cache for instant load
+  const CACHE_KEY = "pdf_catalog_cache_v2";
+  const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
   function cacheSet(data) {
     try { localStorage.setItem(CACHE_KEY, JSON.stringify({ time: Date.now(), data })); } catch (e) {}
@@ -133,8 +146,8 @@
       const parsed = JSON.parse(raw);
       if (!parsed?.time || !parsed?.data) return null;
       if (Date.now() - parsed.time > CACHE_TTL_MS) return null;
-      return parsed;
-    } catch (e) { return null; }
+      return parsed.data;
+    } catch { return null; }
   }
 
   const state = {
@@ -144,7 +157,7 @@
     selectedYears: new Set(),
     searchQuery: "",
     page: 1,
-    pageSize: 50
+    pageSize: 50,
   };
 
   function escapeHtml(str) {
@@ -166,53 +179,47 @@
     return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
   }
 
-  async function fetchCatalog({ forceFresh = false, rebuild = false } = {}) {
-    let url = DATA_URL;
-
-    if (rebuild) {
-      url += (url.includes("?") ? "&" : "?") + "refresh=1";
-      // If your Apps Script requires a key, keep it OFF the public site:
-      // We'll prompt you once and store locally in your browser.
-      const key = getAdminKey();
-      if (key) url += "&key=" + encodeURIComponent(key);
-    }
-
-    if (forceFresh) url += (url.includes("?") ? "&" : "?") + "cb=" + Date.now();
+  async function loadData(forceFresh = false) {
+    const url = forceFresh
+      ? DATA_URL + (DATA_URL.includes("?") ? "&" : "?") + "cb=" + Date.now()
+      : DATA_URL;
 
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error(`Failed to load catalog (${res.status})`);
     return await res.json();
   }
 
-  function getAdminKey() {
-    if (!ENABLE_ADMIN_REBUILD) return "";
-    const stored = localStorage.getItem("docdock_admin_key") || "";
-    if (stored) return stored;
-    const key = prompt("Admin rebuild key (stored only in this browser). Leave blank to cancel:");
-    if (!key) return "";
-    localStorage.setItem("docdock_admin_key", key);
-    return key;
+  // --- URL helpers ---
+  function drivePreviewUrl(fileId) {
+    return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
   }
 
-  // URLs (GitHub Pages safe: NO leading slash)
-  function reportUrl(fileId) { return `report.html?id=${encodeURIComponent(fileId)}`; }
-  function viewerUrl(fileId) { return `view.html?id=${encodeURIComponent(fileId)}`; }
-  function drivePreviewUrl(fileId) { return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`; }
+  // ✅ Download button should NOT download: open DocDock viewer in new tab
+  function driveDownloadUrl(fileId) {
+    return `report.html?id=${encodeURIComponent(fileId)}&view=1`;
+  }
 
-  // Modal
+  function reportPageUrl(fileId) {
+    return `report.html?id=${encodeURIComponent(fileId)}`;
+  }
+
+  // --- Modal ---
   function openPdfModal(item) {
     const modal = document.getElementById("pdfModal");
     const frame = document.getElementById("pdfModalFrame");
     const title = document.getElementById("pdfModalTitle");
-    const openTab = document.getElementById("pdfModalOpenTab");
+    const viewBtn = document.getElementById("pdfModalDownload");
 
     title.textContent = item.title || "Report";
     frame.src = drivePreviewUrl(item.id);
-    openTab.href = viewerUrl(item.id);
+
+    // “View PDF (new tab)” goes to DocDock, not Drive
+    viewBtn.href = driveDownloadUrl(item.id);
 
     modal.classList.remove("hidden");
     document.body.style.overflow = "hidden";
   }
+
   function closePdfModal() {
     const modal = document.getElementById("pdfModal");
     const frame = document.getElementById("pdfModalFrame");
@@ -220,73 +227,88 @@
     modal.classList.add("hidden");
     document.body.style.overflow = "";
   }
+
   function openPdfModalById(id) {
     const item = state.allItems.find(x => String(x.id) === String(id));
     if (item) openPdfModal(item);
   }
   window.openPdfModalById = openPdfModalById;
 
+  // --- Facets / filtering ---
   function buildFacetFilters() {
     const catCounts = new Map();
     const yearCounts = new Map();
 
     state.allItems.forEach(item => {
-      (item.categories || []).forEach(cat => catCounts.set(cat, (catCounts.get(cat) || 0) + 1));
-      if (item.year) yearCounts.set(item.year, (yearCounts.get(item.year) || 0) + 1);
+      (item.categories || []).forEach(cat => {
+        catCounts.set(cat, (catCounts.get(cat) || 0) + 1);
+      });
+      const y = item.year;
+      if (y) yearCounts.set(y, (yearCounts.get(y) || 0) + 1);
     });
 
+    // Categories
     const catContainer = document.getElementById("categoryFilters");
     catContainer.innerHTML = "";
-    Array.from(catCounts.entries()).sort((a,b) => a[0].localeCompare(b[0])).forEach(([cat, count]) => {
-      const id = "cat-" + cat.replace(/\W+/g, "-").toLowerCase();
-      const row = document.createElement("div");
-      row.className = "flex items-center gap-2";
-      row.innerHTML = `
-        <input type="checkbox" id="${id}" class="h-3 w-3 text-amber-600 border-gray-300 rounded">
-        <label for="${id}" class="cursor-pointer text-gray-700">
-          ${escapeHtml(cat)} <span class="text-gray-400 text-xs">(${count})</span>
-        </label>`;
-      const cb = row.querySelector("input");
-      cb.addEventListener("change", () => {
-        cb.checked ? state.selectedCategories.add(cat) : state.selectedCategories.delete(cat);
-        applyFilters();
+    Array.from(catCounts.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .forEach(([cat, count]) => {
+        const id = "cat-" + cat.replace(/\W+/g, "-").toLowerCase();
+        const row = document.createElement("div");
+        row.className = "flex items-center gap-2";
+        row.innerHTML = `
+          <input type="checkbox" id="${id}" value="${escapeHtml(cat)}"
+                 class="h-3 w-3 text-amber-600 border-gray-300 rounded">
+          <label for="${id}" class="cursor-pointer text-gray-700">
+            ${escapeHtml(cat)} <span class="text-gray-400 text-xs">(${count})</span>
+          </label>
+        `;
+        const checkbox = row.querySelector("input");
+        checkbox.addEventListener("change", () => {
+          checkbox.checked ? state.selectedCategories.add(cat) : state.selectedCategories.delete(cat);
+          applyFilters();
+        });
+        catContainer.appendChild(row);
       });
-      catContainer.appendChild(row);
-    });
 
+    // Years
     const yearContainer = document.getElementById("yearFilters");
     yearContainer.innerHTML = "";
-    Array.from(yearCounts.entries()).sort((a,b) => b[0] - a[0]).forEach(([year, count]) => {
-      const id = "year-" + year;
-      const row = document.createElement("div");
-      row.className = "flex items-center gap-2";
-      row.innerHTML = `
-        <input type="checkbox" id="${id}" class="h-3 w-3 text-amber-600 border-gray-300 rounded">
-        <label for="${id}" class="cursor-pointer text-gray-700">
-          ${year} <span class="text-gray-400 text-xs">(${count})</span>
-        </label>`;
-      const cb = row.querySelector("input");
-      cb.addEventListener("change", () => {
-        cb.checked ? state.selectedYears.add(String(year)) : state.selectedYears.delete(String(year));
-        applyFilters();
+    Array.from(yearCounts.entries())
+      .sort((a, b) => b[0] - a[0])
+      .forEach(([year, count]) => {
+        const id = "year-" + year;
+        const row = document.createElement("div");
+        row.className = "flex items-center gap-2";
+        row.innerHTML = `
+          <input type="checkbox" id="${id}" value="${year}"
+                 class="h-3 w-3 text-amber-600 border-gray-300 rounded">
+          <label for="${id}" class="cursor-pointer text-gray-700">
+            ${year} <span class="text-gray-400 text-xs">(${count})</span>
+          </label>
+        `;
+        const checkbox = row.querySelector("input");
+        checkbox.addEventListener("change", () => {
+          checkbox.checked ? state.selectedYears.add(String(year)) : state.selectedYears.delete(String(year));
+          applyFilters();
+        });
+        yearContainer.appendChild(row);
       });
-      yearContainer.appendChild(row);
-    });
   }
 
   function applyFilters() {
     const q = state.searchQuery.toLowerCase();
 
     state.filteredItems = state.allItems.filter(item => {
-      const matchesText = !q
-        || (item.title || "").toLowerCase().includes(q)
-        || (item.summary || "").toLowerCase().includes(q);
+      const matchesText = !q ||
+        (item.title || "").toLowerCase().includes(q) ||
+        (item.summary || "").toLowerCase().includes(q);
 
-      const matchesCat = state.selectedCategories.size === 0
-        || (item.categories || []).some(c => state.selectedCategories.has(c));
+      const matchesCat = state.selectedCategories.size === 0 ||
+        (item.categories || []).some(c => state.selectedCategories.has(c));
 
-      const matchesYear = state.selectedYears.size === 0
-        || state.selectedYears.has(String(item.year));
+      const matchesYear = state.selectedYears.size === 0 ||
+        state.selectedYears.has(String(item.year));
 
       return matchesText && matchesCat && matchesYear;
     });
@@ -297,12 +319,15 @@
 
   function renderCard(item) {
     const thumb = item.thumbUrl || "https://via.placeholder.com/260x360?text=PDF";
-    const title = escapeHtml(item.title || "(Untitled)");
+    const title = escapeHtml(item.title);
     const summary = escapeHtml(item.summary || "");
-    const year = item.year ? escapeHtml(String(item.year)) : "";
-    const cats = (item.categories || []).map(c =>
-      `<span class="px-2 py-0.5 border rounded-full bg-gray-50">${escapeHtml(c)}</span>`
-    ).join("");
+    const year = item.year || "";
+    const reportUrl = reportPageUrl(item.id);
+    const viewUrl = driveDownloadUrl(item.id);
+
+    const cats = (item.categories || [])
+      .map(c => `<span class="px-2 py-0.5 border rounded-full bg-gray-50">${escapeHtml(c)}</span>`)
+      .join("");
 
     return `
       <article class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow transition">
@@ -320,32 +345,25 @@
                             transition-opacity duration-200 shadow-lg ring-1 ring-black/10">
                   <div class="font-semibold mb-1">Summary</div>
                   <div class="leading-snug whitespace-normal">${summary}</div>
-                </div>` : ""}
+                </div>
+              ` : ""}
             </div>
           </div>
 
           <div class="flex flex-col">
             <div class="text-xs text-gray-500 mb-1">${year}</div>
 
-            <!-- Title opens REPORT PAGE -->
-            <a href="${reportUrl(item.id)}"
+            <a href="${reportUrl}"
                class="text-base md:text-lg font-semibold text-amber-700 hover:underline">
               ${title}
             </a>
 
             <div class="mt-3 flex flex-wrap gap-2 text-xs text-gray-500">${cats}</div>
 
-            <div class="mt-3 flex flex-wrap gap-2">
-              <!-- Primary: open modal (best UX) -->
-              <button type="button" onclick="openPdfModalById('${item.id}')"
-                class="inline-flex items-center px-4 py-1.5 text-xs font-semibold uppercase tracking-wide bg-blue-600 text-white rounded hover:bg-blue-700">
-                Quick view
-              </button>
-
-              <!-- Open PDF in new tab on YOUR domain (no Drive URL in address bar) -->
-              <a href="${viewerUrl(item.id)}" target="_blank" rel="noopener"
-                class="inline-flex items-center px-4 py-1.5 text-xs font-semibold uppercase tracking-wide bg-amber-600 text-white rounded hover:bg-amber-700">
-                Open PDF
+            <div class="mt-3">
+              <a href="${viewUrl}" target="_blank" rel="noopener"
+                 class="inline-flex items-center px-4 py-1.5 text-xs font-semibold uppercase tracking-wide bg-amber-600 text-white rounded hover:bg-amber-700">
+                View PDF
               </a>
             </div>
           </div>
@@ -389,20 +407,20 @@
     document.getElementById("pdfModalBackdrop").addEventListener("click", closePdfModal);
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePdfModal(); });
 
-    // Search (button)
+    // Search
     searchBtn.addEventListener("click", () => {
       state.searchQuery = searchInput.value.trim();
       applyFilters();
     });
 
-    // Live search (debounced)
+    // Live search debounce
     let searchTimeout = null;
     searchInput.addEventListener("input", () => {
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(() => {
         state.searchQuery = searchInput.value.trim();
         applyFilters();
-      }, 300);
+      }, 250);
     });
 
     // Clear filters
@@ -416,47 +434,48 @@
       applyFilters();
     });
 
-    // Refresh list
-    refreshBtn.addEventListener("click", async (evt) => {
+    // Refresh list (fetch latest JSON from Apps Script)
+    refreshBtn.addEventListener("click", async () => {
       refreshStatus.textContent = "Refreshing…";
       try {
-        const doRebuild = ENABLE_ADMIN_REBUILD && evt.shiftKey; // Shift+click
-        const data = await fetchCatalog({ forceFresh: true, rebuild: doRebuild });
+        const data = await loadData(true);
         state.allItems = data;
         cacheSet(data);
         buildFacetFilters();
         applyFilters();
-        refreshStatus.textContent = (doRebuild ? "Rebuilt + " : "") + "Last updated: " + formatTime(Date.now());
+        refreshStatus.textContent = "Last updated: " + formatTime(Date.now());
       } catch (e) {
-        refreshStatus.textContent = e.message || String(e);
+        refreshStatus.textContent = e.message;
       }
     });
 
-    // Back-to-top behavior
+    // Back-to-top
     window.addEventListener("scroll", () => {
       if (window.scrollY > 300) backToTopBtn.classList.remove("hidden");
       else backToTopBtn.classList.add("hidden");
     });
     backToTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
-    // Instant cached render
+    // Instant-load cached data
     const cached = cacheGet();
     if (cached) {
-      state.allItems = cached.data;
+      state.allItems = cached;
       buildFacetFilters();
       applyFilters();
       document.getElementById("resultsInfo").textContent = "Showing cached results… updating";
     }
 
-    // Fresh fetch
+    // Fetch fresh
     try {
-      const data = await fetchCatalog({ forceFresh: false, rebuild: false });
+      const data = await loadData(false);
       state.allItems = data;
       cacheSet(data);
       buildFacetFilters();
       applyFilters();
     } catch (e) {
-      if (!cached) document.getElementById("resultsInfo").textContent = "Error loading data: " + (e.message || e);
+      if (!cached) {
+        document.getElementById("resultsInfo").textContent = "Error loading data: " + e.message;
+      }
     }
   });
 </script>
