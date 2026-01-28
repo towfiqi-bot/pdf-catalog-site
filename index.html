@@ -124,375 +124,383 @@
     ↑
   </button>
 
-  <script>
-    // Netlify function endpoints (DO NOT change)
-    const DATA_URL = "/.netlify/functions/catalog";
-    const REBUILD_URL = "/.netlify/functions/catalog?refresh=1";
+<script>
+  // Netlify function endpoints (DO NOT change)
+  const DATA_URL = "/.netlify/functions/catalog";
+  const REBUILD_URL = "/.netlify/functions/catalog?refresh=1";
 
-    // Instant-load cache (browser)
-    const CACHE_KEY = "pdf_catalog_cache_v2";
-    const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+  // Instant-load cache (browser)
+  const CACHE_KEY = "pdf_catalog_cache_v2";
+  const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
 
-    function cacheSet(data) {
-      try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ time: Date.now(), data }));
-      } catch (e) {}
+  function cacheSet(data) {
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ time: Date.now(), data }));
+    } catch (e) {}
+  }
+
+  function cacheGet() {
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed?.time || !parsed?.data) return null;
+      if (Date.now() - parsed.time > CACHE_TTL_MS) return null;
+      return parsed;
+    } catch (e) {
+      return null;
     }
+  }
 
-    function cacheGet() {
-      try {
-        const raw = localStorage.getItem(CACHE_KEY);
-        if (!raw) return null;
-        const parsed = JSON.parse(raw);
-        if (!parsed?.time || !parsed?.data) return null;
-        if (Date.now() - parsed.time > CACHE_TTL_MS) return null;
-        return parsed;
-      } catch (e) {
-        return null;
-      }
-    }
+  const state = {
+    allItems: [],
+    filteredItems: [],
+    selectedCategories: new Set(),
+    selectedYears: new Set(),
+    searchQuery: "",
+    page: 1,
+    pageSize: 50,
+  };
 
-    const state = {
-      allItems: [],
-      filteredItems: [],
-      selectedCategories: new Set(),
-      selectedYears: new Set(),
-      searchQuery: '',
-      page: 1,
-      pageSize: 50
-    };
+  function escapeHtml(str) {
+    return String(str || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
 
-    function escapeHtml(str) {
-      return String(str || "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
+  function formatTime(ts) {
+    const d = new Date(ts);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mi = String(d.getMinutes()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+  }
 
-    function formatTime(ts) {
-      const d = new Date(ts);
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, "0");
-      const dd = String(d.getDate()).padStart(2, "0");
-      const hh = String(d.getHours()).padStart(2, "0");
-      const mi = String(d.getMinutes()).padStart(2, "0");
-      return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
-    }
+  // Load data from Netlify function
+  async function loadData(forceFresh = false, rebuild = false) {
+    const base = rebuild ? REBUILD_URL : DATA_URL;
+    const url = forceFresh
+      ? base + (base.includes("?") ? "&" : "?") + "cb=" + Date.now()
+      : base;
 
-    // Load data from Netlify function
-    async function loadData(forceFresh = false, rebuild = false) {
-      const base = rebuild ? REBUILD_URL : DATA_URL;
-      const url = forceFresh
-        ? base + (base.includes("?") ? "&" : "?") + "cb=" + Date.now()
-        : base;
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Failed to load catalog (${res.status})`);
+    return await res.json();
+  }
 
-      const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) throw new Error(`Failed to load catalog (${res.status})`);
-      return await res.json();
-    }
+  // ------- Modal helpers -------
+  function drivePreviewUrl(fileId) {
+    return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
+  }
+  function driveDownloadUrl(fileId) {
+    return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
+  }
+  function reportPageUrl(fileId) {
+    return `/report.html?id=${encodeURIComponent(fileId)}`;
+  }
 
-    function buildFacetFilters() {
-      const catCounts = new Map();
-      const yearCounts = new Map();
+  function openPdfModal(item) {
+    const modal = document.getElementById("pdfModal");
+    const frame = document.getElementById("pdfModalFrame");
+    const title = document.getElementById("pdfModalTitle");
+    const openPage = document.getElementById("pdfModalOpenPage");
+    const download = document.getElementById("pdfModalDownload");
 
-      state.allItems.forEach(item => {
-        (item.categories || []).forEach(cat => {
-          catCounts.set(cat, (catCounts.get(cat) || 0) + 1);
+    title.textContent = item.title || "Report";
+    frame.src = drivePreviewUrl(item.id);
+
+    openPage.href = reportPageUrl(item.id);
+    download.href = driveDownloadUrl(item.id);
+
+    modal.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closePdfModal() {
+    const modal = document.getElementById("pdfModal");
+    const frame = document.getElementById("pdfModalFrame");
+    frame.src = ""; // stop the PDF
+    modal.classList.add("hidden");
+    document.body.style.overflow = "";
+  }
+
+  // called by onclick in cards
+  function openPdfModalById(id) {
+    const item = state.allItems.find((x) => String(x.id) === String(id));
+    if (item) openPdfModal(item);
+  }
+  window.openPdfModalById = openPdfModalById; // ensure global for onclick
+
+  // ------- Facets / filtering -------
+  function buildFacetFilters() {
+    const catCounts = new Map();
+    const yearCounts = new Map();
+
+    state.allItems.forEach((item) => {
+      (item.categories || []).forEach((cat) => {
+        catCounts.set(cat, (catCounts.get(cat) || 0) + 1);
+      });
+      const y = item.year;
+      if (y) yearCounts.set(y, (yearCounts.get(y) || 0) + 1);
+    });
+
+    // Categories
+    const catContainer = document.getElementById("categoryFilters");
+    catContainer.innerHTML = "";
+    Array.from(catCounts.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .forEach(([cat, count]) => {
+        const id = "cat-" + cat.replace(/\W+/g, "-").toLowerCase();
+        const row = document.createElement("div");
+        row.className = "flex items-center gap-2";
+        row.innerHTML = `
+          <input type="checkbox" id="${id}" value="${escapeHtml(cat)}"
+                 class="h-3 w-3 text-amber-600 border-gray-300 rounded">
+          <label for="${id}" class="cursor-pointer text-gray-700">
+            ${escapeHtml(cat)} <span class="text-gray-400 text-xs">(${count})</span>
+          </label>
+        `;
+        const checkbox = row.querySelector("input");
+        checkbox.addEventListener("change", () => {
+          checkbox.checked ? state.selectedCategories.add(cat) : state.selectedCategories.delete(cat);
+          applyFilters();
         });
-        const y = item.year;
-        if (y) yearCounts.set(y, (yearCounts.get(y) || 0) + 1);
+        catContainer.appendChild(row);
       });
 
-      // Categories
-      const catContainer = document.getElementById('categoryFilters');
-      catContainer.innerHTML = '';
-      Array.from(catCounts.entries())
-        .sort((a, b) => a[0].localeCompare(b[0]))
-        .forEach(([cat, count]) => {
-          const id = 'cat-' + cat.replace(/\W+/g, '-').toLowerCase();
-          const row = document.createElement('div');
-          row.className = 'flex items-center gap-2';
-          row.innerHTML = `
-            <input type="checkbox" id="${id}" value="${escapeHtml(cat)}"
-                   class="h-3 w-3 text-amber-600 border-gray-300 rounded">
-            <label for="${id}" class="cursor-pointer text-gray-700">
-              ${escapeHtml(cat)} <span class="text-gray-400 text-xs">(${count})</span>
-            </label>
-          `;
-          const checkbox = row.querySelector('input');
-          checkbox.addEventListener('change', () => {
-            checkbox.checked ? state.selectedCategories.add(cat)
-                             : state.selectedCategories.delete(cat);
-            applyFilters();
-          });
-          catContainer.appendChild(row);
+    // Years
+    const yearContainer = document.getElementById("yearFilters");
+    yearContainer.innerHTML = "";
+    Array.from(yearCounts.entries())
+      .sort((a, b) => b[0] - a[0])
+      .forEach(([year, count]) => {
+        const id = "year-" + year;
+        const row = document.createElement("div");
+        row.className = "flex items-center gap-2";
+        row.innerHTML = `
+          <input type="checkbox" id="${id}" value="${year}"
+                 class="h-3 w-3 text-amber-600 border-gray-300 rounded">
+          <label for="${id}" class="cursor-pointer text-gray-700">
+            ${year} <span class="text-gray-400 text-xs">(${count})</span>
+          </label>
+        `;
+        const checkbox = row.querySelector("input");
+        checkbox.addEventListener("change", () => {
+          checkbox.checked ? state.selectedYears.add(String(year)) : state.selectedYears.delete(String(year));
+          applyFilters();
         });
-
-      // Years
-      const yearContainer = document.getElementById('yearFilters');
-      yearContainer.innerHTML = '';
-      Array.from(yearCounts.entries())
-        .sort((a, b) => b[0] - a[0])
-        .forEach(([year, count]) => {
-          const id = 'year-' + year;
-          const row = document.createElement('div');
-          row.className = 'flex items-center gap-2';
-          row.innerHTML = `
-            <input type="checkbox" id="${id}" value="${year}"
-                   class="h-3 w-3 text-amber-600 border-gray-300 rounded">
-            <label for="${id}" class="cursor-pointer text-gray-700">
-              ${year} <span class="text-gray-400 text-xs">(${count})</span>
-            </label>
-          `;
-          const checkbox = row.querySelector('input');
-          checkbox.addEventListener('change', () => {
-            checkbox.checked ? state.selectedYears.add(String(year))
-                             : state.selectedYears.delete(String(year));
-            applyFilters();
-          });
-          yearContainer.appendChild(row);
-        });
-    }
-
-    function applyFilters() {
-      const q = state.searchQuery.toLowerCase();
-
-      state.filteredItems = state.allItems.filter(item => {
-        const matchesText = !q ||
-          (item.title || '').toLowerCase().includes(q) ||
-          (item.summary || '').toLowerCase().includes(q);
-
-        const matchesCat = state.selectedCategories.size === 0 ||
-          (item.categories || []).some(c => state.selectedCategories.has(c));
-
-        const matchesYear = state.selectedYears.size === 0 ||
-          state.selectedYears.has(String(item.year));
-
-        return matchesText && matchesCat && matchesYear;
+        yearContainer.appendChild(row);
       });
+  }
 
-      state.page = 1;
-      render();
-    }
+  function applyFilters() {
+    const q = state.searchQuery.toLowerCase();
 
-    function renderCard(item) {
-      const thumb = item.thumbUrl || 'https://via.placeholder.com/260x360?text=PDF';
-      const title = escapeHtml(item.title);
-      const summary = escapeHtml(item.summary || "");
-      const year = item.year || "";
-      const reportUrl = `/report.html?id=${encodeURIComponent(item.id)}`;
-      const downloadUrl = `https://drive.google.com/uc?export=download&id=${encodeURIComponent(item.id)}`;
-      const cats = (item.categories || []).map(c =>
-        `<span class="px-2 py-0.5 border rounded-full bg-gray-50">${escapeHtml(c)}</span>`
-      ).join("");
+    state.filteredItems = state.allItems.filter((item) => {
+      const matchesText =
+        !q ||
+        (item.title || "").toLowerCase().includes(q) ||
+        (item.summary || "").toLowerCase().includes(q);
 
-      return `
-        <article class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow transition">
-          <div class="grid grid-cols-1 sm:grid-cols-[160px,1fr] gap-4">
-            <div class="w-full">
-              <div class="relative border border-gray-200 bg-white rounded group">
-                <button type="button" onclick="openPdfModalById('${item.id}')" class="block w-full text-left">
-  <img
-    src="${thumb}"
-    alt="${title}"
-    class="w-full h-auto object-cover cursor-pointer group-hover:opacity-80 transition"
-  >
-</button>
+      const matchesCat =
+        state.selectedCategories.size === 0 ||
+        (item.categories || []).some((c) => state.selectedCategories.has(c));
 
-                ${summary ? `
-                  <div class="tooltip-summary absolute left-0 top-0 z-20 w-80 md:w-96 bg-white/95
-                              text-xs text-gray-800 p-3 opacity-0 group-hover:opacity-100
-                              transition-opacity duration-200 shadow-lg ring-1 ring-black/10">
-                    <div class="font-semibold mb-1">Summary</div>
-                    <div class="leading-snug whitespace-normal">${summary}</div>
-                  </div>
-                ` : ""}
-              </div>
-            </div>
+      const matchesYear =
+        state.selectedYears.size === 0 || state.selectedYears.has(String(item.year));
 
-            <div class="flex flex-col">
-              <div class="text-xs text-gray-500 mb-1">${year}</div>
+      return matchesText && matchesCat && matchesYear;
+    });
 
-              <a href="${pdfUrl}" target="_blank"
-                class="text-base md:text-lg font-semibold text-amber-700 hover:underline">
-                ${title}
-              </a>
+    state.page = 1;
+    render();
+  }
 
-              <div class="mt-3 flex flex-wrap gap-2 text-xs text-gray-500">
-                ${cats}
-              </div>
+  function renderCard(item) {
+    const thumb = item.thumbUrl || "https://via.placeholder.com/260x360?text=PDF";
+    const title = escapeHtml(item.title);
+    const summary = escapeHtml(item.summary || "");
+    const year = item.year || "";
 
-              <div class="mt-3">
-                <a href="${downloadUrl}" target="_blank" rel="noopener"
-                  class="inline-flex items-center px-4 py-1.5 text-xs font-semibold uppercase tracking-wide bg-amber-600 text-white rounded hover:bg-amber-700">
-                  Download
-                </a>
-              </div>
+    const reportUrl = reportPageUrl(item.id);
+    const downloadUrl = driveDownloadUrl(item.id);
+
+    const cats = (item.categories || [])
+      .map((c) => `<span class="px-2 py-0.5 border rounded-full bg-gray-50">${escapeHtml(c)}</span>`)
+      .join("");
+
+    return `
+      <article class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow transition">
+        <div class="grid grid-cols-1 sm:grid-cols-[160px,1fr] gap-4">
+          <div class="w-full">
+            <div class="relative border border-gray-200 bg-white rounded group">
+              <button type="button" onclick="openPdfModalById('${item.id}')" class="block w-full text-left">
+                <img
+                  src="${thumb}"
+                  alt="${title}"
+                  class="w-full h-auto object-cover cursor-pointer group-hover:opacity-80 transition"
+                >
+              </button>
+
+              ${summary ? `
+                <div class="tooltip-summary absolute left-0 top-0 z-20 w-80 md:w-96 bg-white/95
+                            text-xs text-gray-800 p-3 opacity-0 group-hover:opacity-100
+                            transition-opacity duration-200 shadow-lg ring-1 ring-black/10">
+                  <div class="font-semibold mb-1">Summary</div>
+                  <div class="leading-snug whitespace-normal">${summary}</div>
+                </div>
+              ` : ""}
             </div>
           </div>
-        </article>
-      `;
+
+          <div class="flex flex-col">
+            <div class="text-xs text-gray-500 mb-1">${year}</div>
+
+            <a href="${reportUrl}"
+               class="text-base md:text-lg font-semibold text-amber-700 hover:underline">
+              ${title}
+            </a>
+
+            <div class="mt-3 flex flex-wrap gap-2 text-xs text-gray-500">
+              ${cats}
+            </div>
+
+            <div class="mt-3">
+              <a href="${downloadUrl}" target="_blank" rel="noopener"
+                 class="inline-flex items-center px-4 py-1.5 text-xs font-semibold uppercase tracking-wide bg-amber-600 text-white rounded hover:bg-amber-700">
+                Download
+              </a>
+            </div>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  function render() {
+    const container = document.getElementById("cardsContainer");
+    const info = document.getElementById("resultsInfo");
+    const loadMoreWrap = document.getElementById("loadMoreWrap");
+
+    const total = state.filteredItems.length;
+    const maxShown = state.page * state.pageSize;
+    const itemsToShow = state.filteredItems.slice(0, maxShown);
+
+    info.textContent = `${total} publication(s) found`;
+    container.innerHTML = itemsToShow.map(renderCard).join("");
+
+    loadMoreWrap.innerHTML = "";
+    if (maxShown < total) {
+      const btn = document.createElement("button");
+      btn.id = "loadMoreBtn";
+      btn.textContent = "Load more";
+      btn.className =
+        "mx-auto block px-4 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50";
+      btn.onclick = () => {
+        state.page += 1;
+        render();
+      };
+      loadMoreWrap.appendChild(btn);
     }
+  }
 
-    function render() {
-      const container = document.getElementById("cardsContainer");
-      const info = document.getElementById("resultsInfo");
-      const loadMoreWrap = document.getElementById("loadMoreWrap");
+  document.addEventListener("DOMContentLoaded", async () => {
+    const searchInput = document.getElementById("searchInput");
+    const searchBtn = document.getElementById("searchBtn");
+    const clearBtn = document.getElementById("clearFilters");
+    const refreshBtn = document.getElementById("userRefreshBtn");
+    const refreshStatus = document.getElementById("userRefreshStatus");
+    const backToTopBtn = document.getElementById("backToTop");
 
-      const total = state.filteredItems.length;
-      const maxShown = state.page * state.pageSize;
-      const itemsToShow = state.filteredItems.slice(0, maxShown);
+    // Modal close handlers
+    document.getElementById("pdfModalClose").addEventListener("click", closePdfModal);
+    document.getElementById("pdfModalBackdrop").addEventListener("click", closePdfModal);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closePdfModal();
+    });
 
-      info.textContent = `${total} publication(s) found`;
-      container.innerHTML = itemsToShow.map(renderCard).join("");
+    // Search (button)
+    searchBtn.addEventListener("click", () => {
+      state.searchQuery = searchInput.value.trim();
+      applyFilters();
+    });
 
-      loadMoreWrap.innerHTML = "";
-      if (maxShown < total) {
-        const btn = document.createElement("button");
-        btn.id = "loadMoreBtn";
-        btn.textContent = "Load more";
-        btn.className =
-          "mx-auto block px-4 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50";
-        btn.onclick = () => {
-          state.page += 1;
-          render();
-        };
-        loadMoreWrap.appendChild(btn);
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      const searchInput = document.getElementById('searchInput');
-      const searchBtn = document.getElementById('searchBtn');
-      const clearBtn = document.getElementById('clearFilters');
-      const refreshBtn = document.getElementById("userRefreshBtn");
-      const refreshStatus = document.getElementById("userRefreshStatus");
-      const backToTopBtn = document.getElementById('backToTop');
-// Modal close handlers
-document.getElementById("pdfModalClose").addEventListener("click", closePdfModal);
-document.getElementById("pdfModalBackdrop").addEventListener("click", closePdfModal);
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closePdfModal();
-});
-      // Search (button)
-      searchBtn.addEventListener('click', () => {
+    // Live search (debounced)
+    let searchTimeout = null;
+    searchInput.addEventListener("input", () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
         state.searchQuery = searchInput.value.trim();
         applyFilters();
-      });
+      }, 300);
+    });
 
-      // Live search (debounced)
-      let searchTimeout = null;
-      searchInput.addEventListener('input', () => {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-          state.searchQuery = searchInput.value.trim();
-          applyFilters();
-        }, 300);
-      });
+    // Clear filters
+    clearBtn.addEventListener("click", () => {
+      state.searchQuery = "";
+      searchInput.value = "";
+      state.selectedCategories.clear();
+      state.selectedYears.clear();
 
-      // Clear filters
-      clearBtn.addEventListener('click', () => {
-        state.searchQuery = '';
-        searchInput.value = '';
-        state.selectedCategories.clear();
-        state.selectedYears.clear();
+      document
+        .querySelectorAll("#categoryFilters input[type=checkbox], #yearFilters input[type=checkbox]")
+        .forEach((cb) => (cb.checked = false));
 
-        document
-          .querySelectorAll('#categoryFilters input[type=checkbox], #yearFilters input[type=checkbox]')
-          .forEach(cb => cb.checked = false);
+      applyFilters();
+    });
 
-        applyFilters();
-      });
-
-      // Refresh list (triggers rebuild + fetch, and updates cache)
-      refreshBtn.addEventListener("click", async () => {
-        refreshStatus.textContent = "Refreshing…";
-        try {
-          const data = await loadData(true, true); // force fresh + rebuild
-          state.allItems = data;
-          cacheSet(data);
-          buildFacetFilters();
-          applyFilters();
-          refreshStatus.textContent = "Last updated: " + formatTime(Date.now());
-        } catch (e) {
-          refreshStatus.textContent = e.message;
-        }
-      });
-
-      // Back-to-top behavior
-      window.addEventListener('scroll', () => {
-        if (window.scrollY > 300) backToTopBtn.classList.remove('hidden');
-        else backToTopBtn.classList.add('hidden');
-      });
-      backToTopBtn.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
-
-      // ✅ Instant-load: show cached results immediately (if available)
-      const cached = cacheGet();
-      if (cached) {
-        state.allItems = cached.data;
-        buildFacetFilters();
-        applyFilters();
-        document.getElementById("resultsInfo").textContent =
-          "Showing cached results… updating";
-      }
-
-      // Then fetch fresh in background
+    // Refresh list (triggers rebuild + fetch, and updates cache)
+    refreshBtn.addEventListener("click", async () => {
+      refreshStatus.textContent = "Refreshing…";
       try {
-        const data = await loadData(false, false);
+        const data = await loadData(true, true);
         state.allItems = data;
         cacheSet(data);
         buildFacetFilters();
         applyFilters();
+        refreshStatus.textContent = "Last updated: " + formatTime(Date.now());
       } catch (e) {
-        if (!cached) {
-          document.getElementById("resultsInfo").textContent =
-            "Error loading data: " + e.message;
-        }
+        refreshStatus.textContent = e.message;
       }
     });
- function drivePreviewUrl(fileId) {
-  return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
-}
-function driveDownloadUrl(fileId) {
-  return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
-}
-function reportPageUrl(fileId) {
-  return `/report.html?id=${encodeURIComponent(fileId)}`;
-}
 
-function openPdfModal(item) {
-  const modal = document.getElementById("pdfModal");
-  const frame = document.getElementById("pdfModalFrame");
-  const title = document.getElementById("pdfModalTitle");
-  const openPage = document.getElementById("pdfModalOpenPage");
-  const download = document.getElementById("pdfModalDownload");
+    // Back-to-top behavior
+    window.addEventListener("scroll", () => {
+      if (window.scrollY > 300) backToTopBtn.classList.remove("hidden");
+      else backToTopBtn.classList.add("hidden");
+    });
+    backToTopBtn.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
 
-  title.textContent = item.title || "Report";
-  frame.src = drivePreviewUrl(item.id);
+    // Instant-load cached results (if available)
+    const cached = cacheGet();
+    if (cached) {
+      state.allItems = cached.data;
+      buildFacetFilters();
+      applyFilters();
+      document.getElementById("resultsInfo").textContent = "Showing cached results… updating";
+    }
 
-  openPage.href = reportPageUrl(item.id);
-  download.href = driveDownloadUrl(item.id);
-
-  modal.classList.remove("hidden");
-  document.body.style.overflow = "hidden";
-}
-
-function closePdfModal() {
-  const modal = document.getElementById("pdfModal");
-  const frame = document.getElementById("pdfModalFrame");
-  frame.src = ""; // stop the PDF
-  modal.classList.add("hidden");
-  document.body.style.overflow = "";
-}
-    function openPdfModalById(id) {
-  const item = state.allItems.find(x => String(x.id) === String(id));
-  if (item) openPdfModal(item);
-}
-  </script>
+    // Then fetch fresh
+    try {
+      const data = await loadData(false, false);
+      state.allItems = data;
+      cacheSet(data);
+      buildFacetFilters();
+      applyFilters();
+    } catch (e) {
+      if (!cached) {
+        document.getElementById("resultsInfo").textContent = "Error loading data: " + e.message;
+      }
+    }
+  });
+</script>
   <!-- PDF Modal -->
 <div id="pdfModal" class="hidden fixed inset-0 z-50">
   <div class="absolute inset-0 bg-black/60" id="pdfModalBackdrop"></div>
@@ -526,6 +534,7 @@ function closePdfModal() {
 </div>
 </body>
 </html>
+
 
 
 
