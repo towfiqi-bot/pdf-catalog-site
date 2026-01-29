@@ -14,6 +14,8 @@
     body { font-family: 'Inter', system-ui, -apple-system, Segoe UI, sans-serif; }
     .brand-title { font-family: 'Playfair Display', serif; letter-spacing: 0.03em; }
     .brand-tagline { font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; }
+    .icon-btn { display:inline-flex; align-items:center; justify-content:center; gap:.5rem; }
+    .icon { width: 18px; height: 18px; }
   </style>
 </head>
 
@@ -28,7 +30,7 @@
         </a>
         <div>
           <h1 class="brand-title text-2xl md:text-3xl font-semibold text-gray-900">dotdock</h1>
-          <p class="brand-tagline text-amber-600 mt-1">Find your dots. Feed your curiosity</p>
+          <p class="brand-tagline text-amber-600 mt-1">Report</p>
         </div>
       </div>
     </div>
@@ -42,323 +44,17 @@
         <div id="rMetaLine" class="text-sm text-gray-600 mt-1"></div>
       </div>
 
-      
       <!-- Share -->
       <div id="shareWrap" class="flex flex-wrap gap-2">
-        <button id="copyLinkBtn"
-                class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50"
-                title="Copy link" aria-label="Copy link">
-          <svg viewBox="0 0 24 24" class="w-5 h-5" aria-hidden="true">
-            <path fill="currentColor" d="M16 1H8C6.9 1 6 1.9 6 3v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zm0 14H8V3h8v12zM4 5H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-1h-2v1H3V7h1V5z"/>
+        <button id="copyLinkBtn" class="icon-btn px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50" title="Copy link">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 9h10v10H9z"></path>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
           </svg>
+          <span class="hidden sm:inline">Copy</span>
         </button>
 
         <a id="shareX" target="_blank" rel="noopener"
-           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50"
-           title="Share on X" aria-label="Share on X">
-          <svg viewBox="0 0 24 24" class="w-5 h-5" aria-hidden="true">
-            <path fill="currentColor" d="M18.9 2H22l-6.8 7.8L23 22h-6.9l-5.4-6.9L4.6 22H2l7.3-8.4L1 2h7l4.9 6.3L18.9 2zm-1.2 18h1.9L7.2 4H5.1l12.6 16z"/>
-          </svg>
-        </a>
-
-        <a id="shareLI" target="_blank" rel="noopener"
-           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50"
-           title="Share on LinkedIn" aria-label="Share on LinkedIn">
-          <svg viewBox="0 0 24 24" class="w-5 h-5" aria-hidden="true">
-            <path fill="currentColor" d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1 4.98 2.12 4.98 3.5zM0.5 8.5H4.5V23H0.5V8.5zM8.5 8.5h3.8v2h.1c.5-1 1.9-2.1 3.9-2.1 4.1 0 4.9 2.7 4.9 6.2V23h-4V15.8c0-1.7 0-3.9-2.4-3.9s-2.7 1.9-2.7 3.8V23h-4V8.5z"/>
-          </svg>
-        </a>
-
-        <a id="shareFB" target="_blank" rel="noopener"
-           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50"
-           title="Share on Facebook" aria-label="Share on Facebook">
-          <svg viewBox="0 0 24 24" class="w-5 h-5" aria-hidden="true">
-            <path fill="currentColor" d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9v-3h2.5V9.7c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.4h-1.2c-1.2 0-1.6.8-1.6 1.5v1.9h2.8l-.4 3h-2.4v7A10 10 0 0 0 22 12z"/>
-          </svg>
-        </a>
-
-        <a id="shareWA" target="_blank" rel="noopener"
-           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50"
-           title="Share on WhatsApp" aria-label="Share on WhatsApp">
-          <svg viewBox="0 0 24 24" class="w-5 h-5" aria-hidden="true">
-            <path fill="currentColor" d="M20.5 3.5A11.6 11.6 0 0 0 12.1 0C5.5 0 .2 5.3.2 11.9c0 2.1.6 4.2 1.6 6L0 24l6.3-1.7a11.8 11.8 0 0 0 5.8 1.5h.1c6.6 0 11.9-5.3 11.9-11.9 0-3.2-1.2-6.2-3.6-8.4zM12.1 21.8h-.1c-1.9 0-3.8-.5-5.4-1.5l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 0 1 2.2 12C2.2 6.5 6.7 2 12.1 2a9.8 9.8 0 0 1 6.9 2.9 9.7 9.7 0 0 1 2.9 6.9c0 5.5-4.5 10-9.8 10z"/>
-            <path fill="currentColor" d="M17.1 14.1c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-1 .1-.2.1-.4.2-.7.1-1.2-.6-2-1.1-2.8-2.5-.2-.3 0-.5.1-.6.1-.1.3-.4.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.6 0-.1-.7-1.6-1-2.2-.3-.6-.6-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.1-1.2 2.7 0 1.6 1.2 3.2 1.4 3.4.2.2 2.3 3.5 5.7 4.9.8.3 1.4.5 1.9.7.8.2 1.6.2 2.2.1.7-.1 1.7-.7 1.9-1.4.2-.7.2-1.3.1-1.4-.1-.1-.3-.2-.6-.3z"/>
-          </svg>
-        </a>
-
-        <a id="shareEmail"
-           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50"
-           title="Share via Email" aria-label="Share via Email">
-          <svg viewBox="0 0 24 24" class="w-5 h-5" aria-hidden="true">
-            <path fill="currentColor" d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5L4 8V6l8 5 8-5v2z"/>
-          </svg>
-        </a>
-      </div>
-
-    </div>
-
-    <!-- Content grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <!-- Left: cover + details -->
-      <section id="detailsWrap" class="lg:col-span-5 space-y-4">
-        <div class="bg-white border border-gray-200 rounded-lg p-4">
-          <div class="flex gap-4">
-            <!-- Use a tiny placeholder to avoid the browser's broken-image icon before we set a real thumbnail -->
-            <img id="rThumb"
-                 src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
-                 alt="Cover" loading="lazy" decoding="async" referrerpolicy="no-referrer"
-                 class="w-28 h-40 object-cover rounded border border-gray-200 bg-gray-100"
-                 onerror="this.style.display='none'; document.getElementById('thumbFallback').classList.remove('hidden');">
-            <div id="thumbFallback" class="hidden w-28 h-40 rounded border border-gray-200 bg-gray-100 flex items-center justify-center text-xs text-gray-500">
-              No cover
-            </div>
-
-            <div class="flex-1">
-              <table class="w-full text-sm border border-gray-200">
-                <tbody id="metaTableBody"></tbody>
-              </table>
-              <div class="mt-3">
-                <!-- This is your “download” replacement: opens inside DocDock, not a PC download -->
-                <a id="viewBtn" target="_blank" rel="noopener"
-                   class="inline-flex items-center px-4 py-2 text-sm font-semibold bg-amber-600 text-white rounded hover:bg-amber-700">
-                  View PDF (new tab)
-                </a>
-              </div>
-              <div id="statusLine" class="text-xs text-gray-500 mt-2"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Right: embedded PDF -->
-      <section id="readerWrap" class="lg:col-span-7">
-        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-          <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-            <div class="text-sm font-semibold text-gray-800">Reader</div>
-            <a href="index.html" class="text-sm text-amber-700 hover:underline">Back to dotdock</a>
-          </div>
-
-          <iframe id="pdfFrame"
-                  class="w-full"
-                  style="height: 75vh;"
-                  title="PDF viewer"
-                  src=""
-                  loading="lazy"></iframe>
-        </div>
-      </section>
-    </div>
-
-    <div id="errorBox" class="hidden mt-6 bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
-      <div class="font-semibold">Error</div>
-      <div id="errorText" class="mt-1 text-sm"></div>
-    </div>
-  </main>
-
-  <footer class="max-w-6xl mx-auto px-4 pb-10 text-xs text-gray-500">
-    © Towfiq Islam
-  </footer>
-
-
-<script>
-  // ✅ MUST be the Apps Script URL (GitHub Pages has no Netlify functions)
-  const DATA_URL = "https://script.google.com/macros/s/AKfycbwF2IqDTG0F5acy4K1mtBRMZg1AOp3RMHzYwHEtZcZmRV8Jbpb2_ETe4Mpnkgp-lxmy/exec";
-
-  const CACHE_KEY = "pdf_catalog_cache_v2";
-  const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
-
-  function cacheGet() {
-    try {
-      const raw = localStorage.getItem(CACHE_KEY);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      if (!parsed?.time || !parsed?.data) return null;
-      if (Date.now() - parsed.time > CACHE_TTL_MS) return null;
-      return parsed.data;
-    } catch {
-      return null;
-    }
-  }
-
-  function drivePreviewUrl(fileId) {
-    return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
-  }
-
-  // ✅ “Download” behavior requested: open in new tab INSIDE DocDock
-  function viewInDocDockUrl(fileId) {
-    return `view.html?id=${encodeURIComponent(fileId)}`;
-  }
-
-  function esc(s) {
-    return String(s ?? "")
-      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
-  }
-
-  function setError(msg) {
-    document.getElementById("errorBox").classList.remove("hidden");
-    document.getElementById("errorText").textContent = msg;
-  }
-
-  function setShareLinks(pageUrl, title) {
-    const text = `${title} — via dotdock`;
-    document.getElementById("shareX").href =
-      `https://twitter.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(text)}`;
-    document.getElementById("shareLI").href =
-      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`;
-    document.getElementById("shareFB").href =
-      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
-    document.getElementById("shareWA").href =
-      `https://wa.me/?text=${encodeURIComponent(text + " " + pageUrl)}`;
-    document.getElementById("shareEmail").href =
-      `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(pageUrl)}`;
-  }
-
-  function setMetaTable(item) {
-    const rows = [];
-
-    const year = item.year ? esc(item.year) : "—";
-    const cats = (item.categories || []).length ? esc(item.categories.join(", ")) : "—";
-    const updated = item.modified ? new Date(item.modified).toLocaleString() : "—";
-    const summary = item.summary ? esc(item.summary) : "—";
-
-    rows.push(`<tr><td class="border border-gray-200 px-3 py-2 font-semibold w-32">Year</td><td class="border border-gray-200 px-3 py-2">${year}</td></tr>`);
-    rows.push(`<tr><td class="border border-gray-200 px-3 py-2 font-semibold">Category</td><td class="border border-gray-200 px-3 py-2">${cats}</td></tr>`);
-    rows.push(`<tr><td class="border border-gray-200 px-3 py-2 font-semibold">Updated</td><td class="border border-gray-200 px-3 py-2">${esc(updated)}</td></tr>`);
-    rows.push(`<tr><td class="border border-gray-200 px-3 py-2 font-semibold">Summary</td><td class="border border-gray-200 px-3 py-2">${summary}</td></tr>`);
-
-    document.getElementById("metaTableBody").innerHTML = rows.join("");
-  }
-
-  function renderItem(item) {
-    const title = item.title || "Untitled report";
-    document.getElementById("rTitle").textContent = title;
-    document.title = `dotdock — ${title}`;
-
-    const metaLine = [
-      item.year ? String(item.year) : null,
-      (item.categories || [])[0] || null
-    ].filter(Boolean).join(" • ");
-    document.getElementById("rMetaLine").textContent = metaLine;
-
-    if (item.thumbUrl) {
-      document.getElementById("rThumb").src = item.thumbUrl;
-    }
-
-    // Embed PDF
-    document.getElementById("pdfFrame").src = drivePreviewUrl(item.id);
-
-    // “View PDF” (new tab) opens DocDock URL, not Drive URL
-    document.getElementById("viewBtn").href = viewInDocDockUrl(item.id);
-
-    setMetaTable(item);
-
-    const pageUrl = window.location.href.split("#")[0];
-    setShareLinks(pageUrl, title);
-  }
-
-  async function fetchCatalogFresh() {
-    const url = DATA_URL + (DATA_URL.includes("?") ? "&" : "?") + "cb=" + Date.now();
-    const res = await fetch(url, {
-      cache: "no-store",
-      mode: "cors",
-      credentials: "omit",
-      redirect: "follow",
-    });
-    if (!res.ok) throw new Error("Failed to load catalog (" + res.status + ")");
-
-    // Be defensive: if Apps Script ever returns HTML (login page/error), res.json() will throw.
-    const text = await res.text();
-    let json;
-    try {
-      json = JSON.parse(text);
-    } catch {
-      throw new Error("Catalog returned non-JSON content.");
-    }
-
-    if (Array.isArray(json)) return json;
-    if (json && Array.isArray(json.items)) return json.items;
-    throw new Error("Catalog JSON format unexpected.");
-  }
-
-  (async function init() {
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get("id");
-    const viewOnly = params.get("view") === "1";
-
-    const titleHint = params.get("t");
-
-    // Fast title for sharing UI (social sites won't execute JS for previews, but buttons/text will use this)
-    if (titleHint) {
-      const hinted = titleHint;
-      document.getElementById("rTitle").textContent = hinted;
-      document.title = `dotdock — ${hinted}`;
-      const pageUrl = window.location.href.split("#")[0];
-      setShareLinks(pageUrl, hinted);
-    }
-
-    if (!id) {
-      setError("Missing report id in URL.");
-      return;
-    }
-
-	    // Always show the PDF reader immediately (works even if the catalog fetch fails).
-	    document.getElementById("pdfFrame").src = drivePreviewUrl(id);
-	    document.getElementById("viewBtn").href = viewInDocDockUrl(id);
-
-	    // View-only mode: hide share + details (fast “reader” mode)
-    if (viewOnly) {
-      document.getElementById("shareWrap").classList.add("hidden");
-      document.getElementById("detailsWrap").classList.add("hidden");
-      document.getElementById("readerWrap").classList.remove("lg:col-span-7");
-      document.getElementById("readerWrap").classList.add("lg:col-span-12");
-      document.getElementById("statusLine").textContent = "";
-	      document.title = "dotdock — Viewer";
-	      // No need to fetch the full catalog in reader-only mode.
-	      return;
-    }
-
-    // Fast render from cache first
-	    const cached = cacheGet();
-	    let renderedFromCache = false;
-    if (cached) {
-      const cachedItem = cached.find(x => String(x.id) === String(id));
-      if (cachedItem) {
-        renderItem(cachedItem);
-	        renderedFromCache = true;
-        document.getElementById("statusLine").textContent = "Loaded from cache… updating";
-      }
-    }
-
-    // Copy link
-    document.getElementById("copyLinkBtn").addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(window.location.href.split("#")[0]);
-        document.getElementById("copyLinkBtn").textContent = "Copied!";
-        setTimeout(() => (document.getElementById("copyLinkBtn").textContent = "Copy link"), 1200);
-      } catch {
-        // ignore
-      }
-    });
-
-    // Then load fresh
-	    try {
-	      const data = await fetchCatalogFresh();
-	      const item = data.find(x => String(x.id) === String(id));
-	      if (!item) {
-	        // Keep the reader working even if the catalog index is temporarily stale.
-	        document.getElementById("statusLine").textContent = "Not in catalog yet — showing reader only.";
-	        return;
-	      }
-	      renderItem(item);
-	      document.getElementById("statusLine").textContent = "Updated";
-	    } catch (e) {
-	      console.warn("Catalog fetch failed:", e);
-	      document.getElementById("statusLine").textContent = renderedFromCache
-	        ? "Loaded from cache (update unavailable)."
-	        : "Catalog unavailable — showing reader only.";
-	    }
-  })();
-</script>
-
-</body>
-</html>
+           class="icon-btn px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50" title="Share on X">
+          <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18.9 2H22l-6.8 7.8L23 22h-6.6l-5.2-
