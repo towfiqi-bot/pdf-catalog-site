@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DocDock — Viewer</title>
+  <title>dotdock — Viewer</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50">
   <header class="bg-white border-b border-gray-200">
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
-      <a href="index.html" class="text-sm font-semibold text-amber-700 hover:underline">← Back to library</a>
+      <a href="index.html" class="text-sm font-semibold text-amber-700 hover:underline">← Back to dotdock</a>
       <div class="ml-auto flex gap-2">
         <a id="openReport" class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50" href="#">Report page</a>
         <button id="copyLink" class="px-3 py-1.5 text-sm bg-amber-600 text-white rounded hover:bg-amber-700">Copy link</button>
@@ -26,9 +26,14 @@
 <script>
   function qs(name){ return new URLSearchParams(location.search).get(name) || ""; }
   function drivePreviewUrl(fileId){ return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`; }
-  function reportUrl(fileId){ return `report.html?id=${encodeURIComponent(fileId)}`; }
+  function reportUrl(fileId){
+    const base = `report.html?id=${encodeURIComponent(fileId)}`;
+    return t ? `${base}&t=${encodeURIComponent(t)}` : base;
+  }
 
   const id = qs("id");
+  const t = qs("t");
+  if (t) document.title = `dotdock — ${t}`;
   const frame = document.getElementById("frame");
   const openReport = document.getElementById("openReport");
   const copyBtn = document.getElementById("copyLink");

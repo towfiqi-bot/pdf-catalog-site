@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DocDock — Report</title>
+  <title>dotdock — Report</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,12 +23,12 @@
     <div class="max-w-6xl mx-auto px-4 py-4">
       <div class="flex items-center gap-4">
         <a href="index.html" class="block">
-          <img src="logo.png" alt="DocDock logo"
+          <img src="logo.png" alt="dotdock logo"
                class="h-12 w-12 md:h-16 md:w-16 rounded-full object-cover shadow-md border border-gray-200 bg-white">
         </a>
         <div>
-          <h1 class="brand-title text-2xl md:text-3xl font-semibold text-gray-900">DocDock</h1>
-          <p class="brand-tagline text-amber-600 mt-1">Report</p>
+          <h1 class="brand-title text-2xl md:text-3xl font-semibold text-gray-900">dotdock</h1>
+          <p class="brand-tagline text-amber-600 mt-1">Find your dots. Feed your curiosity</p>
         </div>
       </div>
     </div>
@@ -42,21 +42,59 @@
         <div id="rMetaLine" class="text-sm text-gray-600 mt-1"></div>
       </div>
 
-      <!-- Share (kept, since report page is for sharing) -->
+      
+      <!-- Share -->
       <div id="shareWrap" class="flex flex-wrap gap-2">
-        <button id="copyLinkBtn" class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">
-          Copy link
+        <button id="copyLinkBtn"
+                class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50"
+                title="Copy link" aria-label="Copy link">
+          <svg viewBox="0 0 24 24" class="w-5 h-5" aria-hidden="true">
+            <path fill="currentColor" d="M16 1H8C6.9 1 6 1.9 6 3v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zm0 14H8V3h8v12zM4 5H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-1h-2v1H3V7h1V5z"/>
+          </svg>
         </button>
+
         <a id="shareX" target="_blank" rel="noopener"
-           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">X</a>
+           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50"
+           title="Share on X" aria-label="Share on X">
+          <svg viewBox="0 0 24 24" class="w-5 h-5" aria-hidden="true">
+            <path fill="currentColor" d="M18.9 2H22l-6.8 7.8L23 22h-6.9l-5.4-6.9L4.6 22H2l7.3-8.4L1 2h7l4.9 6.3L18.9 2zm-1.2 18h1.9L7.2 4H5.1l12.6 16z"/>
+          </svg>
+        </a>
+
         <a id="shareLI" target="_blank" rel="noopener"
-           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">LinkedIn</a>
+           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50"
+           title="Share on LinkedIn" aria-label="Share on LinkedIn">
+          <svg viewBox="0 0 24 24" class="w-5 h-5" aria-hidden="true">
+            <path fill="currentColor" d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1 4.98 2.12 4.98 3.5zM0.5 8.5H4.5V23H0.5V8.5zM8.5 8.5h3.8v2h.1c.5-1 1.9-2.1 3.9-2.1 4.1 0 4.9 2.7 4.9 6.2V23h-4V15.8c0-1.7 0-3.9-2.4-3.9s-2.7 1.9-2.7 3.8V23h-4V8.5z"/>
+          </svg>
+        </a>
+
         <a id="shareFB" target="_blank" rel="noopener"
-           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">Facebook</a>
+           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50"
+           title="Share on Facebook" aria-label="Share on Facebook">
+          <svg viewBox="0 0 24 24" class="w-5 h-5" aria-hidden="true">
+            <path fill="currentColor" d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9v-3h2.5V9.7c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.4h-1.2c-1.2 0-1.6.8-1.6 1.5v1.9h2.8l-.4 3h-2.4v7A10 10 0 0 0 22 12z"/>
+          </svg>
+        </a>
+
         <a id="shareWA" target="_blank" rel="noopener"
-           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">WhatsApp</a>
-        <a id="shareEmail" class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">Email</a>
+           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50"
+           title="Share on WhatsApp" aria-label="Share on WhatsApp">
+          <svg viewBox="0 0 24 24" class="w-5 h-5" aria-hidden="true">
+            <path fill="currentColor" d="M20.5 3.5A11.6 11.6 0 0 0 12.1 0C5.5 0 .2 5.3.2 11.9c0 2.1.6 4.2 1.6 6L0 24l6.3-1.7a11.8 11.8 0 0 0 5.8 1.5h.1c6.6 0 11.9-5.3 11.9-11.9 0-3.2-1.2-6.2-3.6-8.4zM12.1 21.8h-.1c-1.9 0-3.8-.5-5.4-1.5l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 0 1 2.2 12C2.2 6.5 6.7 2 12.1 2a9.8 9.8 0 0 1 6.9 2.9 9.7 9.7 0 0 1 2.9 6.9c0 5.5-4.5 10-9.8 10z"/>
+            <path fill="currentColor" d="M17.1 14.1c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-1 .1-.2.1-.4.2-.7.1-1.2-.6-2-1.1-2.8-2.5-.2-.3 0-.5.1-.6.1-.1.3-.4.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.6 0-.1-.7-1.6-1-2.2-.3-.6-.6-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.1-1.2 2.7 0 1.6 1.2 3.2 1.4 3.4.2.2 2.3 3.5 5.7 4.9.8.3 1.4.5 1.9.7.8.2 1.6.2 2.2.1.7-.1 1.7-.7 1.9-1.4.2-.7.2-1.3.1-1.4-.1-.1-.3-.2-.6-.3z"/>
+          </svg>
+        </a>
+
+        <a id="shareEmail"
+           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50"
+           title="Share via Email" aria-label="Share via Email">
+          <svg viewBox="0 0 24 24" class="w-5 h-5" aria-hidden="true">
+            <path fill="currentColor" d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5L4 8V6l8 5 8-5v2z"/>
+          </svg>
+        </a>
       </div>
+
     </div>
 
     <!-- Content grid -->
@@ -93,11 +131,11 @@
       </section>
 
       <!-- Right: embedded PDF -->
-      <section class="lg:col-span-7">
+      <section id="readerWrap" class="lg:col-span-7">
         <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
           <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
             <div class="text-sm font-semibold text-gray-800">Reader</div>
-            <a href="index.html" class="text-sm text-amber-700 hover:underline">Back to catalog</a>
+            <a href="index.html" class="text-sm text-amber-700 hover:underline">Back to dotdock</a>
           </div>
 
           <iframe id="pdfFrame"
@@ -115,6 +153,11 @@
       <div id="errorText" class="mt-1 text-sm"></div>
     </div>
   </main>
+
+  <footer class="max-w-6xl mx-auto px-4 pb-10 text-xs text-gray-500">
+    © Towfiq Islam
+  </footer>
+
 
 <script>
   // ✅ MUST be the Apps Script URL (GitHub Pages has no Netlify functions)
@@ -142,7 +185,7 @@
 
   // ✅ “Download” behavior requested: open in new tab INSIDE DocDock
   function viewInDocDockUrl(fileId) {
-    return `report.html?id=${encodeURIComponent(fileId)}&view=1`;
+    return `view.html?id=${encodeURIComponent(fileId)}`;
   }
 
   function esc(s) {
@@ -157,7 +200,7 @@
   }
 
   function setShareLinks(pageUrl, title) {
-    const text = `${title} — via DocDock`;
+    const text = `${title} — via dotdock`;
     document.getElementById("shareX").href =
       `https://twitter.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(text)}`;
     document.getElementById("shareLI").href =
@@ -189,7 +232,7 @@
   function renderItem(item) {
     const title = item.title || "Untitled report";
     document.getElementById("rTitle").textContent = title;
-    document.title = `DocDock — ${title}`;
+    document.title = `dotdock — ${title}`;
 
     const metaLine = [
       item.year ? String(item.year) : null,
@@ -242,6 +285,17 @@
     const id = params.get("id");
     const viewOnly = params.get("view") === "1";
 
+    const titleHint = params.get("t");
+
+    // Fast title for sharing UI (social sites won't execute JS for previews, but buttons/text will use this)
+    if (titleHint) {
+      const hinted = titleHint;
+      document.getElementById("rTitle").textContent = hinted;
+      document.title = `dotdock — ${hinted}`;
+      const pageUrl = window.location.href.split("#")[0];
+      setShareLinks(pageUrl, hinted);
+    }
+
     if (!id) {
       setError("Missing report id in URL.");
       return;
@@ -255,8 +309,10 @@
     if (viewOnly) {
       document.getElementById("shareWrap").classList.add("hidden");
       document.getElementById("detailsWrap").classList.add("hidden");
+      document.getElementById("readerWrap").classList.remove("lg:col-span-7");
+      document.getElementById("readerWrap").classList.add("lg:col-span-12");
       document.getElementById("statusLine").textContent = "";
-	      document.title = "DocDock — Viewer";
+	      document.title = "dotdock — Viewer";
 	      // No need to fetch the full catalog in reader-only mode.
 	      return;
     }
