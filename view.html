@@ -9,9 +9,10 @@
 <body class="bg-gray-50">
   <header class="bg-white border-b border-gray-200">
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
-      <a href="index.html" class="text-sm font-semibold text-amber-700 hover:underline">← Back to dotdock</a>
+      <a href="index.html" class="text-sm font-semibold text-amber-700 hover:underline">← Back to library</a>
       <div class="ml-auto flex gap-2">
         <a id="openReport" class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50" href="#">Report page</a>
+        <button id="openNb" class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">NotebookLM</button>
         <button id="copyLink" class="px-3 py-1.5 text-sm bg-amber-600 text-white rounded hover:bg-amber-700">Copy link</button>
       </div>
     </div>
@@ -26,23 +27,30 @@
 <script>
   function qs(name){ return new URLSearchParams(location.search).get(name) || ""; }
   function drivePreviewUrl(fileId){ return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`; }
-  function reportUrl(fileId){
-    const base = `report.html?id=${encodeURIComponent(fileId)}`;
-    return t ? `${base}&t=${encodeURIComponent(t)}` : base;
-  }
+  function reportUrl(fileId){ return `report.html?id=${encodeURIComponent(fileId)}`; }
 
   const id = qs("id");
-  const t = qs("t");
-  if (t) document.title = `dotdock — ${t}`;
   const frame = document.getElementById("frame");
   const openReport = document.getElementById("openReport");
   const copyBtn = document.getElementById("copyLink");
+  const openNb = document.getElementById("openNb");
+
 
   if (!id) {
     document.body.innerHTML = "<div class='p-6 text-red-700'>Missing id</div>";
   } else {
     frame.src = drivePreviewUrl(id);
     openReport.href = reportUrl(id);
+    if (openNb) {
+      openNb.addEventListener("click", async () => {
+        const url = `https://drive.google.com/file/d/${encodeURIComponent(id)}/view?usp=sharing`;
+        try {
+          await navigator.clipboard.writeText(url);
+        } catch (e) {}
+        window.open("https://notebooklm.google.com/", "_blank", "noopener");
+      });
+    }
+
   }
 
   copyBtn.addEventListener("click", async () => {

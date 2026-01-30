@@ -14,8 +14,6 @@
     body { font-family: 'Inter', system-ui, -apple-system, Segoe UI, sans-serif; }
     .brand-title { font-family: 'Playfair Display', serif; letter-spacing: 0.03em; }
     .brand-tagline { font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; }
-    .icon-btn { display:inline-flex; align-items:center; justify-content:center; gap:.5rem; }
-    .icon { width: 18px; height: 18px; }
   </style>
 </head>
 
@@ -44,65 +42,30 @@
         <div id="rMetaLine" class="text-sm text-gray-600 mt-1"></div>
       </div>
 
-      <!-- Share -->
+      <!-- Share (kept, since report page is for sharing) -->
       <div id="shareWrap" class="flex flex-wrap gap-2">
-        <button id="copyLinkBtn" class="icon-btn px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50" title="Copy link">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 9h10v10H9z"></path>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-          </svg>
-          <span class="hidden sm:inline">Copy</span>
+        <button id="copyLinkBtn" class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">
+          Copy link
         </button>
-
         <a id="shareX" target="_blank" rel="noopener"
-           class="icon-btn px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50" title="Share on X">
-          <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M18.9 2H22l-6.8 7.8L23 22h-6.6l-5.2-6.7L5.4 22H2l7.4-8.6L1 2h6.7l4.7 6.1L18.9 2zm-1.2 18h1.7L6.8 3.9H5L17.7 20z"/>
-          </svg>
-          <span class="hidden sm:inline">X</span>
-        </a>
-
+           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">X</a>
         <a id="shareLI" target="_blank" rel="noopener"
-           class="icon-btn px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50" title="Share on LinkedIn">
-          <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM0.5 8.5H4.5V23H0.5V8.5zM8 8.5h3.8v2h.1c.5-1 1.9-2.1 4-2.1 4.3 0 5.1 2.8 5.1 6.5V23h-4V15.6c0-1.8 0-4.1-2.5-4.1s-2.9 2-2.9 4V23H8V8.5z"/>
-          </svg>
-          <span class="hidden sm:inline">LinkedIn</span>
-        </a>
-
+           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">LinkedIn</a>
         <a id="shareFB" target="_blank" rel="noopener"
-           class="icon-btn px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50" title="Share on Facebook">
-          <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M22 12a10 10 0 1 0-11.5 9.9v-7H8v-3h2.5V9.5c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.4h-1.2c-1.2 0-1.6.8-1.6 1.5V12H16l-.5 3h-2.1v7A10 10 0 0 0 22 12z"/>
-          </svg>
-          <span class="hidden sm:inline">Facebook</span>
-        </a>
-
+           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">Facebook</a>
         <a id="shareWA" target="_blank" rel="noopener"
-           class="icon-btn px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50" title="Share on WhatsApp">
-          <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M20.5 3.5A11 11 0 0 0 3.4 18.7L2 22l3.4-1.3A11 11 0 1 0 20.5 3.5zm-8.5 18a9 9 0 0 1-4.6-1.3l-.3-.2-2 .8.8-1.9-.2-.3A9 9 0 1 1 12 21.5zm5.2-6.4c-.3-.1-1.8-.9-2.1-1s-.5-.1-.7.1-.8 1-.9 1.1-.3.2-.6.1a7.4 7.4 0 0 1-2.2-1.4 8.3 8.3 0 0 1-1.5-1.9c-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.1.1-.3 0-.5s-.7-1.7-1-2.3c-.3-.6-.6-.5-.7-.5h-.6c-.2 0-.5.1-.7.3s-1 1-1 2.4 1 2.8 1.1 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.2.1-1.4-.1-.1-.3-.2-.6-.3z"/>
-          </svg>
-          <span class="hidden sm:inline">WhatsApp</span>
-        </a>
-
-        <a id="shareEmail" class="icon-btn px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50" title="Share by email">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M4 4h16v16H4z"></path>
-            <path d="M22 6l-10 7L2 6"></path>
-          </svg>
-          <span class="hidden sm:inline">Email</span>
-        </a>
+           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">WhatsApp</a>
+        <a id="shareEmail" class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">Email</a>
       </div>
     </div>
 
     <!-- Content grid -->
-    <div id="contentGrid" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <!-- Left: cover + details -->
       <section id="detailsWrap" class="lg:col-span-5 space-y-4">
         <div class="bg-white border border-gray-200 rounded-lg p-4">
           <div class="flex gap-4">
-            <!-- Tiny placeholder to avoid broken-image icon -->
+            <!-- Use a tiny placeholder to avoid the browser's broken-image icon before we set a real thumbnail -->
             <img id="rThumb"
                  src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
                  alt="Cover" loading="lazy" decoding="async" referrerpolicy="no-referrer"
@@ -116,21 +79,82 @@
               <table class="w-full text-sm border border-gray-200">
                 <tbody id="metaTableBody"></tbody>
               </table>
-              <div class="mt-3">
+              <div class="mt-3 flex flex-wrap gap-2">
                 <!-- Opens inside dotdock (new tab), not a PC download -->
                 <a id="viewBtn" target="_blank" rel="noopener"
                    class="inline-flex items-center px-4 py-2 text-sm font-semibold bg-amber-600 text-white rounded hover:bg-amber-700">
                   View PDF (new tab)
                 </a>
+
+                <button id="readBtn"
+                        class="inline-flex items-center px-4 py-2 text-sm font-semibold border border-gray-300 rounded bg-white hover:bg-gray-50">
+                  Add to reading list
+                </button>
+
+                <button id="nbBtn"
+                        class="inline-flex items-center px-4 py-2 text-sm font-semibold border border-gray-300 rounded bg-white hover:bg-gray-50">
+                  NotebookLM
+                </button>
+
+                <button id="cmpBtn"
+                        class="inline-flex items-center px-4 py-2 text-sm font-semibold border border-gray-300 rounded bg-white hover:bg-gray-50">
+                  Compare
+                </button>
               </div>
               <div id="statusLine" class="text-xs text-gray-500 mt-2"></div>
             </div>
           </div>
         </div>
+      
+        <!-- You may also like -->
+        <div id="recosCard" class="bg-white border border-gray-200 rounded-lg p-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-sm font-semibold text-gray-800">You may also like</div>
+            <a href="index.html" class="text-xs text-amber-700 hover:underline">Browse</a>
+          </div>
+          <div id="recoList" class="space-y-2 text-sm text-gray-700">
+            <div class="text-xs text-gray-500">Loading…</div>
+          </div>
+        </div>
+
+        <!-- My workspace -->
+        <div id="workspaceCard" class="bg-white border border-gray-200 rounded-lg p-4">
+          <div class="flex items-center justify-between">
+            <div class="text-sm font-semibold text-gray-800">My workspace</div>
+            <button id="wsExportBtn" class="text-xs font-semibold text-amber-700 hover:underline">Export</button>
+          </div>
+
+          <div class="mt-3 grid grid-cols-1 gap-3">
+            <div>
+              <label class="block text-xs text-gray-600 mb-1">Status</label>
+              <select id="wsStatus" class="w-full border rounded px-2 py-1 text-sm">
+                <option value="unread">Unread</option>
+                <option value="reading">Reading</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs text-gray-600 mb-1">Tags (comma-separated)</label>
+              <input id="wsTags" type="text" class="w-full border rounded px-2 py-1 text-sm" placeholder="e.g., energy, productivity" />
+            </div>
+
+            <div>
+              <label class="block text-xs text-gray-600 mb-1">Notes</label>
+              <textarea id="wsNotes" class="w-full border rounded px-2 py-1 text-sm" rows="5" placeholder="Your notes for this report…"></textarea>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+              <button id="wsPinBtn" class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">Pin</button>
+              <div class="text-[11px] text-gray-500 self-center">Saved locally in your browser (no login).</div>
+            </div>
+          </div>
+        </div>
+
       </section>
 
       <!-- Right: embedded PDF -->
-      <section id="readerSection" class="lg:col-span-7">
+      <section class="lg:col-span-7">
         <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
           <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
             <div class="text-sm font-semibold text-gray-800">Reader</div>
@@ -151,14 +175,10 @@
       <div class="font-semibold">Error</div>
       <div id="errorText" class="mt-1 text-sm"></div>
     </div>
-
-    <footer class="mt-10 text-center text-xs text-gray-500">
-      © Towfiq
-    </footer>
   </main>
 
 <script>
-  // Apps Script URL (serves JSON + share OG HTML mode)
+  // ✅ MUST be the Apps Script URL (GitHub Pages has no Netlify functions)
   const DATA_URL = "https://script.google.com/macros/s/AKfycbwF2IqDTG0F5acy4K1mtBRMZg1AOp3RMHzYwHEtZcZmRV8Jbpb2_ETe4Mpnkgp-lxmy/exec";
 
   const CACHE_KEY = "pdf_catalog_cache_v2";
@@ -177,32 +197,132 @@
     }
   }
 
+
+  // --- Shared local features (reading list / compare / workspace) ---
+  const READING_KEY = "dotdock_reading_list_v1";
+  const COMPARE_KEY = "dotdock_compare_v1";
+  const WORKSPACE_KEY = "dotdock_workspace_v1";
+
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.remove("hidden");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => t.classList.add("hidden"), 1400);
+  }
+
+  // Reading list
+  function readingGet() {
+    try {
+      const raw = localStorage.getItem(READING_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr.map(String) : [];
+    } catch { return []; }
+  }
+  function readingSet(arr) {
+    try { localStorage.setItem(READING_KEY, JSON.stringify(Array.from(new Set(arr.map(String))))); } catch {}
+  }
+  function isInReadingList(id) { return readingGet().includes(String(id)); }
+  function toggleReadingList(id) {
+    const list = readingGet();
+    const sid = String(id);
+    const idx = list.indexOf(sid);
+    if (idx >= 0) list.splice(idx, 1);
+    else list.unshift(sid);
+    readingSet(list);
+    return list;
+  }
+
+  // Compare
+  function compareGet() {
+    try {
+      const raw = localStorage.getItem(COMPARE_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr.map(String) : [];
+    } catch { return []; }
+  }
+  function compareSet(arr) {
+    try { localStorage.setItem(COMPARE_KEY, JSON.stringify(arr.map(String).slice(0,2))); } catch {}
+  }
+  function isInCompare(id) { return compareGet().includes(String(id)); }
+  function compareToggle(id) {
+    const sid = String(id);
+    const list = compareGet();
+    const idx = list.indexOf(sid);
+    if (idx >= 0) list.splice(idx, 1);
+    else {
+      if (list.length >= 2) list.pop();
+      list.unshift(sid);
+    }
+    compareSet(list);
+    return list;
+  }
+  function comparePageUrl(id1, id2, t1 = "", t2 = "") {
+    const base = `compare.html?left=${encodeURIComponent(id1)}&right=${encodeURIComponent(id2)}`;
+    const q1 = t1 ? `&t1=${encodeURIComponent(t1)}` : "";
+    const q2 = t2 ? `&t2=${encodeURIComponent(t2)}` : "";
+    return base + q1 + q2;
+  }
+
+  // Workspace
+  function wsAll() {
+    try {
+      const raw = localStorage.getItem(WORKSPACE_KEY);
+      const obj = raw ? JSON.parse(raw) : {};
+      return (obj && typeof obj === "object") ? obj : {};
+    } catch { return {}; }
+  }
+  function wsSaveAll(obj) {
+    try { localStorage.setItem(WORKSPACE_KEY, JSON.stringify(obj)); } catch {}
+  }
+  function wsGet(id) {
+    const all = wsAll();
+    return all[String(id)] || null;
+  }
+  function wsSet(id, patch) {
+    const sid = String(id);
+    const all = wsAll();
+    const cur = all[sid] || { status: "unread", tags: [], notes: "", pinned: false, updated: 0 };
+    const next = { ...cur, ...patch, updated: Date.now() };
+    all[sid] = next;
+    wsSaveAll(all);
+    return next;
+  }
+
+  function exportWorkspace() {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      readingList: readingGet(),
+      compare: compareGet(),
+      workspace: wsAll()
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `dotdock_workspace_${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 250);
+  }
+
+  // NotebookLM
+  function driveShareUrl(fileId) {
+    return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view?usp=sharing`;
+  }
+  async function openNotebookLM(fileId) {
+    const url = driveShareUrl(fileId);
+    try { await navigator.clipboard.writeText(url); showToast("Link copied for NotebookLM"); } catch { showToast("Copy failed"); }
+    window.open("https://notebooklm.google.com/", "_blank", "noopener");
+  }
+
   function drivePreviewUrl(fileId) {
     return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
   }
 
-  // “Download” behavior: open viewer in new tab inside dotdock
-  // Keeping your original spec: report.html?id=...&view=1
-  function viewInDocDockUrl(fileId) {
+  // ✅ “Download” behavior requested: open in new tab inside dotdock
+  function viewInDotdockUrl(fileId) {
     return `report.html?id=${encodeURIComponent(fileId)}&view=1`;
-  }
-
-  function canonicalReportUrl(fileId) {
-    const u = new URL(window.location.href);
-    u.hash = "";
-    u.search = "";
-    u.searchParams.set("id", fileId);
-    return u.toString();
-  }
-
-  function shareCardUrl(fileId, title, desc) {
-    // Apps Script returns HTML with og:image + redirect
-    const u = new URL(DATA_URL);
-    u.searchParams.set("share", "1");
-    u.searchParams.set("id", fileId);
-    if (title) u.searchParams.set("t", title);
-    if (desc) u.searchParams.set("d", String(desc).slice(0, 180));
-    return u.toString();
   }
 
   function esc(s) {
@@ -216,27 +336,18 @@
     document.getElementById("errorText").textContent = msg;
   }
 
-  function setShareLinks(reportUrl, title, fileId, desc) {
-    const brand = "dotdock";
-    const text = `${title} — via ${brand}`;
-
-    // Use OG scrape URL for Facebook/LinkedIn/X so preview pulls correct og:image
-    const ogUrl = shareCardUrl(fileId, title, desc);
-
+  function setShareLinks(pageUrl, title) {
+    const text = `${title} — via dotdock`;
     document.getElementById("shareX").href =
-      `https://twitter.com/intent/tweet?url=${encodeURIComponent(ogUrl)}&text=${encodeURIComponent(text)}`;
-
+      `https://twitter.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(text)}`;
     document.getElementById("shareLI").href =
-      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(ogUrl)}`;
-
+      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`;
     document.getElementById("shareFB").href =
-      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(ogUrl)}`;
-
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
     document.getElementById("shareWA").href =
-      `https://wa.me/?text=${encodeURIComponent(text + " " + reportUrl)}`;
-
+      `https://wa.me/?text=${encodeURIComponent(text + " " + pageUrl)}`;
     document.getElementById("shareEmail").href =
-      `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(reportUrl)}`;
+      `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(pageUrl)}`;
   }
 
   function setMetaTable(item) {
@@ -255,7 +366,7 @@
     document.getElementById("metaTableBody").innerHTML = rows.join("");
   }
 
-  function renderItem(item) {
+  function renderItem(item, allItems = []) {
     const title = item.title || "Untitled report";
     document.getElementById("rTitle").textContent = title;
     document.title = `dotdock — ${title}`;
@@ -274,13 +385,218 @@
     document.getElementById("pdfFrame").src = drivePreviewUrl(item.id);
 
     // View (new tab) opens dotdock URL (not Drive)
-    document.getElementById("viewBtn").href = viewInDocDockUrl(item.id);
+    document.getElementById("viewBtn").href = viewInDotdockUrl(item.id);
+
+    // Action buttons
+    setupActionButtons(item);
 
     setMetaTable(item);
 
     const reportUrl = canonicalReportUrl(item.id);
     setShareLinks(reportUrl, title, item.id, item.summary || "");
+
+    // Recommendations
+    renderRecommendations(item, allItems);
+
+    // Workspace panel
+    loadWorkspacePanel(item.id);
   }
+
+    // Embed PDF
+    document.getElementById("pdfFrame").src = drivePreviewUrl(item.id);
+
+    // “View PDF” (new tab) opens dotdock URL, not Drive URL
+    document.getElementById("viewBtn").href = viewInDotdockUrl(item.id);
+
+    setMetaTable(item);
+
+    const pageUrl = window.location.href.split("#")[0];
+    setShareLinks(pageUrl, title);
+  
+  function setupActionButtons(item) {
+    const readBtn = document.getElementById("readBtn");
+    const nbBtn = document.getElementById("nbBtn");
+    const cmpBtn = document.getElementById("cmpBtn");
+
+    if (readBtn) {
+      const sync = () => {
+        readBtn.textContent = isInReadingList(item.id) ? "Saved" : "Add to reading list";
+      };
+      sync();
+      readBtn.onclick = () => {
+        toggleReadingList(item.id);
+        sync();
+        showToast(isInReadingList(item.id) ? "Saved to reading list" : "Removed from reading list");
+      };
+    }
+
+    if (nbBtn) {
+      nbBtn.onclick = () => openNotebookLM(item.id);
+    }
+
+    if (cmpBtn) {
+      const syncC = () => {
+        cmpBtn.textContent = isInCompare(item.id) ? "Selected" : "Compare";
+      };
+      syncC();
+      cmpBtn.onclick = () => {
+        const list = compareToggle(item.id);
+        syncC();
+        if (list.length === 2) {
+          const [a, b] = list; // most-recent selection first
+          const all = window.__catalog || [];
+          const ta = (all.find(x => String(x.id) === String(a))?.title) || (String(a) === String(item.id) ? (item.title || "") : "");
+          const tb = (all.find(x => String(x.id) === String(b))?.title) || (String(b) === String(item.id) ? (item.title || "") : "");
+          window.open(comparePageUrl(a, b, ta, tb), "_blank", "noopener");
+        } else {
+          showToast("Select one more report to compare");
+        }
+      };
+    }
+  }
+
+  function tokenizeTitle(title) {
+    return String(title || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter(w => w.length >= 3 && !["the","and","for","with","from","into","that","this","report","study","analysis"].includes(w));
+  }
+
+  function scoreRelated(current, candidate) {
+    if (!candidate || String(candidate.id) === String(current.id)) return -999;
+
+    let score = 0;
+
+    // Same year
+    if (current.year && candidate.year && String(current.year) === String(candidate.year)) score += 2;
+
+    // Category overlap
+    const aCats = new Set((current.categories || []).map(String));
+    const bCats = (candidate.categories || []).map(String);
+    let overlap = 0;
+    bCats.forEach(c => { if (aCats.has(c)) overlap += 1; });
+    score += overlap * 3;
+
+    // Title token overlap
+    const tA = new Set(tokenizeTitle(current.title));
+    const tB = tokenizeTitle(candidate.title);
+    let tok = 0;
+    tB.forEach(w => { if (tA.has(w)) tok += 1; });
+    score += tok;
+
+    // Freshness
+    score += Math.min(2, ((candidate.modified || 0) / 1e13)); // tiny tie-breaker
+    return score;
+  }
+
+  function renderRecommendations(current, allItems) {
+    const card = document.getElementById("recosCard");
+    const listEl = document.getElementById("recoList");
+    if (!card || !listEl) return;
+
+    if (!Array.isArray(allItems) || allItems.length < 3) {
+      card.classList.add("hidden");
+      return;
+    }
+
+    const related = allItems
+      .filter(x => String(x.id) !== String(current.id))
+      .map(x => ({ item: x, score: scoreRelated(current, x) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 6)
+      .map(x => x.item);
+
+    if (related.length === 0) {
+      card.classList.add("hidden");
+      return;
+    }
+
+    listEl.innerHTML = related.map(r => {
+      const title = esc(r.title || "Untitled");
+      const meta = [r.year ? String(r.year) : "", (r.categories || [])[0] || ""].filter(Boolean).join(" • ");
+      const reportLink = `report.html?id=${encodeURIComponent(r.id)}&t=${encodeURIComponent(r.title || "")}`;
+      const saved = isInReadingList(r.id);
+      return `
+        <div class="border border-gray-200 rounded p-2 bg-gray-50">
+          <a class="block font-semibold text-amber-700 hover:underline truncate" href="${reportLink}">
+            ${title}
+          </a>
+          <div class="text-xs text-gray-500 mt-0.5">${esc(meta)}</div>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <button class="px-3 py-1 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50"
+                    onclick="(function(){ toggleReadingList('${r.id}'); renderRecommendations(window.__currentItem, window.__catalog); showToast('Updated reading list'); })()">
+              ${saved ? "Saved" : "Save to reading list"}
+            </button>
+            <a class="px-3 py-1 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50"
+               target="_blank" rel="noopener"
+               href="view.html?id=${encodeURIComponent(r.id)}&t=${encodeURIComponent(r.title || "")}">
+              Preview
+            </a>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function loadWorkspacePanel(fileId) {
+    const statusEl = document.getElementById("wsStatus");
+    const tagsEl = document.getElementById("wsTags");
+    const notesEl = document.getElementById("wsNotes");
+    const pinBtn = document.getElementById("wsPinBtn");
+    const exportBtn = document.getElementById("wsExportBtn");
+
+    const ws = wsGet(fileId) || { status: "unread", tags: [], notes: "", pinned: false };
+    if (statusEl) statusEl.value = ws.status || "unread";
+    if (tagsEl) tagsEl.value = (Array.isArray(ws.tags) ? ws.tags : []).join(", ");
+    if (notesEl) notesEl.value = ws.notes || "";
+
+    const syncPin = () => {
+      const cur = wsGet(fileId) || { pinned: false };
+      if (pinBtn) pinBtn.textContent = cur.pinned ? "Unpin" : "Pin";
+    };
+    syncPin();
+
+    statusEl && (statusEl.onchange = () => {
+      wsSet(fileId, { status: statusEl.value || "unread" });
+      showToast("Workspace saved");
+    });
+
+    let tmr = null;
+    tagsEl && (tagsEl.oninput = () => {
+      clearTimeout(tmr);
+      tmr = setTimeout(() => {
+        const tags = String(tagsEl.value || "")
+          .split(",")
+          .map(s => s.trim())
+          .filter(Boolean)
+          .slice(0, 25);
+        wsSet(fileId, { tags });
+        showToast("Workspace saved");
+      }, 250);
+    });
+
+    let nmr = null;
+    notesEl && (notesEl.oninput = () => {
+      clearTimeout(nmr);
+      nmr = setTimeout(() => {
+        wsSet(fileId, { notes: notesEl.value || "" });
+        showToast("Workspace saved");
+      }, 250);
+    });
+
+    pinBtn && (pinBtn.onclick = () => {
+      const cur = wsGet(fileId) || { pinned: false };
+      wsSet(fileId, { pinned: !cur.pinned });
+      syncPin();
+      showToast(cur.pinned ? "Unpinned" : "Pinned");
+    });
+
+    exportBtn && (exportBtn.onclick = exportWorkspace);
+  }
+
+
+}
 
   async function fetchCatalogFresh() {
     const url = DATA_URL + (DATA_URL.includes("?") ? "&" : "?") + "cb=" + Date.now();
@@ -292,7 +608,7 @@
     });
     if (!res.ok) throw new Error("Failed to load catalog (" + res.status + ")");
 
-    // Be defensive if Apps Script ever returns HTML
+    // Be defensive: if Apps Script ever returns HTML (login page/error), res.json() will throw.
     const text = await res.text();
     let json;
     try {
@@ -310,82 +626,77 @@
     const params = new URLSearchParams(window.location.search);
     const id = params.get("id");
     const viewOnly = params.get("view") === "1";
-    const titleHint = params.get("t") || ""; // optional hint from index.html
 
     if (!id) {
       setError("Missing report id in URL.");
       return;
     }
 
-    // Always show the PDF reader immediately (works even if catalog fetch fails)
-    document.getElementById("pdfFrame").src = drivePreviewUrl(id);
-    document.getElementById("viewBtn").href = viewInDocDockUrl(id);
+	    // Always show the PDF reader immediately (works even if the catalog fetch fails).
+	    document.getElementById("pdfFrame").src = drivePreviewUrl(id);
+	    document.getElementById("viewBtn").href = viewInDotdockUrl(id);
 
-    // If we have a title hint, set it instantly (better UX while loading)
-    if (titleHint) {
-      document.getElementById("rTitle").textContent = titleHint;
-      document.title = `dotdock — ${titleHint}`;
-    }
-
-    // View-only mode: make reader full-width (fixes “PDF stuck on left/right” issue)
+	    // View-only mode: hide share + details (fast “reader” mode)
     if (viewOnly) {
       document.getElementById("shareWrap").classList.add("hidden");
       document.getElementById("detailsWrap").classList.add("hidden");
       document.getElementById("statusLine").textContent = "";
-      document.title = "dotdock — Viewer";
-
-      const reader = document.getElementById("readerSection");
-      reader.classList.remove("lg:col-span-7");
-      reader.classList.add("lg:col-span-12");
-
-      // No need to fetch catalog in viewer-only mode
-      return;
+	      document.title = "dotdock — Viewer";
+	      // No need to fetch the full catalog in reader-only mode.
+	      return;
     }
 
     // Fast render from cache first
-    const cached = cacheGet();
-    let renderedFromCache = false;
+	    const cached = cacheGet();
+	    let renderedFromCache = false;
     if (cached) {
       const cachedItem = cached.find(x => String(x.id) === String(id));
       if (cachedItem) {
-        renderItem(cachedItem);
-        renderedFromCache = true;
+        window.__catalog = cached;
+        window.__currentItem = cachedItem;
+        renderItem(cachedItem, cached);
+	        renderedFromCache = true;
         document.getElementById("statusLine").textContent = "Loaded from cache… updating";
       }
     }
 
-    // Copy link (copies clean report URL)
+    // Copy link
     document.getElementById("copyLinkBtn").addEventListener("click", async () => {
       try {
-        await navigator.clipboard.writeText(canonicalReportUrl(id));
-        document.getElementById("copyLinkBtn").querySelector("span")?.replaceChildren(document.createTextNode("Copied"));
-        document.getElementById("copyLinkBtn").title = "Copied!";
-        setTimeout(() => {
-          document.getElementById("copyLinkBtn").title = "Copy link";
-        }, 1200);
+        await navigator.clipboard.writeText(window.location.href.split("#")[0]);
+        document.getElementById("copyLinkBtn").textContent = "Copied!";
+        setTimeout(() => (document.getElementById("copyLinkBtn").textContent = "Copy link"), 1200);
       } catch {
         // ignore
       }
     });
 
     // Then load fresh
-    try {
-      const data = await fetchCatalogFresh();
-      const item = data.find(x => String(x.id) === String(id));
-      if (!item) {
-        document.getElementById("statusLine").textContent = "Not in catalog yet — showing reader only.";
-        return;
-      }
-      renderItem(item);
-      document.getElementById("statusLine").textContent = "Updated";
-    } catch (e) {
-      console.warn("Catalog fetch failed:", e);
-      document.getElementById("statusLine").textContent = renderedFromCache
-        ? "Loaded from cache (update unavailable)."
-        : "Catalog unavailable — showing reader only.";
-    }
+	    try {
+	      const data = await fetchCatalogFresh();
+	      const item = data.find(x => String(x.id) === String(id));
+	      if (!item) {
+	        // Keep the reader working even if the catalog index is temporarily stale.
+	        document.getElementById("statusLine").textContent = "Not in catalog yet — showing reader only.";
+	        return;
+	      }
+	      window.__catalog = data;
+      window.__currentItem = item;
+      renderItem(item, data);
+	      document.getElementById("statusLine").textContent = "Updated";
+	    } catch (e) {
+	      console.warn("Catalog fetch failed:", e);
+	      document.getElementById("statusLine").textContent = renderedFromCache
+	        ? "Loaded from cache (update unavailable)."
+	        : "Catalog unavailable — showing reader only.";
+	    }
   })();
 </script>
 
+
+  <div id="toast"
+       class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-sm px-4 py-2 rounded shadow-lg">
+    Saved
+  </div>
 </body>
 </html>
