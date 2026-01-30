@@ -715,7 +715,7 @@
   }
 
   // --------- NotebookLM UX ----------
-  async async function openInNotebookLM(fileId) {
+  async function openInNotebookLM(fileId) {
     const link = driveShareUrl(fileId);
     try {
       await navigator.clipboard.writeText(link);
@@ -815,15 +815,15 @@
     });
 
     // Reading list toggle
-    toggleReadingBtn.addEventListener("click", () => {
+    toggleReading.addEventListener("click", () => {
       const wrap = document.getElementById("readingListWrap");
       const isHidden = wrap.classList.contains("hidden");
       if (isHidden) {
         wrap.classList.remove("hidden");
-        toggleReadingBtn.textContent = "Hide";
+        toggleReading.textContent = "Hide";
       } else {
         wrap.classList.add("hidden");
-        toggleReadingBtn.textContent = "Show";
+        toggleReading.textContent = "Show";
       }
     });
     clearReading.addEventListener("click", () => {

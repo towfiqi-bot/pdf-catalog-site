@@ -482,7 +482,7 @@
     });
   }
 
-  async async function openInNotebookLM(fileId) {
+  async function openInNotebookLM(fileId) {
     const link = driveShareUrl(fileId);
     try {
       await navigator.clipboard.writeText(link);
