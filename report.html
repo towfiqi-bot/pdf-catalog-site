@@ -22,7 +22,7 @@
   <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-4 py-4">
       <div class="flex items-center gap-4">
-        <a href="index.html" class="block">
+        <a href="index.html" class="block" aria-label="Back to catalog">
           <img src="logo.png" alt="dotdock logo"
                class="h-12 w-12 md:h-16 md:w-16 rounded-full object-cover shadow-md border border-gray-200 bg-white">
         </a>
@@ -36,13 +36,13 @@
 
   <main class="max-w-6xl mx-auto px-4 py-6">
     <!-- Top row -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5">
+    <div id="topRow" class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5">
       <div>
         <div id="rTitle" class="text-xl md:text-2xl font-semibold text-gray-900">Loading…</div>
         <div id="rMetaLine" class="text-sm text-gray-600 mt-1"></div>
       </div>
 
-      <!-- Share (kept, since report page is for sharing) -->
+      <!-- Share -->
       <div id="shareWrap" class="flex flex-wrap gap-2">
         <button id="copyLinkBtn" class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">
           Copy link
@@ -60,12 +60,12 @@
     </div>
 
     <!-- Content grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <!-- Left: cover + details -->
-      <section id="detailsWrap" class="lg:col-span-5 space-y-4">
+    <div id="grid" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Left: details (sticky + scrollable on desktop) -->
+      <section id="detailsCol" class="lg:col-span-5 space-y-4 lg:sticky lg:top-24 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto lg:pr-1">
         <div class="bg-white border border-gray-200 rounded-lg p-4">
           <div class="flex gap-4">
-            <!-- Use a tiny placeholder to avoid the browser's broken-image icon before we set a real thumbnail -->
+            <!-- Tiny placeholder avoids broken-image icon -->
             <img id="rThumb"
                  src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
                  alt="Cover" loading="lazy" decoding="async" referrerpolicy="no-referrer"
@@ -79,82 +79,86 @@
               <table class="w-full text-sm border border-gray-200">
                 <tbody id="metaTableBody"></tbody>
               </table>
+
               <div class="mt-3 flex flex-wrap gap-2">
-                <!-- Opens inside dotdock (new tab), not a PC download -->
                 <a id="viewBtn" target="_blank" rel="noopener"
                    class="inline-flex items-center px-4 py-2 text-sm font-semibold bg-amber-600 text-white rounded hover:bg-amber-700">
                   View PDF (new tab)
                 </a>
 
-                <button id="readBtn"
-                        class="inline-flex items-center px-4 py-2 text-sm font-semibold border border-gray-300 rounded bg-white hover:bg-gray-50">
+                <button id="addReadingBtn"
+                        class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">
                   Add to reading list
                 </button>
 
-                <button id="nbBtn"
-                        class="inline-flex items-center px-4 py-2 text-sm font-semibold border border-gray-300 rounded bg-white hover:bg-gray-50">
+                <button id="notebookBtn"
+                        class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">
                   NotebookLM
                 </button>
 
-                <button id="cmpBtn"
-                        class="inline-flex items-center px-4 py-2 text-sm font-semibold border border-gray-300 rounded bg-white hover:bg-gray-50">
+                <button id="compareBtn"
+                        class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">
                   Compare
                 </button>
               </div>
+
               <div id="statusLine" class="text-xs text-gray-500 mt-2"></div>
+              <div id="compareHint" class="hidden text-xs text-amber-700 mt-2"></div>
             </div>
           </div>
         </div>
-      
+
         <!-- You may also like -->
-        <div id="recosCard" class="bg-white border border-gray-200 rounded-lg p-4">
-          <div class="flex items-center justify-between mb-2">
-            <div class="text-sm font-semibold text-gray-800">You may also like</div>
-            <a href="index.html" class="text-xs text-amber-700 hover:underline">Browse</a>
+        <div class="bg-white border border-gray-200 rounded-lg p-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-semibold text-gray-800">You may also like</h2>
+            <a href="index.html" class="text-xs font-semibold text-amber-700 hover:underline">Browse</a>
           </div>
-          <div id="recoList" class="space-y-2 text-sm text-gray-700">
-            <div class="text-xs text-gray-500">Loading…</div>
+
+          <div id="recoWrap" class="mt-3 text-sm text-gray-600">
+            Loading…
           </div>
         </div>
 
         <!-- My workspace -->
-        <div id="workspaceCard" class="bg-white border border-gray-200 rounded-lg p-4">
+        <div class="bg-white border border-gray-200 rounded-lg p-4">
           <div class="flex items-center justify-between">
-            <div class="text-sm font-semibold text-gray-800">My workspace</div>
-            <button id="wsExportBtn" class="text-xs font-semibold text-amber-700 hover:underline">Export</button>
+            <h2 class="text-sm font-semibold text-gray-800">My workspace</h2>
+            <button id="exportWsBtn" class="text-xs font-semibold text-amber-700 hover:underline">Export</button>
           </div>
 
-          <div class="mt-3 grid grid-cols-1 gap-3">
-            <div>
-              <label class="block text-xs text-gray-600 mb-1">Status</label>
-              <select id="wsStatus" class="w-full border rounded px-2 py-1 text-sm">
-                <option value="unread">Unread</option>
-                <option value="reading">Reading</option>
-                <option value="done">Done</option>
-              </select>
-            </div>
+          <label class="block text-xs text-gray-600 mt-3">Status</label>
+          <select id="wsStatus" class="mt-1 w-full border border-gray-300 rounded px-2 py-1 text-sm bg-white">
+            <option value="unread">Unread</option>
+            <option value="reading">Reading</option>
+            <option value="done">Done</option>
+          </select>
 
-            <div>
-              <label class="block text-xs text-gray-600 mb-1">Tags (comma-separated)</label>
-              <input id="wsTags" type="text" class="w-full border rounded px-2 py-1 text-sm" placeholder="e.g., energy, productivity" />
-            </div>
+          <label class="block text-xs text-gray-600 mt-3">Tags (comma-separated)</label>
+          <input id="wsTags" type="text"
+                 class="mt-1 w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                 placeholder="e.g., energy, productivity" />
 
-            <div>
-              <label class="block text-xs text-gray-600 mb-1">Notes</label>
-              <textarea id="wsNotes" class="w-full border rounded px-2 py-1 text-sm" rows="5" placeholder="Your notes for this report…"></textarea>
-            </div>
+          <label class="block text-xs text-gray-600 mt-3">Notes</label>
+          <textarea id="wsNotes" rows="6"
+                    class="mt-1 w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                    placeholder="Your notes for this report…"></textarea>
 
-            <div class="flex flex-wrap gap-2">
-              <button id="wsPinBtn" class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">Pin</button>
-              <div class="text-[11px] text-gray-500 self-center">Saved locally in your browser (no login).</div>
-            </div>
+          <div class="mt-3 flex gap-2">
+            <button id="pinBtn"
+                    class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">
+              Pin
+            </button>
+          </div>
+
+          <div class="text-[11px] text-gray-500 mt-2">
+            Saved locally in your browser (no login).
           </div>
         </div>
-
       </section>
 
       <!-- Right: embedded PDF -->
-      <section class="lg:col-span-7">
+      <section id="readerCol" class="lg:col-span-7">
         <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
           <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
             <div class="text-sm font-semibold text-gray-800">Reader</div>
@@ -177,12 +181,32 @@
     </div>
   </main>
 
+  <!-- Toast -->
+  <div id="toast" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] bg-gray-900 text-white text-sm px-4 py-2 rounded shadow-lg"></div>
+
 <script>
-  // ✅ MUST be the Apps Script URL (GitHub Pages has no Netlify functions)
   const DATA_URL = "https://script.google.com/macros/s/AKfycbwF2IqDTG0F5acy4K1mtBRMZg1AOp3RMHzYwHEtZcZmRV8Jbpb2_ETe4Mpnkgp-lxmy/exec";
 
   const CACHE_KEY = "pdf_catalog_cache_v2";
   const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+
+  const READING_KEY = "dotdock_reading_list_v1";
+  const WORKSPACE_KEY = "dotdock_workspace_v1";
+  const COMPARE_KEY = "dotdock_compare_v1";
+
+  function esc(s) {
+    return String(s ?? "")
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.remove("hidden");
+    clearTimeout(showToast._to);
+    showToast._to = setTimeout(() => t.classList.add("hidden"), 2200);
+  }
 
   function cacheGet() {
     try {
@@ -192,24 +216,25 @@
       if (!parsed?.time || !parsed?.data) return null;
       if (Date.now() - parsed.time > CACHE_TTL_MS) return null;
       return parsed.data;
-    } catch {
-      return null;
-    }
+    } catch { return null; }
   }
 
+  function drivePreviewUrl(fileId) {
+    return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
+  }
 
-  // --- Shared local features (reading list / compare / workspace) ---
-  const READING_KEY = "dotdock_reading_list_v1";
-  const COMPARE_KEY = "dotdock_compare_v1";
-  const WORKSPACE_KEY = "dotdock_workspace_v1";
+  function driveShareUrl(fileId) {
+    return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view?usp=sharing`;
+  }
 
-  function showToast(msg) {
-    const t = document.getElementById("toast");
-    if (!t) return;
-    t.textContent = msg;
-    t.classList.remove("hidden");
-    clearTimeout(showToast._t);
-    showToast._t = setTimeout(() => t.classList.add("hidden"), 1400);
+  function viewUrl(fileId, title) {
+    const base = `report.html?id=${encodeURIComponent(fileId)}&view=1`;
+    return title ? `${base}&t=${encodeURIComponent(title)}` : base;
+  }
+
+  function reportUrl(fileId, title) {
+    const base = `report.html?id=${encodeURIComponent(fileId)}`;
+    return title ? `${base}&t=${encodeURIComponent(title)}` : base;
   }
 
   // Reading list
@@ -223,15 +248,50 @@
   function readingSet(arr) {
     try { localStorage.setItem(READING_KEY, JSON.stringify(Array.from(new Set(arr.map(String))))); } catch {}
   }
-  function isInReadingList(id) { return readingGet().includes(String(id)); }
-  function toggleReadingList(id) {
-    const list = readingGet();
+  function isInReadingList(id) {
+    return readingGet().includes(String(id));
+  }
+  function toggleReading(id) {
+    const cur = readingGet();
     const sid = String(id);
-    const idx = list.indexOf(sid);
-    if (idx >= 0) list.splice(idx, 1);
-    else list.unshift(sid);
-    readingSet(list);
-    return list;
+    const next = cur.includes(sid) ? cur.filter(x => x !== sid) : [sid, ...cur];
+    readingSet(next);
+  }
+
+  // Workspace
+  function workspaceGet() {
+    try {
+      const raw = localStorage.getItem(WORKSPACE_KEY);
+      const obj = raw ? JSON.parse(raw) : {};
+      return (obj && typeof obj === "object") ? obj : {};
+    } catch { return {}; }
+  }
+  function workspaceSet(obj) {
+    try { localStorage.setItem(WORKSPACE_KEY, JSON.stringify(obj)); } catch {}
+  }
+  function wsItem(id) {
+    const ws = workspaceGet();
+    return ws[String(id)] || {};
+  }
+  function wsSetItem(id, patch) {
+    const ws = workspaceGet();
+    const key = String(id);
+    const prev = ws[key] || {};
+    ws[key] = { ...prev, ...patch, updatedAt: Date.now() };
+    workspaceSet(ws);
+  }
+  function exportWorkspace() {
+    const ws = workspaceGet();
+    const data = JSON.stringify(ws, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "dotdock-workspace.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
   }
 
   // Compare
@@ -239,96 +299,18 @@
     try {
       const raw = localStorage.getItem(COMPARE_KEY);
       const arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr.map(String) : [];
+      return Array.isArray(arr) ? arr.map(String).slice(0,2) : [];
     } catch { return []; }
   }
   function compareSet(arr) {
-    try { localStorage.setItem(COMPARE_KEY, JSON.stringify(arr.map(String).slice(0,2))); } catch {}
+    try { localStorage.setItem(COMPARE_KEY, JSON.stringify(arr.slice(0,2).map(String))); } catch {}
   }
-  function isInCompare(id) { return compareGet().includes(String(id)); }
-  function compareToggle(id) {
+  function toggleCompare(id) {
     const sid = String(id);
-    const list = compareGet();
-    const idx = list.indexOf(sid);
-    if (idx >= 0) list.splice(idx, 1);
-    else {
-      if (list.length >= 2) list.pop();
-      list.unshift(sid);
-    }
-    compareSet(list);
-    return list;
-  }
-  function comparePageUrl(id1, id2, t1 = "", t2 = "") {
-    const base = `compare.html?left=${encodeURIComponent(id1)}&right=${encodeURIComponent(id2)}`;
-    const q1 = t1 ? `&t1=${encodeURIComponent(t1)}` : "";
-    const q2 = t2 ? `&t2=${encodeURIComponent(t2)}` : "";
-    return base + q1 + q2;
-  }
-
-  // Workspace
-  function wsAll() {
-    try {
-      const raw = localStorage.getItem(WORKSPACE_KEY);
-      const obj = raw ? JSON.parse(raw) : {};
-      return (obj && typeof obj === "object") ? obj : {};
-    } catch { return {}; }
-  }
-  function wsSaveAll(obj) {
-    try { localStorage.setItem(WORKSPACE_KEY, JSON.stringify(obj)); } catch {}
-  }
-  function wsGet(id) {
-    const all = wsAll();
-    return all[String(id)] || null;
-  }
-  function wsSet(id, patch) {
-    const sid = String(id);
-    const all = wsAll();
-    const cur = all[sid] || { status: "unread", tags: [], notes: "", pinned: false, updated: 0 };
-    const next = { ...cur, ...patch, updated: Date.now() };
-    all[sid] = next;
-    wsSaveAll(all);
+    const cur = compareGet();
+    const next = cur.includes(sid) ? cur.filter(x => x !== sid) : [sid, ...cur].slice(0,2);
+    compareSet(next);
     return next;
-  }
-
-  function exportWorkspace() {
-    const payload = {
-      exportedAt: new Date().toISOString(),
-      readingList: readingGet(),
-      compare: compareGet(),
-      workspace: wsAll()
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `dotdock_workspace_${new Date().toISOString().slice(0,10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 250);
-  }
-
-  // NotebookLM
-  function driveShareUrl(fileId) {
-    return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view?usp=sharing`;
-  }
-  async function openNotebookLM(fileId) {
-    const url = driveShareUrl(fileId);
-    try { await navigator.clipboard.writeText(url); showToast("Link copied for NotebookLM"); } catch { showToast("Copy failed"); }
-    window.open("https://notebooklm.google.com/", "_blank", "noopener");
-  }
-
-  function drivePreviewUrl(fileId) {
-    return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
-  }
-
-  // ✅ “Download” behavior requested: open in new tab inside dotdock
-  function viewInDotdockUrl(fileId) {
-    return `report.html?id=${encodeURIComponent(fileId)}&view=1`;
-  }
-
-  function esc(s) {
-    return String(s ?? "")
-      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
   }
 
   function setError(msg) {
@@ -352,7 +334,6 @@
 
   function setMetaTable(item) {
     const rows = [];
-
     const year = item.year ? esc(item.year) : "—";
     const cats = (item.categories || []).length ? esc(item.categories.join(", ")) : "—";
     const updated = item.modified ? new Date(item.modified).toLocaleString() : "—";
@@ -366,7 +347,7 @@
     document.getElementById("metaTableBody").innerHTML = rows.join("");
   }
 
-  function renderItem(item, allItems = []) {
+  function renderItem(item) {
     const title = item.title || "Untitled report";
     document.getElementById("rTitle").textContent = title;
     document.title = `dotdock — ${title}`;
@@ -377,254 +358,145 @@
     ].filter(Boolean).join(" • ");
     document.getElementById("rMetaLine").textContent = metaLine;
 
-    if (item.thumbUrl) {
-      document.getElementById("rThumb").src = item.thumbUrl;
-    }
+    if (item.thumbUrl) document.getElementById("rThumb").src = item.thumbUrl;
 
-    // Embed PDF
+    // Reader
     document.getElementById("pdfFrame").src = drivePreviewUrl(item.id);
-
-    // View (new tab) opens dotdock URL (not Drive)
-    document.getElementById("viewBtn").href = viewInDotdockUrl(item.id);
-
-    // Action buttons
-    setupActionButtons(item);
-
-    setMetaTable(item);
-
-    const reportUrl = canonicalReportUrl(item.id);
-    setShareLinks(reportUrl, title, item.id, item.summary || "");
-
-    // Recommendations
-    renderRecommendations(item, allItems);
-
-    // Workspace panel
-    loadWorkspacePanel(item.id);
-  }
-
-    // Embed PDF
-    document.getElementById("pdfFrame").src = drivePreviewUrl(item.id);
-
-    // “View PDF” (new tab) opens dotdock URL, not Drive URL
-    document.getElementById("viewBtn").href = viewInDotdockUrl(item.id);
+    document.getElementById("viewBtn").href = viewUrl(item.id, item.title || "");
 
     setMetaTable(item);
 
     const pageUrl = window.location.href.split("#")[0];
     setShareLinks(pageUrl, title);
-  
-  function setupActionButtons(item) {
-    const readBtn = document.getElementById("readBtn");
-    const nbBtn = document.getElementById("nbBtn");
-    const cmpBtn = document.getElementById("cmpBtn");
 
-    if (readBtn) {
-      const sync = () => {
-        readBtn.textContent = isInReadingList(item.id) ? "Saved" : "Add to reading list";
-      };
-      sync();
-      readBtn.onclick = () => {
-        toggleReadingList(item.id);
-        sync();
-        showToast(isInReadingList(item.id) ? "Saved to reading list" : "Removed from reading list");
-      };
-    }
+    // Buttons state
+    const addBtn = document.getElementById("addReadingBtn");
+    addBtn.textContent = isInReadingList(item.id) ? "Remove from reading list" : "Add to reading list";
 
-    if (nbBtn) {
-      nbBtn.onclick = () => openNotebookLM(item.id);
-    }
+    // Workspace state
+    const ws = wsItem(item.id);
+    document.getElementById("wsStatus").value = (ws.status || "unread").toLowerCase();
+    document.getElementById("wsTags").value = Array.isArray(ws.tags) ? ws.tags.join(", ") : "";
+    document.getElementById("wsNotes").value = ws.notes || "";
+    document.getElementById("pinBtn").textContent = ws.pinned ? "Unpin" : "Pin";
 
-    if (cmpBtn) {
-      const syncC = () => {
-        cmpBtn.textContent = isInCompare(item.id) ? "Selected" : "Compare";
-      };
-      syncC();
-      cmpBtn.onclick = () => {
-        const list = compareToggle(item.id);
-        syncC();
-        if (list.length === 2) {
-          const [a, b] = list; // most-recent selection first
-          const all = window.__catalog || [];
-          const ta = (all.find(x => String(x.id) === String(a))?.title) || (String(a) === String(item.id) ? (item.title || "") : "");
-          const tb = (all.find(x => String(x.id) === String(b))?.title) || (String(b) === String(item.id) ? (item.title || "") : "");
-          window.open(comparePageUrl(a, b, ta, tb), "_blank", "noopener");
-        } else {
-          showToast("Select one more report to compare");
-        }
-      };
-    }
+    // Compare state
+    const compared = compareGet().includes(String(item.id));
+    document.getElementById("compareBtn").textContent = compared ? "Compared" : "Compare";
   }
-
-  function tokenizeTitle(title) {
-    return String(title || "")
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, " ")
-      .split(/\s+/)
-      .filter(w => w.length >= 3 && !["the","and","for","with","from","into","that","this","report","study","analysis"].includes(w));
-  }
-
-  function scoreRelated(current, candidate) {
-    if (!candidate || String(candidate.id) === String(current.id)) return -999;
-
-    let score = 0;
-
-    // Same year
-    if (current.year && candidate.year && String(current.year) === String(candidate.year)) score += 2;
-
-    // Category overlap
-    const aCats = new Set((current.categories || []).map(String));
-    const bCats = (candidate.categories || []).map(String);
-    let overlap = 0;
-    bCats.forEach(c => { if (aCats.has(c)) overlap += 1; });
-    score += overlap * 3;
-
-    // Title token overlap
-    const tA = new Set(tokenizeTitle(current.title));
-    const tB = tokenizeTitle(candidate.title);
-    let tok = 0;
-    tB.forEach(w => { if (tA.has(w)) tok += 1; });
-    score += tok;
-
-    // Freshness
-    score += Math.min(2, ((candidate.modified || 0) / 1e13)); // tiny tie-breaker
-    return score;
-  }
-
-  function renderRecommendations(current, allItems) {
-    const card = document.getElementById("recosCard");
-    const listEl = document.getElementById("recoList");
-    if (!card || !listEl) return;
-
-    if (!Array.isArray(allItems) || allItems.length < 3) {
-      card.classList.add("hidden");
-      return;
-    }
-
-    const related = allItems
-      .filter(x => String(x.id) !== String(current.id))
-      .map(x => ({ item: x, score: scoreRelated(current, x) }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 6)
-      .map(x => x.item);
-
-    if (related.length === 0) {
-      card.classList.add("hidden");
-      return;
-    }
-
-    listEl.innerHTML = related.map(r => {
-      const title = esc(r.title || "Untitled");
-      const meta = [r.year ? String(r.year) : "", (r.categories || [])[0] || ""].filter(Boolean).join(" • ");
-      const reportLink = `report.html?id=${encodeURIComponent(r.id)}&t=${encodeURIComponent(r.title || "")}`;
-      const saved = isInReadingList(r.id);
-      return `
-        <div class="border border-gray-200 rounded p-2 bg-gray-50">
-          <a class="block font-semibold text-amber-700 hover:underline truncate" href="${reportLink}">
-            ${title}
-          </a>
-          <div class="text-xs text-gray-500 mt-0.5">${esc(meta)}</div>
-          <div class="mt-2 flex flex-wrap gap-2">
-            <button class="px-3 py-1 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50"
-                    onclick="(function(){ toggleReadingList('${r.id}'); renderRecommendations(window.__currentItem, window.__catalog); showToast('Updated reading list'); })()">
-              ${saved ? "Saved" : "Save to reading list"}
-            </button>
-            <a class="px-3 py-1 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50"
-               target="_blank" rel="noopener"
-               href="view.html?id=${encodeURIComponent(r.id)}&t=${encodeURIComponent(r.title || "")}">
-              Preview
-            </a>
-          </div>
-        </div>
-      `;
-    }).join("");
-  }
-
-  function loadWorkspacePanel(fileId) {
-    const statusEl = document.getElementById("wsStatus");
-    const tagsEl = document.getElementById("wsTags");
-    const notesEl = document.getElementById("wsNotes");
-    const pinBtn = document.getElementById("wsPinBtn");
-    const exportBtn = document.getElementById("wsExportBtn");
-
-    const ws = wsGet(fileId) || { status: "unread", tags: [], notes: "", pinned: false };
-    if (statusEl) statusEl.value = ws.status || "unread";
-    if (tagsEl) tagsEl.value = (Array.isArray(ws.tags) ? ws.tags : []).join(", ");
-    if (notesEl) notesEl.value = ws.notes || "";
-
-    const syncPin = () => {
-      const cur = wsGet(fileId) || { pinned: false };
-      if (pinBtn) pinBtn.textContent = cur.pinned ? "Unpin" : "Pin";
-    };
-    syncPin();
-
-    statusEl && (statusEl.onchange = () => {
-      wsSet(fileId, { status: statusEl.value || "unread" });
-      showToast("Workspace saved");
-    });
-
-    let tmr = null;
-    tagsEl && (tagsEl.oninput = () => {
-      clearTimeout(tmr);
-      tmr = setTimeout(() => {
-        const tags = String(tagsEl.value || "")
-          .split(",")
-          .map(s => s.trim())
-          .filter(Boolean)
-          .slice(0, 25);
-        wsSet(fileId, { tags });
-        showToast("Workspace saved");
-      }, 250);
-    });
-
-    let nmr = null;
-    notesEl && (notesEl.oninput = () => {
-      clearTimeout(nmr);
-      nmr = setTimeout(() => {
-        wsSet(fileId, { notes: notesEl.value || "" });
-        showToast("Workspace saved");
-      }, 250);
-    });
-
-    pinBtn && (pinBtn.onclick = () => {
-      const cur = wsGet(fileId) || { pinned: false };
-      wsSet(fileId, { pinned: !cur.pinned });
-      syncPin();
-      showToast(cur.pinned ? "Unpinned" : "Pinned");
-    });
-
-    exportBtn && (exportBtn.onclick = exportWorkspace);
-  }
-
-
-}
 
   async function fetchCatalogFresh() {
     const url = DATA_URL + (DATA_URL.includes("?") ? "&" : "?") + "cb=" + Date.now();
-    const res = await fetch(url, {
-      cache: "no-store",
-      mode: "cors",
-      credentials: "omit",
-      redirect: "follow",
-    });
+    const res = await fetch(url, { cache: "no-store", mode: "cors", credentials: "omit" });
     if (!res.ok) throw new Error("Failed to load catalog (" + res.status + ")");
-
-    // Be defensive: if Apps Script ever returns HTML (login page/error), res.json() will throw.
     const text = await res.text();
     let json;
-    try {
-      json = JSON.parse(text);
-    } catch {
-      throw new Error("Catalog returned non-JSON content.");
-    }
-
+    try { json = JSON.parse(text); } catch { throw new Error("Catalog returned non-JSON content."); }
     if (Array.isArray(json)) return json;
     if (json && Array.isArray(json.items)) return json.items;
     throw new Error("Catalog JSON format unexpected.");
   }
 
+  function titleTokens(title) {
+    return String(title || "")
+      .toLowerCase()
+      .split(/[^a-z0-9]+/g)
+      .filter(t => t.length >= 4)
+      .slice(0, 24);
+  }
+
+  function scoreRelated(base, cand) {
+    if (!cand || String(base.id) === String(cand.id)) return -1;
+    let score = 0;
+
+    const bc = new Set((base.categories || []).map(String));
+    const cc = (cand.categories || []).map(String);
+    for (const c of cc) if (bc.has(c)) score += 5;
+
+    if (base.year && cand.year && String(base.year) === String(cand.year)) score += 2;
+
+    const bt = new Set(titleTokens(base.title));
+    const ct = titleTokens(cand.title);
+    for (const t of ct) if (bt.has(t)) score += 1;
+
+    // slight boost for newer
+    score += Math.min(2, ((cand.modified || 0) / 1e12)); // tiny, mostly stable tie-break
+
+    return score;
+  }
+
+  function renderRecommendations(baseItem, all) {
+    const wrap = document.getElementById("recoWrap");
+    if (!baseItem || !Array.isArray(all) || all.length === 0) {
+      wrap.textContent = "No recommendations available.";
+      return;
+    }
+
+    const scored = all
+      .filter(x => String(x.id) !== String(baseItem.id))
+      .map(x => ({ item: x, score: scoreRelated(baseItem, x) }))
+      .filter(x => x.score > 0)
+      .sort((a,b) => b.score - a.score)
+      .slice(0, 6)
+      .map(x => x.item);
+
+    if (scored.length === 0) {
+      wrap.textContent = "No close matches yet.";
+      return;
+    }
+
+    wrap.innerHTML = scored.map(it => {
+      const thumb = it.thumbUrl || "https://via.placeholder.com/120x160?text=PDF";
+      const title = esc(it.title || "Untitled");
+      const year = it.year ? esc(it.year) : "";
+      const inList = isInReadingList(it.id);
+
+      return `
+        <div class="border border-gray-200 rounded p-2 bg-gray-50 flex gap-3">
+          <img src="${thumb}" alt="${title}" class="w-12 h-16 object-cover rounded border border-gray-200 bg-white"
+               loading="lazy" decoding="async" referrerpolicy="no-referrer"
+               onerror="this.onerror=null;this.src='https://via.placeholder.com/120x160?text=PDF';">
+          <div class="flex-1 min-w-0">
+            <div class="text-xs text-gray-500">${year}</div>
+            <a class="text-sm font-semibold text-amber-700 hover:underline block truncate" href="${reportUrl(it.id, it.title || "")}">
+              ${title}
+            </a>
+            <div class="mt-2 flex flex-wrap gap-2">
+              <button class="px-2 py-1 text-xs border rounded bg-white hover:bg-gray-50" data-action="save" data-id="${esc(it.id)}">
+                ${inList ? "Saved" : "Save"}
+              </button>
+              <a class="px-2 py-1 text-xs border rounded bg-white hover:bg-gray-50" target="_blank" rel="noopener" href="${viewUrl(it.id, it.title || "")}">View</a>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    wrap.querySelectorAll("[data-action='save']").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-id");
+        toggleReading(id);
+        btn.textContent = isInReadingList(id) ? "Saved" : "Save";
+      });
+    });
+  }
+
+  async function openInNotebookLM(fileId) {
+    const link = driveShareUrl(fileId);
+    try {
+      await navigator.clipboard.writeText(link);
+      window.open("https://notebooklm.google.com/", "_blank", "noopener");
+      showToast("Link copied. In NotebookLM: Add sources → Paste link.");
+    } catch {
+      window.open("https://notebooklm.google.com/", "_blank", "noopener");
+      showToast("Open NotebookLM, then add this report link as a source.");
+    }
+  }
+
   (async function init() {
     const params = new URLSearchParams(window.location.search);
     const id = params.get("id");
+    const titleHint = params.get("t") || "";
     const viewOnly = params.get("view") === "1";
 
     if (!id) {
@@ -632,71 +504,129 @@
       return;
     }
 
-	    // Always show the PDF reader immediately (works even if the catalog fetch fails).
-	    document.getElementById("pdfFrame").src = drivePreviewUrl(id);
-	    document.getElementById("viewBtn").href = viewInDotdockUrl(id);
+    // Always show reader immediately
+    document.getElementById("pdfFrame").src = drivePreviewUrl(id);
+    document.getElementById("viewBtn").href = viewUrl(id, titleHint);
 
-	    // View-only mode: hide share + details (fast “reader” mode)
-    if (viewOnly) {
-      document.getElementById("shareWrap").classList.add("hidden");
-      document.getElementById("detailsWrap").classList.add("hidden");
-      document.getElementById("statusLine").textContent = "";
-	      document.title = "dotdock — Viewer";
-	      // No need to fetch the full catalog in reader-only mode.
-	      return;
+    // Title hint (instant)
+    if (titleHint) {
+      document.getElementById("rTitle").textContent = titleHint;
+      document.title = `dotdock — ${titleHint}`;
     }
 
-    // Fast render from cache first
-	    const cached = cacheGet();
-	    let renderedFromCache = false;
-    if (cached) {
-      const cachedItem = cached.find(x => String(x.id) === String(id));
-      if (cachedItem) {
-        window.__catalog = cached;
-        window.__currentItem = cachedItem;
-        renderItem(cachedItem, cached);
-	        renderedFromCache = true;
-        document.getElementById("statusLine").textContent = "Loaded from cache… updating";
-      }
+    // View-only mode: reader full width
+    if (viewOnly) {
+      document.getElementById("shareWrap").classList.add("hidden");
+      document.getElementById("detailsCol").classList.add("hidden");
+      document.getElementById("readerCol").className = "lg:col-span-12";
+      document.getElementById("topRow").classList.add("hidden");
+      return;
     }
 
     // Copy link
-    document.getElementById("copyLinkBtn").addEventListener("click", async () => {
+    const copyBtn = document.getElementById("copyLinkBtn");
+    copyBtn.addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(window.location.href.split("#")[0]);
-        document.getElementById("copyLinkBtn").textContent = "Copied!";
-        setTimeout(() => (document.getElementById("copyLinkBtn").textContent = "Copy link"), 1200);
+        copyBtn.textContent = "Copied!";
+        setTimeout(() => (copyBtn.textContent = "Copy link"), 1200);
       } catch {
-        // ignore
+        showToast("Copy failed — you can copy from the address bar.");
       }
     });
 
-    // Then load fresh
-	    try {
-	      const data = await fetchCatalogFresh();
-	      const item = data.find(x => String(x.id) === String(id));
-	      if (!item) {
-	        // Keep the reader working even if the catalog index is temporarily stale.
-	        document.getElementById("statusLine").textContent = "Not in catalog yet — showing reader only.";
-	        return;
-	      }
-	      window.__catalog = data;
-      window.__currentItem = item;
-      renderItem(item, data);
-	      document.getElementById("statusLine").textContent = "Updated";
-	    } catch (e) {
-	      console.warn("Catalog fetch failed:", e);
-	      document.getElementById("statusLine").textContent = renderedFromCache
-	        ? "Loaded from cache (update unavailable)."
-	        : "Catalog unavailable — showing reader only.";
-	    }
+    // Wire buttons (need id)
+    document.getElementById("addReadingBtn").addEventListener("click", () => {
+      toggleReading(id);
+      const btn = document.getElementById("addReadingBtn");
+      btn.textContent = isInReadingList(id) ? "Remove from reading list" : "Add to reading list";
+      showToast(isInReadingList(id) ? "Saved to reading list." : "Removed from reading list.");
+    });
+
+    document.getElementById("notebookBtn").addEventListener("click", () => openInNotebookLM(id));
+
+    document.getElementById("compareBtn").addEventListener("click", () => {
+      const ids = toggleCompare(id);
+      const btn = document.getElementById("compareBtn");
+      btn.textContent = ids.includes(String(id)) ? "Compared" : "Compare";
+
+      const hint = document.getElementById("compareHint");
+      if (ids.length === 2) {
+        hint.classList.remove("hidden");
+        hint.innerHTML = `Ready. <a class="underline font-semibold" href="compare.html?left=${encodeURIComponent(ids[0])}&right=${encodeURIComponent(ids[1])}">Open compare</a>`;
+      } else {
+        hint.classList.remove("hidden");
+        hint.textContent = "Select one more report (from catalog or another report page).";
+      }
+    });
+
+    // Workspace handlers
+    const wsStatus = document.getElementById("wsStatus");
+    const wsTags = document.getElementById("wsTags");
+    const wsNotes = document.getElementById("wsNotes");
+    const pinBtn = document.getElementById("pinBtn");
+    const exportBtn = document.getElementById("exportWsBtn");
+
+    function saveWorkspace() {
+      const tags = wsTags.value.split(",").map(s => s.trim()).filter(Boolean);
+      wsSetItem(id, {
+        status: wsStatus.value,
+        tags,
+        notes: wsNotes.value
+      });
+    }
+
+    wsStatus.addEventListener("change", () => { saveWorkspace(); showToast("Workspace saved."); });
+    wsTags.addEventListener("input", () => { saveWorkspace(); });
+    wsNotes.addEventListener("input", () => { saveWorkspace(); });
+
+    pinBtn.addEventListener("click", () => {
+      const cur = wsItem(id);
+      const pinned = !!cur.pinned;
+      wsSetItem(id, { pinned: !pinned });
+      pinBtn.textContent = !pinned ? "Unpin" : "Pin";
+      showToast(!pinned ? "Pinned (shows at top of catalog)." : "Unpinned.");
+    });
+
+    exportBtn.addEventListener("click", exportWorkspace);
+
+    // Render from cache fast
+    const cached = cacheGet();
+    let renderedFromCache = false;
+    let baseItem = null;
+    if (cached) {
+      const cachedItem = cached.find(x => String(x.id) === String(id));
+      if (cachedItem) {
+        baseItem = cachedItem;
+        renderItem(cachedItem);
+        renderedFromCache = true;
+        document.getElementById("statusLine").textContent = "Loaded from cache… updating";
+        renderRecommendations(cachedItem, cached);
+      }
+    }
+
+    // Load fresh
+    try {
+      const data = await fetchCatalogFresh();
+      const item = data.find(x => String(x.id) === String(id));
+      if (!item) {
+        document.getElementById("statusLine").textContent = "Not in catalog yet — showing reader only.";
+        document.getElementById("recoWrap").textContent = "No recommendations available.";
+        return;
+      }
+      baseItem = item;
+      renderItem(item);
+      document.getElementById("statusLine").textContent = "Updated";
+      renderRecommendations(item, data);
+    } catch (e) {
+      console.warn("Catalog fetch failed:", e);
+      document.getElementById("statusLine").textContent = renderedFromCache
+        ? "Loaded from cache (update unavailable)."
+        : "Catalog unavailable — showing reader only.";
+      if (!renderedFromCache) document.getElementById("recoWrap").textContent = "Recommendations unavailable.";
+    }
   })();
 </script>
 
-
-  <div id="toast"
-       class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-sm px-4 py-2 rounded shadow-lg">
-    Saved
-  </div>
 </body>
 </html>

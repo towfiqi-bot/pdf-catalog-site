@@ -4,10 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>dotdock — Compare</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+
   <style>
     body { font-family: 'Inter', system-ui, -apple-system, Segoe UI, sans-serif; }
     .brand-title { font-family: 'Playfair Display', serif; letter-spacing: 0.03em; }
@@ -16,198 +18,163 @@
 
 <body class="bg-gray-50">
   <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
-      <a href="index.html" class="text-sm font-semibold text-amber-700 hover:underline">← Back to dotdock</a>
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center gap-4">
+      <a href="index.html" class="text-sm font-semibold text-amber-700 hover:underline">← Back to catalog</a>
+      <div class="brand-title text-xl font-semibold text-gray-900">dotdock</div>
       <div class="ml-auto flex flex-wrap gap-2">
-        <button id="swapBtn" class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">Swap</button>
-        <button id="copyBtn" class="px-3 py-2 text-sm bg-amber-600 text-white rounded hover:bg-amber-700">Copy compare link</button>
+        <button id="swapBtn" class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">Swap</button>
+        <a id="openLeftReport" class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50" href="#" target="_blank" rel="noopener">Left report</a>
+        <a id="openRightReport" class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50" href="#" target="_blank" rel="noopener">Right report</a>
       </div>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-4 py-6">
-    <div id="errorBox" class="hidden bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 mb-6">
-      <div class="font-semibold">Error</div>
-      <div id="errorText" class="mt-1 text-sm"></div>
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    <div id="missing" class="hidden bg-white border border-gray-200 rounded-lg p-4 text-sm text-gray-700">
+      Missing compare IDs. Go back to <a class="text-amber-700 font-semibold underline" href="index.html">catalog</a> and select two reports using “Compare”.
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Left -->
-      <section class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-        <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between gap-3">
-          <div class="min-w-0">
-            <div class="text-xs text-gray-500">Left</div>
-            <div id="tLeft" class="font-semibold text-gray-900 truncate">Loading…</div>
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <a id="leftReport" class="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50" href="#">Report</a>
-            <a id="leftView" target="_blank" rel="noopener" class="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50" href="#">View</a>
-            <button id="leftNb" class="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50">NotebookLM</button>
-          </div>
-        </div>
-        <iframe id="frameLeft" class="w-full" style="height:70vh;" title="Left PDF" loading="lazy"></iframe>
-      </section>
-
-      <!-- Right -->
-      <section class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-        <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between gap-3">
-          <div class="min-w-0">
-            <div class="text-xs text-gray-500">Right</div>
-            <div id="tRight" class="font-semibold text-gray-900 truncate">Loading…</div>
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <a id="rightReport" class="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50" href="#">Report</a>
-            <a id="rightView" target="_blank" rel="noopener" class="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50" href="#">View</a>
-            <button id="rightNb" class="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50">NotebookLM</button>
-          </div>
-        </div>
-        <iframe id="frameRight" class="w-full" style="height:70vh;" title="Right PDF" loading="lazy"></iframe>
-      </section>
+    <!-- Mobile tab switcher -->
+    <div id="mobileTabs" class="lg:hidden mb-3 flex gap-2">
+      <button id="tabLeft" class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 font-semibold">Left</button>
+      <button id="tabRight" class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">Right</button>
     </div>
 
-    <!-- Notes -->
-    <section class="mt-6 bg-white border border-gray-200 rounded-lg p-4">
-      <div class="flex items-center justify-between gap-3">
-        <div>
-          <div class="text-sm font-semibold text-gray-900">Comparison notes</div>
-          <div class="text-xs text-gray-500">Saved locally for this pair of reports.</div>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Left PDF -->
+      <section id="leftCol" class="lg:col-span-6">
+        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+          <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+            <div class="text-sm font-semibold text-gray-800 truncate" id="leftTitle">Left</div>
+            <div class="flex gap-2">
+              <a id="openLeftView" class="px-2 py-1 text-xs font-semibold bg-amber-600 text-white rounded hover:bg-amber-700" href="#" target="_blank" rel="noopener">View</a>
+            </div>
+          </div>
+          <iframe id="leftFrame" class="w-full" style="height: 70vh;" title="Left PDF" loading="lazy"></iframe>
         </div>
-        <button id="clearNotesBtn" class="text-xs font-semibold text-gray-500 hover:underline">Clear notes</button>
-      </div>
+      </section>
 
-      <textarea id="notes" class="mt-3 w-full border rounded px-3 py-2 text-sm" rows="6"
-                placeholder="Write differences, key takeaways, etc."></textarea>
+      <!-- Right PDF -->
+      <section id="rightCol" class="lg:col-span-6">
+        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+          <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+            <div class="text-sm font-semibold text-gray-800 truncate" id="rightTitle">Right</div>
+            <div class="flex gap-2">
+              <a id="openRightView" class="px-2 py-1 text-xs font-semibold bg-amber-600 text-white rounded hover:bg-amber-700" href="#" target="_blank" rel="noopener">View</a>
+            </div>
+          </div>
+          <iframe id="rightFrame" class="w-full" style="height: 70vh;" title="Right PDF" loading="lazy"></iframe>
+        </div>
+      </section>
 
-      <div id="savedLine" class="mt-2 text-xs text-gray-500"></div>
-    </section>
+      <!-- Notes -->
+      <section class="lg:col-span-12">
+        <div class="bg-white border border-gray-200 rounded-lg p-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-semibold text-gray-800">Comparison notes</h2>
+            <div class="text-xs text-gray-500">Saved locally per pair (no login)</div>
+          </div>
+
+          <textarea id="notes" rows="5"
+                    class="mt-3 w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                    placeholder="Write your notes for this comparison…"></textarea>
+
+          <div class="mt-2 text-xs text-gray-500">
+            Tip: write in bullets like “Left: … / Right: … / Key difference: …”.
+          </div>
+        </div>
+      </section>
+    </div>
   </main>
 
-  <div id="toast"
-       class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-sm px-4 py-2 rounded shadow-lg">
-    Copied
-  </div>
+  <div id="toast" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] bg-gray-900 text-white text-sm px-4 py-2 rounded shadow-lg"></div>
 
 <script>
   function qs(name){ return new URLSearchParams(location.search).get(name) || ""; }
   function drivePreviewUrl(fileId){ return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`; }
-  function reportUrl(fileId, titleHint){
-    const base = `report.html?id=${encodeURIComponent(fileId)}`;
-    return titleHint ? `${base}&t=${encodeURIComponent(titleHint)}` : base;
-  }
-  function viewerUrl(fileId, titleHint){
-    const base = `view.html?id=${encodeURIComponent(fileId)}`;
-    return titleHint ? `${base}&t=${encodeURIComponent(titleHint)}` : base;
-  }
-  function driveShareUrl(fileId){
-    return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view?usp=sharing`;
-  }
+  function viewUrl(fileId){ return `report.html?id=${encodeURIComponent(fileId)}&view=1`; }
+  function reportUrl(fileId){ return `report.html?id=${encodeURIComponent(fileId)}`; }
 
   function showToast(msg){
     const t = document.getElementById("toast");
     t.textContent = msg;
     t.classList.remove("hidden");
-    clearTimeout(showToast._t);
-    showToast._t = setTimeout(() => t.classList.add("hidden"), 1400);
+    clearTimeout(showToast._to);
+    showToast._to = setTimeout(() => t.classList.add("hidden"), 2200);
   }
 
-  function pairKey(a, b){
+  function normPair(a,b){
     const x = String(a), y = String(b);
-    const s = [x, y].sort();
-    return `dotdock_compare_notes_v1:${s[0]}::${s[1]}`;
+    return (x < y) ? [x,y] : [y,x];
   }
 
   const leftId = qs("left");
   const rightId = qs("right");
-  const t1 = qs("t1");
-  const t2 = qs("t2");
-
-  const errorBox = document.getElementById("errorBox");
-  const errorText = document.getElementById("errorText");
-
-  function setError(msg){
-    errorBox.classList.remove("hidden");
-    errorText.textContent = msg;
-  }
 
   if (!leftId || !rightId) {
-    setError("Missing left/right ids in URL. Go back to the catalog and select two reports to compare.");
+    document.getElementById("missing").classList.remove("hidden");
   } else {
-    document.getElementById("tLeft").textContent = t1 || "Report";
-    document.getElementById("tRight").textContent = t2 || "Report";
-    document.title = `dotdock — Compare`;
+    document.getElementById("leftFrame").src = drivePreviewUrl(leftId);
+    document.getElementById("rightFrame").src = drivePreviewUrl(rightId);
 
-    document.getElementById("frameLeft").src = drivePreviewUrl(leftId);
-    document.getElementById("frameRight").src = drivePreviewUrl(rightId);
+    document.getElementById("openLeftView").href = viewUrl(leftId);
+    document.getElementById("openRightView").href = viewUrl(rightId);
 
-    document.getElementById("leftReport").href = reportUrl(leftId, t1);
-    document.getElementById("rightReport").href = reportUrl(rightId, t2);
+    document.getElementById("openLeftReport").href = reportUrl(leftId);
+    document.getElementById("openRightReport").href = reportUrl(rightId);
 
-    document.getElementById("leftView").href = viewerUrl(leftId, t1);
-    document.getElementById("rightView").href = viewerUrl(rightId, t2);
+    // Titles show IDs (since compare page doesn't load catalog). You can improve later by passing lt/rt in query params.
+    document.getElementById("leftTitle").textContent = "Left: " + leftId;
+    document.getElementById("rightTitle").textContent = "Right: " + rightId;
 
-    document.getElementById("leftNb").addEventListener("click", async () => {
-      const url = driveShareUrl(leftId);
-      try { await navigator.clipboard.writeText(url); showToast("Left link copied for NotebookLM"); } catch { showToast("Copy failed"); }
-      window.open("https://notebooklm.google.com/", "_blank", "noopener");
+    const pair = normPair(leftId, rightId);
+    const NOTES_KEY = "dotdock_compare_notes_v1::" + pair[0] + "::" + pair[1];
+
+    const notes = document.getElementById("notes");
+    try { notes.value = localStorage.getItem(NOTES_KEY) || ""; } catch {}
+
+    let to = null;
+    notes.addEventListener("input", () => {
+      clearTimeout(to);
+      to = setTimeout(() => {
+        try { localStorage.setItem(NOTES_KEY, notes.value || ""); } catch {}
+        showToast("Notes saved.");
+      }, 400);
     });
-    document.getElementById("rightNb").addEventListener("click", async () => {
-      const url = driveShareUrl(rightId);
-      try { await navigator.clipboard.writeText(url); showToast("Right link copied for NotebookLM"); } catch { showToast("Copy failed"); }
-      window.open("https://notebooklm.google.com/", "_blank", "noopener");
+
+    // Swap
+    document.getElementById("swapBtn").addEventListener("click", () => {
+      const url = new URL(location.href);
+      url.searchParams.set("left", rightId);
+      url.searchParams.set("right", leftId);
+      location.href = url.toString();
     });
 
-    // Notes
-    const key = pairKey(leftId, rightId);
-    const notesEl = document.getElementById("notes");
-    const savedLine = document.getElementById("savedLine");
-    const clearNotesBtn = document.getElementById("clearNotesBtn");
+    // Mobile tabs
+    const leftCol = document.getElementById("leftCol");
+    const rightCol = document.getElementById("rightCol");
+    const tabLeft = document.getElementById("tabLeft");
+    const tabRight = document.getElementById("tabRight");
 
-    function loadNotes(){
-      try { notesEl.value = localStorage.getItem(key) || ""; } catch {}
+    function showLeft(){
+      leftCol.classList.remove("hidden");
+      rightCol.classList.add("hidden");
+      tabLeft.classList.add("font-semibold");
+      tabRight.classList.remove("font-semibold");
     }
-    function saveNotes(){
-      try { localStorage.setItem(key, notesEl.value || ""); } catch {}
-      savedLine.textContent = "Saved: " + new Date().toLocaleString();
+    function showRight(){
+      rightCol.classList.remove("hidden");
+      leftCol.classList.add("hidden");
+      tabRight.classList.add("font-semibold");
+      tabLeft.classList.remove("font-semibold");
     }
 
-    loadNotes();
-    savedLine.textContent = notesEl.value ? ("Loaded: " + new Date().toLocaleString()) : "";
+    // Default on mobile: left
+    if (window.matchMedia("(max-width: 1023px)").matches) showLeft();
 
-    let timer = null;
-    notesEl.addEventListener("input", () => {
-      clearTimeout(timer);
-      timer = setTimeout(saveNotes, 300);
-    });
-
-    clearNotesBtn.addEventListener("click", () => {
-      notesEl.value = "";
-      saveNotes();
-      showToast("Notes cleared");
-    });
+    tabLeft.addEventListener("click", showLeft);
+    tabRight.addEventListener("click", showRight);
   }
-
-  // Swap
-  document.getElementById("swapBtn").addEventListener("click", () => {
-    if (!leftId || !rightId) return;
-    const u = new URL(location.href);
-    u.searchParams.set("left", rightId);
-    u.searchParams.set("right", leftId);
-    if (t1 || t2) {
-      u.searchParams.set("t1", t2);
-      u.searchParams.set("t2", t1);
-    }
-    location.href = u.toString();
-  });
-
-  // Copy link
-  document.getElementById("copyBtn").addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(location.href);
-      showToast("Compare link copied");
-    } catch {
-      alert("Copy failed. You can copy from the address bar.");
-    }
-  });
 </script>
 </body>
 </html>
