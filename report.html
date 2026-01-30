@@ -28,7 +28,8 @@
         </a>
         <div>
           <h1 class="brand-title text-2xl md:text-3xl font-semibold text-gray-900">dotdock</h1>
-          <p class="brand-tagline text-amber-600 mt-1">Report</p>
+          <p class="brand-tagline text-amber-600 mt-1">Find your dots. Feed your curiosity.</p>
+          <p class="text-xs text-gray-500 mt-1 tracking-[0.14em] uppercase">Report</p>
         </div>
       </div>
     </div>
@@ -481,7 +482,7 @@
     });
   }
 
-  async function openInNotebookLM(fileId) {
+  async async function openInNotebookLM(fileId) {
     const link = driveShareUrl(fileId);
     try {
       await navigator.clipboard.writeText(link);

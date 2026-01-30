@@ -41,31 +41,42 @@
   </header>
 
   <!-- Main layout -->
-  <main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-12 gap-6">
+  
+<main class="max-w-6xl mx-auto px-4 py-6" id="top">
+  <!-- Top search -->
+  <section class="mb-6">
+    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+      <div class="max-w-3xl mx-auto">
+        <div class="flex items-center gap-3 bg-white border border-gray-300 rounded-full px-5 py-3 shadow-sm focus-within:ring-2 focus-within:ring-amber-200">
+          <svg class="h-5 w-5 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="M21 21l-4.3-4.3"></path>
+          </svg>
+          <input id="searchInput" type="text"
+                 class="w-full outline-none text-base md:text-lg"
+                 placeholder="Search reports by title or summary…" />
+          <button id="searchBtn"
+                  class="shrink-0 px-5 py-2 text-sm font-semibold uppercase tracking-wide bg-amber-600 text-white rounded-full hover:bg-amber-700">
+            Search
+          </button>
+        </div>
+        <p class="mt-2 text-xs text-gray-500 text-center">
+          Searches <span class="font-semibold">title</span> + <span class="font-semibold">summary</span> (not inside PDF pages).
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+
     <!-- Sidebar -->
-    <aside class="md:col-span-3 space-y-6 md:sticky md:top-28 self-start">
+    <aside class="md:col-span-3 space-y-6 md:sticky md:top-28 self-start md:max-h-[calc(100vh-7rem)] md:overflow-auto md:pr-1">
       <!-- Keywords + Filters -->
       <section class="bg-white rounded-lg border border-gray-200 p-4">
         <h2 class="text-sm font-semibold text-gray-700 mb-2">Keywords</h2>
 
         <!-- Stronger search box -->
-        <div class="flex items-center gap-2 bg-white border border-gray-300 rounded-full px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-amber-200">
-          <svg class="h-4 w-4 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="7"></circle>
-            <path d="M21 21l-4.3-4.3"></path>
-          </svg>
-          <input id="searchInput" type="text"
-                 class="w-full outline-none text-sm"
-                 placeholder="Search title or summary…" />
-          <button id="searchBtn"
-                  class="shrink-0 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide bg-amber-600 text-white rounded-full hover:bg-amber-700">
-            Search
-          </button>
-        </div>
-
-        <p class="mt-2 text-[11px] text-gray-500">
-          Searches <span class="font-semibold">title</span> + <span class="font-semibold">summary</span> (not inside PDF pages).
-        </p>
+        <p class="text-xs text-gray-500">Use the search bar above to find reports.</p>
 
         <div class="my-3 border-t border-gray-200"></div>
 
@@ -186,6 +197,7 @@
         © Towfiq
       </footer>
     </section>
+  </div>
   </main>
 
   <button id="backToTop"
@@ -201,8 +213,8 @@
     <div class="absolute inset-0 bg-black/60" id="pdfModalBackdrop"></div>
 
     <!-- Full screen on mobile, padded on desktop -->
-    <div class="relative mx-auto h-full p-0 md:p-6 flex flex-col">
-      <div class="bg-white shadow-xl overflow-hidden flex flex-col h-full rounded-none md:rounded-lg md:max-w-6xl md:mx-auto">
+    <div class="relative mx-auto h-full p-0 md:p-3 flex flex-col">
+      <div class="bg-white shadow-xl overflow-hidden flex flex-col h-full rounded-none md:rounded-lg md:max-w-none md:w-[96vw] md:h-[92vh] md:mx-auto">
         <div class="flex items-center gap-3 px-3 md:px-4 py-2 border-b border-gray-200">
           <div class="font-semibold text-gray-900 truncate" id="pdfModalTitle">Report</div>
           <div class="ml-auto flex gap-2">
@@ -314,7 +326,7 @@
   function readingSet(arr) {
     try { localStorage.setItem(READING_KEY, JSON.stringify(Array.from(new Set(arr.map(String))))); } catch {}
   }
-  function toggleReading(id) {
+  function toggleReadingItem(id) {
     const cur = readingGet();
     const sid = String(id);
     const next = cur.includes(sid) ? cur.filter(x => x !== sid) : [sid, ...cur];
@@ -545,7 +557,7 @@
               <span>${year}</span>
               <span class="text-gray-300">•</span>
               <span>${escapeHtml(statusLabel)}</span>
-              ${pinned ? `<span class="ml-auto text-amber-600" title="Pinned">★</span>` : ""}
+              ${pinned ? `<span class="ml-auto text-amber-600 flex items-center gap-1" title="Pinned"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 2l-1 1v5.2l4.6 4.6-1.4 1.4L11 9.6V3l-1-1h4zM5 14l5 5v3H8v-2.2L3.4 15.4 5 14z"/></svg><span class="text-xs font-semibold">Pinned</span></span>` : ""}
             </div>
 
             <a href="${reportPageUrl(item.id, item.title || "")}"
@@ -573,7 +585,7 @@
 
               <button data-action="pin" data-id="${escapeHtml(item.id)}"
                  class="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50">
-                ${escapeHtml(pinLabel)}
+                <span class="inline-flex items-center gap-1"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 2l-1 1v5.2l4.6 4.6-1.4 1.4L11 9.6V3l-1-1h4zM5 14l5 5v3H8v-2.2L3.4 15.4 5 14z"/></svg><span>${escapeHtml(pinLabel)}</span></span>
               </button>
 
               <a href="${viewPageUrl(item.id, item.title || "")}" target="_blank" rel="noopener"
@@ -703,7 +715,7 @@
   }
 
   // --------- NotebookLM UX ----------
-  async function openInNotebookLM(fileId) {
+  async async function openInNotebookLM(fileId) {
     const link = driveShareUrl(fileId);
     try {
       await navigator.clipboard.writeText(link);
@@ -803,15 +815,15 @@
     });
 
     // Reading list toggle
-    toggleReading.addEventListener("click", () => {
+    toggleReadingBtn.addEventListener("click", () => {
       const wrap = document.getElementById("readingListWrap");
       const isHidden = wrap.classList.contains("hidden");
       if (isHidden) {
         wrap.classList.remove("hidden");
-        toggleReading.textContent = "Hide";
+        toggleReadingBtn.textContent = "Hide";
       } else {
         wrap.classList.add("hidden");
-        toggleReading.textContent = "Show";
+        toggleReadingBtn.textContent = "Show";
       }
     });
     clearReading.addEventListener("click", () => {
@@ -871,7 +883,7 @@
       if (!id) return;
 
       if (action === "modal") openPdfModalById(id);
-      if (action === "reading") toggleReading(id);
+      if (action === "reading") toggleReadingItem(id);
       if (action === "compare") toggleCompare(id);
       if (action === "pin") {
         const pinned = wsPinned(id);
@@ -889,7 +901,7 @@
       const id = btn.getAttribute("data-id");
       if (!id) return;
       if (action === "modal") openPdfModalById(id);
-      if (action === "reading") toggleReading(id);
+      if (action === "reading") toggleReadingItem(id);
       if (action === "compare") toggleCompare(id);
     });
 
