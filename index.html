@@ -41,7 +41,7 @@
   </header>
 
   <!-- Main layout -->
-  
+
 <main class="max-w-6xl mx-auto px-4 py-6" id="top">
   <!-- Top search -->
   <section class="mb-6">
@@ -71,17 +71,12 @@
 
     <!-- Sidebar -->
     <aside class="md:col-span-3 space-y-6 md:sticky md:top-28 self-start md:max-h-[calc(100vh-7rem)] md:overflow-auto md:pr-1">
-      <!-- Keywords + Filters -->
+      <!-- Filters -->
       <section class="bg-white rounded-lg border border-gray-200 p-4">
-        <h2 class="text-sm font-semibold text-gray-700 mb-2">Keywords</h2>
-
-        <!-- Stronger search box -->
-        <p class="text-xs text-gray-500">Use the search bar above to find reports.</p>
-
-        <div class="my-3 border-t border-gray-200"></div>
+        <h2 class="text-sm font-semibold text-gray-700 mb-2">Filters</h2>
 
         <div class="space-y-4">
-          <!-- Category filters (inside Keywords card) -->
+          <!-- Category filters -->
           <div>
             <div class="flex items-center justify-between">
               <h3 class="text-xs font-semibold text-gray-700">Category</h3>
@@ -90,7 +85,7 @@
             <div id="categoryFilters" class="hidden mt-2 space-y-1 text-sm max-h-56 overflow-y-auto"></div>
           </div>
 
-          <!-- Year filters (inside Keywords card) -->
+          <!-- Year filters -->
           <div>
             <div class="flex items-center justify-between">
               <h3 class="text-xs font-semibold text-gray-700">Year</h3>
@@ -99,6 +94,19 @@
             <div id="yearFilters" class="hidden mt-2 space-y-1 text-sm max-h-56 overflow-y-auto"></div>
           </div>
         </div>
+      </section>
+
+      <!-- Newsletter -->
+      <section class="bg-white rounded-lg border border-gray-200 p-4">
+        <button id="newsletterBtn" class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-blue-300 text-blue-700 font-semibold hover:bg-blue-50">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 4h16v16H4z" opacity="0"/>
+            <path d="M4 4h16v16H4z"/>
+            <path d="M22 6l-10 7L2 6"/>
+          </svg>
+          <span>Join the free newsletter</span>
+        </button>
+        <div class="mt-2 text-[11px] text-gray-500">We’ll set the signup link later.</div>
       </section>
 
       <!-- Refresh list -->
@@ -189,7 +197,21 @@
 
     <!-- Catalogue -->
     <section class="md:col-span-9">
-      <p id="resultsInfo" class="text-sm text-gray-600 mb-3">Loading publications…</p>
+      <div class="flex items-center justify-between gap-3 mb-3">
+        <p id="resultsInfo" class="text-sm text-gray-600">Loading publications…</p>
+        <div class="flex items-center gap-2">
+          <label for="sortSelect" class="text-xs text-gray-500 hidden sm:block">Sort</label>
+          <select id="sortSelect" class="border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white">
+            <option value="newest">Sort (Default - Newest)</option>
+            <option value="upvoted">Most Upvoted</option>
+            <option value="name_az">Sort By Name (A-Z)</option>
+            <option value="name_za">Sort By Name (Z-A)</option>
+            <option value="added_newest">Date Added (Newest-Oldest)</option>
+            <option value="added_oldest">Date Added (Oldest-Newest)</option>
+          </select>
+        </div>
+      </div>
+
       <div id="cardsContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
       <div id="infiniteSentinel" class="h-1"></div>
 
@@ -250,6 +272,10 @@
   const READING_KEY = "dotdock_reading_list_v1";
   const WORKSPACE_KEY = "dotdock_workspace_v1";
   const COMPARE_KEY = "dotdock_compare_v1";
+  const VOTE_KEY = "dotdock_votes_v1";
+
+  // Set this later (Substack / Beehiiv / Mailchimp signup URL)
+  const NEWSLETTER_URL = "";
 
   const state = {
     allItems: [],
@@ -260,7 +286,8 @@
     page: 1,
     pageSize: 50,
     wsStatusFilter: "all",
-    wsTagFilter: ""
+    wsTagFilter: "",
+    sortMode: "newest"
   };
 
   // --------- Utilities ----------
@@ -392,6 +419,30 @@
     return compareGet().includes(String(id));
   }
 
+  // --------- Votes (local-only) ----------
+  function votesGetAll() {
+    try {
+      const raw = localStorage.getItem(VOTE_KEY);
+      const obj = raw ? JSON.parse(raw) : {};
+      return (obj && typeof obj === "object") ? obj : {};
+    } catch { return {}; }
+  }
+  function votesSetAll(obj) {
+    try { localStorage.setItem(VOTE_KEY, JSON.stringify(obj || {})); } catch {}
+  }
+  function voteCount(id) {
+    const obj = votesGetAll();
+    return Number(obj[String(id)] || 0) || 0;
+  }
+  function upvote(id) {
+    const obj = votesGetAll();
+    const key = String(id);
+    const next = (Number(obj[key] || 0) || 0) + 1;
+    obj[key] = next;
+    votesSetAll(obj);
+    return next;
+  }
+
   // --------- Data loading ----------
   async function loadData(forceFresh) {
     if (!forceFresh) {
@@ -472,7 +523,7 @@
       });
   }
 
-  function applyFilters() {
+  function applyFilters(keepPage = false) {
     const q = state.searchQuery.toLowerCase();
     const tagNeedles = state.wsTagFilter
       .split(",")
@@ -499,15 +550,36 @@
       return matchesText && matchesCat && matchesYear && matchesStatus && matchesTags;
     });
 
-    // Pinned first, then newest modified
+    function titleKey(it) {
+      return String(it.title || "").toLowerCase();
+    }
+
+    function compareByMode(a, b) {
+      switch (state.sortMode) {
+        case "upvoted":
+          return (voteCount(b.id) - voteCount(a.id)) || ((b.modified || 0) - (a.modified || 0));
+        case "name_az":
+          return titleKey(a).localeCompare(titleKey(b));
+        case "name_za":
+          return titleKey(b).localeCompare(titleKey(a));
+        case "added_oldest":
+          return (a.modified || 0) - (b.modified || 0);
+        case "added_newest":
+        case "newest":
+        default:
+          return (b.modified || 0) - (a.modified || 0);
+      }
+    }
+
+    // Pinned items always stay on top; sort within pinned/unpinned by selected mode
     state.filteredItems.sort((a,b) => {
       const ap = wsPinned(a.id) ? 1 : 0;
       const bp = wsPinned(b.id) ? 1 : 0;
       if (ap !== bp) return bp - ap;
-      return (b.modified || 0) - (a.modified || 0);
+      return compareByMode(a, b);
     });
 
-    state.page = 1;
+    if (!keepPage) state.page = 1;
     render();
   }
 
@@ -530,6 +602,8 @@
     const compareLabel = isCompared(item.id) ? "Compared" : "Compare";
     const pinLabel = pinned ? "Unpin" : "Pin";
 
+    const votes = voteCount(item.id);
+
     return `
       <article class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow transition">
         <div class="grid grid-cols-1 sm:grid-cols-[160px,1fr] gap-4">
@@ -539,6 +613,15 @@
                 <img src="${thumb}" alt="${title}" loading="lazy" decoding="async" referrerpolicy="no-referrer"
                      onerror="this.onerror=null;this.src='https://via.placeholder.com/260x360?text=PDF';"
                      class="w-full h-auto object-cover cursor-pointer group-hover:opacity-80 transition">
+              </button>
+
+              <button type="button" data-action="upvote" data-id="${escapeHtml(item.id)}"
+                class="absolute bottom-2 right-2 z-30 bg-white/95 border border-gray-200 rounded-lg px-2 py-2 shadow hover:bg-white"
+                title="Upvote (saved in your browser)" aria-label="Upvote">
+                <div class="flex flex-col items-center leading-none">
+                  <span class="text-sm">▲</span>
+                  <span class="mt-0.5 text-xs font-semibold">${votes}</span>
+                </div>
               </button>
 
               ${summary ? `
@@ -560,7 +643,7 @@
               ${pinned ? `<span class="ml-auto text-amber-600 flex items-center gap-1" title="Pinned"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 2l-1 1v5.2l4.6 4.6-1.4 1.4L11 9.6V3l-1-1h4zM5 14l5 5v3H8v-2.2L3.4 15.4 5 14z"/></svg><span class="text-xs font-semibold">Pinned</span></span>` : ""}
             </div>
 
-            <a href="${reportPageUrl(item.id, item.title || "")}"
+            <a href="${reportPageUrl(item.id, item.title || "") }"
                class="mt-1 text-base md:text-lg font-semibold text-amber-700 hover:underline">
               ${title}
             </a>
@@ -766,6 +849,8 @@
     const wsTagFilter = document.getElementById("wsTagFilter");
     const exportWsBtn = document.getElementById("exportWorkspaceBtn");
     const clearCompareBtn = document.getElementById("clearCompareBtn");
+    const sortSelect = document.getElementById("sortSelect");
+    const newsletterBtn = document.getElementById("newsletterBtn");
 
     // Modal close handlers
     document.getElementById("pdfModalClose").addEventListener("click", closePdfModal);
@@ -782,6 +867,21 @@
       const el = document.getElementById("yearFilters");
       const open = el.classList.toggle("hidden") === false;
       toggleYears.textContent = open ? "Hide" : "Show";
+    });
+
+    // Sort
+    sortSelect.addEventListener("change", () => {
+      state.sortMode = sortSelect.value || "newest";
+      applyFilters(true);
+    });
+
+    // Newsletter
+    newsletterBtn.addEventListener("click", () => {
+      if (!NEWSLETTER_URL) {
+        showToast("Newsletter link not set yet.");
+        return;
+      }
+      window.open(NEWSLETTER_URL, "_blank", "noopener");
     });
 
     // Search
@@ -892,6 +992,12 @@
         applyFilters();
       }
       if (action === "notebooklm") openInNotebookLM(id);
+      if (action === "upvote") {
+        const n = upvote(id);
+        showToast("Upvoted (local): " + n);
+        if (state.sortMode === "upvoted") applyFilters(true);
+        else render();
+      }
     });
 
     document.getElementById("readingListWrap").addEventListener("click", (e) => {
@@ -938,6 +1044,9 @@
         document.getElementById("resultsInfo").textContent = "Error loading data: " + e.message;
       }
     }
+
+    // Set default sort UI
+    sortSelect.value = state.sortMode;
 
     setupInfiniteScroll();
   });
