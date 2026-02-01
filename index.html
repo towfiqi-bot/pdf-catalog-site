@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>dotdock — Find your dots. Feed your curiosity</title>
 
+  <!-- Font + Tailwind CDN -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
@@ -16,264 +17,88 @@
     .brand-tagline { font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; }
     .tooltip-summary { pointer-events: none; }
     .group:hover .tooltip-summary { pointer-events: auto; }
-
-    /* Help dropdown */
-    .dd-shadow { box-shadow: 0 12px 30px rgba(0,0,0,0.10); }
-
-    /* Modal smooth */
-    .modal-anim { transform: translateY(6px); opacity: 0; transition: all .18s ease; }
-    .modal-open .modal-anim { transform: translateY(0); opacity: 1; }
-
-    /* Make sidebar scroll nicely on desktop */
-    @media (min-width: 768px) {
-      aside::-webkit-scrollbar { width: 10px; }
-      aside::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 999px; }
-      aside::-webkit-scrollbar-track { background: transparent; }
-    }
   </style>
 </head>
 
-<body class="bg-gray-50" id="top">
+<body class="bg-gray-50">
   <!-- Header -->
   <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-4 py-4">
-      <div class="flex flex-col gap-3">
-        <div class="flex items-center gap-4">
-          <a href="index.html" class="block" aria-label="Back to top">
-            <img src="logo.png"
-                 alt="dotdock logo"
-                 class="h-12 w-12 md:h-16 md:w-16 rounded-full object-cover shadow-md border border-gray-200 bg-white">
-          </a>
+      <div class="flex items-center gap-4">
+        <a href="#top" class="block">
+          <img src="logo.png"
+               alt="DocDock logo"
+               class="h-12 w-12 md:h-16 md:w-16 rounded-full object-cover shadow-md border border-gray-200 bg-white">
+        </a>
 
-          <div class="flex-1">
-            <div class="flex flex-col md:flex-row md:items-baseline md:justify-between gap-2">
-              <div>
-                <h1 class="brand-title text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight">dotdock</h1>
-                <p class="brand-tagline mt-1 text-amber-600 text-[10px] md:text-xs font-semibold uppercase tracking-[0.14em] not-italic">
-                  Find your dots. Feed your curiosity
-                </p>
-              </div>
-
-              <!-- Top menu -->
-              <nav class="flex items-center gap-5 text-sm font-medium text-gray-700">
-                <a id="navHome" href="index.html" class="hover:text-amber-700">Home</a>
-                <a id="navToday" href="index.html?tab=today" class="hover:text-amber-700">Added Today</a>
-
-                <div class="relative">
-                  <button id="helpBtn" class="inline-flex items-center gap-1 hover:text-amber-700">
-                    Help
-                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                      <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
-                    </svg>
-                  </button>
-
-                  <div id="helpDropdown" class="hidden absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-lg dd-shadow overflow-hidden">
-                    <button data-openmodal="glossary" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">Glossary</button>
-                    <button data-openmodal="faq" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">FAQ</button>
-                    <div class="border-t border-gray-200"></div>
-                    <button data-openmodal="submit" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">Submit a PDF</button>
-                  </div>
-                </div>
-              </nav>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
+        <div>
+  <h1 class="brand-title text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight">
+    dotdock
+  </h1>
+  <p class="brand-tagline mt-1 text-amber-600 text-[10px] md:text-xs font-semibold uppercase tracking-[0.14em] not-italic">
+    Find your dots. Feed your curiosity
+  </p>
+</div>
   </header>
 
   <!-- Main layout -->
-  <main class="max-w-6xl mx-auto px-4 py-6" id="top">
-    <!-- Top search -->
-    <section class="mb-6">
-      <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-        <div class="max-w-3xl mx-auto">
-          <div class="flex items-center gap-3 bg-white border border-gray-300 rounded-full px-5 py-3 shadow-sm focus-within:ring-2 focus-within:ring-amber-200">
-            <svg class="h-5 w-5 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="7"></circle>
-              <path d="M21 21l-4.3-4.3"></path>
-            </svg>
-            <input id="searchInput" type="text"
-                   class="w-full outline-none text-base md:text-lg"
-                   placeholder="Search reports by title or summary… (try: AI + Education)" />
-            <button id="searchBtn"
-                    class="shrink-0 px-5 py-2 text-sm font-semibold uppercase tracking-wide bg-amber-600 text-white rounded-full hover:bg-amber-700">
-              Search
-            </button>
-          </div>
-          <p class="mt-2 text-xs text-gray-500 text-center">
-            Strong search across <span class="font-semibold">title</span> + <span class="font-semibold">summary</span> (not inside PDF pages yet).
-          </p>
+  <main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-12 gap-6">
+    <!-- Sidebar -->
+    <aside class="md:col-span-3 space-y-6 md:sticky md:top-28 self-start">
+      <!-- Keyword search -->
+      <section class="bg-white rounded-lg border border-gray-200 p-4">
+        <h2 class="text-sm font-semibold text-gray-700 mb-2">Keywords</h2>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <input id="searchInput" type="text"
+                 class="flex-1 border rounded px-2 py-1 text-sm w-full"
+                 placeholder="Title, summary..." />
+          <button id="searchBtn"
+                  class="shrink-0 px-3 py-1 text-sm bg-amber-600 text-white rounded hover:bg-amber-700 w-full sm:w-auto sm:min-w-[84px]">
+            Search
+          </button>
         </div>
-      </div>
-    </section>
-
-    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-
-      <!-- Sidebar -->
-      <aside class="md:col-span-3 space-y-6 md:sticky md:top-28 self-start md:max-h-[calc(100vh-7rem)] md:overflow-auto md:pr-1">
-
-        <!-- Filters -->
-        <section class="bg-white rounded-lg border border-gray-200 p-4">
-          <h2 class="text-sm font-semibold text-gray-700 mb-2">Filters</h2>
-
-          <div class="space-y-4">
-
-            <!-- Topics (auto from titles) -->
-            <div>
-              <div class="flex items-center justify-between">
-                <h3 class="text-xs font-semibold text-gray-700">Topics</h3>
-                <button id="toggleTopics" class="text-xs font-semibold text-amber-700 hover:underline">Show</button>
-              </div>
-              <div id="topicFilters" class="hidden mt-2 text-sm max-h-56 overflow-y-auto grid grid-cols-2 gap-x-4 gap-y-1"></div>
-              <div class="mt-2 text-[11px] text-gray-500">Auto-generated from report titles.</div>
-            </div>
-
-            <!-- Category filters -->
-            <div>
-              <div class="flex items-center justify-between">
-                <h3 class="text-xs font-semibold text-gray-700">Category</h3>
-                <button id="toggleCats" class="text-xs font-semibold text-amber-700 hover:underline">Show</button>
-              </div>
-              <div id="categoryFilters" class="hidden mt-2 space-y-1 text-sm max-h-56 overflow-y-auto"></div>
-            </div>
-
-            <!-- Year filters -->
-            <div>
-              <div class="flex items-center justify-between">
-                <h3 class="text-xs font-semibold text-gray-700">Year</h3>
-                <button id="toggleYears" class="text-xs font-semibold text-amber-700 hover:underline">Show</button>
-              </div>
-              <div id="yearFilters" class="hidden mt-2 space-y-1 text-sm max-h-56 overflow-y-auto"></div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Newsletter -->
-        <section class="bg-white rounded-lg border border-gray-200 p-4">
-          <button id="newsletterBtn" class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-blue-300 text-blue-700 font-semibold hover:bg-blue-50">
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M4 4h16v16H4z" opacity="0"/>
-              <path d="M4 4h16v16H4z"/>
-              <path d="M22 6l-10 7L2 6"/>
-            </svg>
-            <span>Join the free newsletter</span>
-          </button>
-          <div class="mt-2 text-[11px] text-gray-500">We’ll set the signup link later.</div>
-        </section>
-
-        <!-- Refresh list -->
-        <section class="bg-white rounded-lg border border-gray-200 p-4">
-          <button id="userRefreshBtn"
-                  class="w-full px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
-            Refresh list
-          </button>
-          <div id="userRefreshStatus" class="text-xs text-gray-500 mt-2"></div>
-        </section>
-
-        <!-- Reading list -->
-        <section class="bg-white rounded-lg border border-gray-200 p-4">
-          <div class="flex items-center justify-between">
-            <h2 class="text-sm font-semibold text-gray-700">Reading list</h2>
-            <button id="toggleReadingList"
-                    class="text-xs font-semibold text-amber-700 hover:underline">
-              Show
-            </button>
-          </div>
-
-          <div id="readingListEmpty" class="text-xs text-gray-500 mt-2">
-            No items yet. Click “Add to reading list” on any card.
-          </div>
-
-          <div id="readingListWrap" class="hidden mt-3 space-y-2"></div>
-
-          <div class="mt-3 flex gap-2">
-            <button id="clearReadingListBtn"
-                    class="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50">
-              Clear list
-            </button>
-          </div>
-        </section>
-
-        <!-- Compare -->
-        <section class="bg-white rounded-lg border border-gray-200 p-4">
-          <div class="flex items-center justify-between">
-            <h2 class="text-sm font-semibold text-gray-700">Compare</h2>
-            <button id="clearCompareBtn" class="text-xs font-semibold text-amber-700 hover:underline">Clear</button>
-          </div>
-          <div class="text-xs text-gray-500 mt-1">Select 2 reports to compare side-by-side.</div>
-
-          <div id="compareWrap" class="mt-3 space-y-2"></div>
-
-          <a id="openCompareBtn"
-             class="hidden mt-3 w-full text-center block px-3 py-2 text-sm font-semibold bg-amber-600 text-white rounded hover:bg-amber-700"
-             href="#">
-            Open compare
-          </a>
-        </section>
-
-        <!-- My workspace (filters + export) -->
-        <section class="bg-white rounded-lg border border-gray-200 p-4">
-          <div class="flex items-center justify-between">
-            <h2 class="text-sm font-semibold text-gray-700">My workspace</h2>
-          </div>
-
-          <label class="block text-xs text-gray-600 mt-3">Status filter</label>
-          <select id="wsStatusFilter" class="mt-1 w-full border border-gray-300 rounded px-2 py-1 text-sm bg-white">
-            <option value="all">All</option>
-            <option value="unread">Unread</option>
-            <option value="reading">Reading</option>
-            <option value="done">Done</option>
-          </select>
-
-          <label class="block text-xs text-gray-600 mt-3">Tag filter</label>
-          <input id="wsTagFilter" type="text"
-                 class="mt-1 w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                 placeholder="e.g., energy, tpm" />
-
-          <button id="exportWorkspaceBtn"
-                  class="mt-3 w-full px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">
-            Export my workspace
-          </button>
-
-          <div class="text-[11px] text-gray-500 mt-2">
-            Saved locally in your browser (no login).
-          </div>
-        </section>
-
-        <!-- Clear filters -->
-        <button id="clearFilters"
-                class="w-full text-sm border border-gray-300 rounded-md py-1.5 bg-white hover:bg-gray-50">
-          Clear all filters
-        </button>
-      </aside>
-
-      <!-- Catalogue -->
-      <section class="md:col-span-9">
-        <div class="flex items-center justify-between gap-3 mb-3">
-          <p id="resultsInfo" class="text-sm text-gray-600">Loading publications…</p>
-          <div class="flex items-center gap-2">
-            <label for="sortSelect" class="text-xs text-gray-500 hidden sm:block">Sort</label>
-            <select id="sortSelect" class="border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white">
-              <option value="newest">Sort (Default - Newest)</option>
-              <option value="liked">Most Liked</option>
-              <option value="name_az">Sort By Name (A-Z)</option>
-              <option value="name_za">Sort By Name (Z-A)</option>
-              <option value="added_newest">Date Added (Newest-Oldest)</option>
-              <option value="added_oldest">Date Added (Oldest-Newest)</option>
-            </select>
-          </div>
-        </div>
-
-        <div id="cardsContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
-        <div id="infiniteSentinel" class="h-1"></div>
-
-        <footer class="mt-10 text-center text-xs text-gray-500">
-          © Towfiq
-        </footer>
       </section>
-    </div>
+
+      <!-- Refresh list -->
+      <section class="bg-white rounded-lg border border-gray-200 p-4">
+        <button id="userRefreshBtn"
+                class="w-full px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
+          Refresh list
+        </button>
+        <div id="userRefreshStatus" class="text-xs text-gray-500 mt-2"></div>
+      </section>
+
+      <!-- Category filters -->
+      <section class="bg-white rounded-lg border border-gray-200 p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-semibold text-gray-700">Filter By Category</h2>
+          <button id="toggleCats" class="text-xs font-semibold text-amber-700 hover:underline">Show</button>
+        </div>
+        <div id="categoryFilters" class="hidden space-y-1 text-sm max-h-64 overflow-y-auto"></div>
+      </section>
+
+      <!-- Year filters -->
+      <section class="bg-white rounded-lg border border-gray-200 p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-semibold text-gray-700">Filter By Year</h2>
+          <button id="toggleYears" class="text-xs font-semibold text-amber-700 hover:underline">Show</button>
+        </div>
+        <div id="yearFilters" class="hidden space-y-1 text-sm max-h-64 overflow-y-auto"></div>
+      </section>
+
+      <!-- Clear filters -->
+      <button id="clearFilters"
+              class="w-full text-sm border border-gray-300 rounded-md py-1.5 bg-white hover:bg-gray-50">
+        Clear all filters
+      </button>
+    </aside>
+
+    <!-- Catalogue -->
+    <section class="md:col-span-9">
+      <p id="resultsInfo" class="text-sm text-gray-600 mb-3">Loading publications…</p>
+      <div id="cardsContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
+      <div id="loadMoreWrap" class="mt-6"></div>
+    </section>
   </main>
 
   <button id="backToTop"
@@ -281,21 +106,18 @@
     ↑
   </button>
 
-  <!-- Toast -->
-  <div id="toast" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] bg-gray-900 text-white text-sm px-4 py-2 rounded shadow-lg"></div>
-
   <!-- PDF Modal -->
   <div id="pdfModal" class="hidden fixed inset-0 z-50">
     <div class="absolute inset-0 bg-black/60" id="pdfModalBackdrop"></div>
 
-    <div class="relative mx-auto h-full p-0 md:p-3 flex flex-col">
-      <div class="bg-white shadow-xl overflow-hidden flex flex-col h-full rounded-none md:rounded-lg md:max-w-none md:w-[96vw] md:h-[92vh] md:mx-auto">
-        <div class="flex items-center gap-3 px-3 md:px-4 py-2 border-b border-gray-200">
+    <div class="relative max-w-6xl mx-auto h-full p-3 md:p-6 flex flex-col">
+      <div class="bg-white rounded-lg shadow-xl overflow-hidden flex flex-col h-full">
+        <div class="flex items-center gap-3 px-4 py-3 border-b border-gray-200">
           <div class="font-semibold text-gray-900 truncate" id="pdfModalTitle">Report</div>
           <div class="ml-auto flex gap-2">
-            <a id="pdfModalView"
-               target="_blank" rel="noopener"
-               class="px-3 py-1.5 text-sm font-semibold bg-amber-600 text-white rounded hover:bg-amber-700">
+            <!-- Note: no "Open report page" button (title already does that) -->
+            <a id="pdfModalDownload" href="#" target="_blank" rel="noopener"
+               class="px-3 py-1.5 text-sm bg-amber-600 text-white rounded hover:bg-amber-700">
               View PDF (new tab)
             </a>
             <button id="pdfModalClose"
@@ -314,124 +136,14 @@
     </div>
   </div>
 
-  <!-- Help / Submit Modals -->
-  <div id="helpModal" class="hidden fixed inset-0 z-[70]">
-    <div id="helpModalBackdrop" class="absolute inset-0 bg-black/60"></div>
-    <div class="relative max-w-2xl mx-auto mt-10 md:mt-14 p-3 modal-anim">
-      <div class="bg-white rounded-lg border border-gray-200 shadow-xl overflow-hidden">
-        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-          <div id="helpModalTitle" class="font-semibold text-gray-900">Help</div>
-          <button id="helpModalClose" class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">Close</button>
-        </div>
-
-        <div id="helpModalBody" class="px-4 py-4 text-sm text-gray-700"></div>
-      </div>
-    </div>
-  </div>
-
 <script>
+  // ✅ GitHub Pages: use Apps Script JSON
   const DATA_URL = "https://script.google.com/macros/s/AKfycbwF2IqDTG0F5acy4K1mtBRMZg1AOp3RMHzYwHEtZcZmRV8Jbpb2_ETe4Mpnkgp-lxmy/exec";
 
   // Browser cache for instant load
   const CACHE_KEY = "pdf_catalog_cache_v2";
   const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
-  // Local-only features
-  const READING_KEY = "dotdock_reading_list_v1";
-  const WORKSPACE_KEY = "dotdock_workspace_v1";
-  const COMPARE_KEY = "dotdock_compare_v1";
-  const LIKE_KEY = "dotdock_likes_v1";
-
-  // Set these later
-  const NEWSLETTER_URL = "";
-  const SUBMIT_FORM_URL = "";  // optional: link to a Google Form / Typeform
-  const CONTACT_EMAIL = "";    // optional: submission mailto fallback if you want
-
-  const STOPWORDS = new Set([
-    "the","and","for","with","that","this","from","into","your","about","their","they","them","then","than",
-    "what","when","where","which","while","will","would","could","should","can","may","might","not","are","was","were",
-    "in","on","at","to","of","a","an","as","by","or","be","is","it","we","our","you","i"
-  ]);
-
-  const state = {
-    tab: "home",                  // home | today
-    allItems: [],
-    filteredItems: [],
-    selectedTopics: new Set(),
-    selectedCategories: new Set(),
-    selectedYears: new Set(),
-    searchQuery: "",
-    page: 1,
-    pageSize: 50,
-    wsStatusFilter: "all",
-    wsTagFilter: "",
-    sortMode: "newest",
-    scoreById: new Map(),
-    topicList: []                 // [{topic,count}]
-  };
-
-  // --------- Utilities ----------
-  function escapeHtml(s) {
-    return String(s ?? "")
-      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
-  }
-
-  function formatTime(ts) {
-    const d = new Date(ts);
-    return d.toLocaleString();
-  }
-
-  function showToast(msg) {
-    const t = document.getElementById("toast");
-    t.textContent = msg;
-    t.classList.remove("hidden");
-    clearTimeout(showToast._to);
-    showToast._to = setTimeout(() => t.classList.add("hidden"), 2200);
-  }
-
-  function normalizeText(s) {
-    const str = String(s ?? "");
-    // basic diacritics-safe normalization
-    return str.normalize("NFKD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/[’']/g, "")
-      .replace(/[^a-z0-9]+/g, " ")
-      .trim();
-  }
-
-  function tokenizeLoose(s) {
-    const t = normalizeText(s);
-    if (!t) return [];
-    return t.split(/\s+/g).filter(Boolean);
-  }
-
-  function todayStartMs() {
-    const d = new Date();
-    d.setHours(0,0,0,0);
-    return d.getTime();
-  }
-
-  function drivePreviewUrl(fileId) {
-    return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
-  }
-
-  function driveShareUrl(fileId) {
-    return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view?usp=sharing`;
-  }
-
-  function reportPageUrl(fileId, title) {
-    const base = `report.html?id=${encodeURIComponent(fileId)}`;
-    return title ? `${base}&t=${encodeURIComponent(title)}` : base;
-  }
-
-  function viewPageUrl(fileId, title) {
-    const base = `report.html?id=${encodeURIComponent(fileId)}&view=1`;
-    return title ? `${base}&t=${encodeURIComponent(title)}` : base;
-  }
-
-  // --------- Cache helpers ----------
   function cacheSet(data) {
     try { localStorage.setItem(CACHE_KEY, JSON.stringify({ time: Date.now(), data })); } catch (e) {}
   }
@@ -446,342 +158,92 @@
     } catch { return null; }
   }
 
-  // --------- Reading list ----------
-  function readingGet() {
-    try {
-      const raw = localStorage.getItem(READING_KEY);
-      const arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr.map(String) : [];
-    } catch { return []; }
-  }
-  function readingSet(arr) {
-    try { localStorage.setItem(READING_KEY, JSON.stringify(Array.from(new Set(arr.map(String))))); } catch {}
-  }
-  function toggleReadingItem(id) {
-    const cur = readingGet();
-    const sid = String(id);
-    const next = cur.includes(sid) ? cur.filter(x => x !== sid) : [sid, ...cur];
-    readingSet(next);
-    renderReadingList();
-    render(); // update button states
-  }
-  function isInReadingList(id) {
-    return readingGet().includes(String(id));
+  const state = {
+    allItems: [],
+    filteredItems: [],
+    selectedCategories: new Set(),
+    selectedYears: new Set(),
+    searchQuery: "",
+    page: 1,
+    pageSize: 50,
+  };
+
+  function escapeHtml(str) {
+    return String(str || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
-  // --------- Workspace ----------
-  function workspaceGet() {
-    try {
-      const raw = localStorage.getItem(WORKSPACE_KEY);
-      const obj = raw ? JSON.parse(raw) : {};
-      return (obj && typeof obj === "object") ? obj : {};
-    } catch { return {}; }
-  }
-  function workspaceSet(obj) {
-    try { localStorage.setItem(WORKSPACE_KEY, JSON.stringify(obj)); } catch {}
-  }
-  function wsItem(id) {
-    const ws = workspaceGet();
-    return ws[String(id)] || {};
-  }
-  function wsSetItem(id, patch) {
-    const ws = workspaceGet();
-    const key = String(id);
-    const prev = ws[key] || {};
-    ws[key] = { ...prev, ...patch, updatedAt: Date.now() };
-    workspaceSet(ws);
-  }
-  function wsPinned(id) {
-    return !!wsItem(id).pinned;
-  }
-  function wsStatus(id) {
-    return (wsItem(id).status || "").toLowerCase();
-  }
-  function wsTags(id) {
-    const t = wsItem(id).tags;
-    return Array.isArray(t) ? t.map(x => String(x).toLowerCase()) : [];
+  function formatTime(ts) {
+    const d = new Date(ts);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mi = String(d.getMinutes()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
   }
 
-  // --------- Compare ----------
-  function compareGet() {
-    try {
-      const raw = localStorage.getItem(COMPARE_KEY);
-      const arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr.map(String).slice(0,2) : [];
-    } catch { return []; }
-  }
-  function compareSet(arr) {
-    try { localStorage.setItem(COMPARE_KEY, JSON.stringify(arr.slice(0,2).map(String))); } catch {}
-  }
-  function toggleCompare(id) {
-    const sid = String(id);
-    const cur = compareGet();
-    let next = cur.includes(sid) ? cur.filter(x => x !== sid) : [sid, ...cur].slice(0,2);
-    compareSet(next);
-    renderCompare();
-    render(); // update button states
-  }
-  function isCompared(id) {
-    return compareGet().includes(String(id));
+  async function loadData(forceFresh = false) {
+    const url = forceFresh
+      ? DATA_URL + (DATA_URL.includes("?") ? "&" : "?") + "cb=" + Date.now()
+      : DATA_URL;
+
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Failed to load catalog (${res.status})`);
+    return await res.json();
   }
 
-  // --------- Likes (local-only, non-spam) ----------
-  function likesGetAll() {
-    try {
-      const raw = localStorage.getItem(LIKE_KEY);
-      const obj = raw ? JSON.parse(raw) : {};
-      const counts = (obj && typeof obj.counts === "object") ? obj.counts : {};
-      const liked  = (obj && typeof obj.liked  === "object") ? obj.liked  : {};
-      return { counts, liked };
-    } catch { return { counts:{}, liked:{} }; }
-  }
-  function likesSetAll(payload) {
-    try { localStorage.setItem(LIKE_KEY, JSON.stringify(payload || {counts:{},liked:{}})); } catch {}
-  }
-  function likeCount(id) {
-    const { counts } = likesGetAll();
-    return Number(counts[String(id)] || 0) || 0;
-  }
-  function isLiked(id) {
-    const { liked } = likesGetAll();
-    return !!liked[String(id)];
-  }
-  function toggleLike(id) {
-    const s = likesGetAll();
-    const k = String(id);
-    const currently = !!s.liked[k];
-
-    if (currently) {
-      s.liked[k] = false;
-      s.counts[k] = Math.max(0, (Number(s.counts[k] || 1) || 1) - 1);
-    } else {
-      s.liked[k] = true;
-      // cap at 1 per user (no spam). If you later add backend, remove this cap.
-      s.counts[k] = Math.min(1, (Number(s.counts[k] || 0) || 0) + 1);
-    }
-    likesSetAll(s);
-    return { liked: !!s.liked[k], count: Number(s.counts[k] || 0) || 0 };
+  // --- URL helpers ---
+  function drivePreviewUrl(fileId) {
+    return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
   }
 
-  // --------- AI summary UX ----------
-  async function openInChatGPT(item) {
-    const link = driveShareUrl(item.id);
-    const title = item.title || "Untitled report";
-    const prompt =
-`Please summarize this PDF clearly:
-Title: ${title}
-Link: ${link}
-
-Output:
-1) 8 bullet executive summary
-2) Key concepts + definitions
-3) 5 actionable takeaways
-4) If there are frameworks/models, list them
-`;
-
-    try {
-      await navigator.clipboard.writeText(prompt);
-      window.open("https://chatgpt.com/", "_blank", "noopener");
-      showToast("AI prompt copied. Paste into ChatGPT.");
-    } catch {
-      window.open("https://chatgpt.com/", "_blank", "noopener");
-      showToast("Open ChatGPT and paste the report link.");
-    }
+  // ✅ Download button should NOT download: open DocDock viewer in new tab
+  function driveDownloadUrl(fileId) {
+    return `report.html?id=${encodeURIComponent(fileId)}&view=1`;
   }
 
-  // --------- NotebookLM UX ----------
-  async function openInNotebookLM(item) {
-    const link = driveShareUrl(item.id);
-    try {
-      await navigator.clipboard.writeText(link);
-      window.open("https://notebooklm.google.com/", "_blank", "noopener");
-      showToast("Link copied. In NotebookLM: Add sources → Paste link.");
-    } catch {
-      window.open("https://notebooklm.google.com/", "_blank", "noopener");
-      showToast("Open NotebookLM and add this report link as a source.");
-    }
+  function reportPageUrl(fileId) {
+    return `report.html?id=${encodeURIComponent(fileId)}`;
   }
 
-  // --------- Data loading ----------
-  async function loadData(forceFresh) {
-    if (!forceFresh) {
-      const cached = cacheGet();
-      if (cached) return cached;
-    }
-    const url = DATA_URL + (DATA_URL.includes("?") ? "&" : "?") + "cb=" + Date.now();
-    const res = await fetch(url, { cache: "no-store", mode: "cors", credentials: "omit" });
-    if (!res.ok) throw new Error("Failed to load catalog (" + res.status + ")");
-    const text = await res.text();
-    let json;
-    try { json = JSON.parse(text); } catch { throw new Error("Catalog returned non-JSON content."); }
-    if (!Array.isArray(json)) throw new Error("Catalog JSON format unexpected.");
-    return json;
+  // --- Modal ---
+  function openPdfModal(item) {
+    const modal = document.getElementById("pdfModal");
+    const frame = document.getElementById("pdfModalFrame");
+    const title = document.getElementById("pdfModalTitle");
+    const viewBtn = document.getElementById("pdfModalDownload");
+
+    title.textContent = item.title || "Report";
+    frame.src = drivePreviewUrl(item.id);
+
+    // “View PDF (new tab)” goes to DocDock, not Drive
+    viewBtn.href = driveDownloadUrl(item.id);
+
+    modal.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
   }
 
-  // Prepare items for fast search/filter
-  function prepareItems(items) {
-    for (const it of items) {
-      const t = it.title || "";
-      const s = it.summary || "";
-      const normTitle = normalizeText(t);
-      const normSummary = normalizeText(s);
-      it._searchText = (normTitle + " " + normSummary).trim();
-      it._titleTokens = tokenizeLoose(t);
-      it._allTokens = tokenizeLoose(t + " " + s);
-      it._tokenSet = new Set(it._allTokens);
-    }
-    return items;
+  function closePdfModal() {
+    const modal = document.getElementById("pdfModal");
+    const frame = document.getElementById("pdfModalFrame");
+    frame.src = "";
+    modal.classList.add("hidden");
+    document.body.style.overflow = "";
   }
 
-  // --------- Strong search ----------
-  function termVariants(term) {
-    const t = normalizeText(term);
-    if (!t) return [];
-    const out = new Set([t]);
-
-    // allow partial / near matches (education → educa / educat)
-    if (t.length >= 6) {
-      out.add(t.slice(0, 5));
-      out.add(t.slice(0, 4));
-    }
-    // simple singularization
-    if (t.endsWith("s") && t.length >= 4) out.add(t.slice(0, -1));
-    // common suffix trims
-    if (t.endsWith("ing") && t.length >= 7) out.add(t.slice(0, -3));
-    if (t.endsWith("tion") && t.length >= 7) out.add(t.slice(0, -3));
-    if (t.endsWith("ment") && t.length >= 8) out.add(t.slice(0, -4));
-
-    // keep meaningful
-    return Array.from(out).filter(x => x.length >= 2);
+  function openPdfModalById(id) {
+    const item = state.allItems.find(x => String(x.id) === String(id));
+    if (item) openPdfModal(item);
   }
+  window.openPdfModalById = openPdfModalById;
 
-  function parseQuery(q) {
-    const raw = String(q || "").trim();
-    if (!raw) return { must: [], not: [] };
-
-    // support quotes "ai in education"
-    const phrases = [];
-    const withoutPhrases = raw.replace(/"([^"]+)"/g, (m, p1) => {
-      phrases.push(p1);
-      return " ";
-    });
-
-    // treat + as AND, spaces also AND
-    const parts = withoutPhrases
-      .split("+")
-      .map(s => s.trim())
-      .filter(Boolean)
-      .flatMap(s => s.split(/\s+/g).map(x => x.trim()).filter(Boolean));
-
-    const must = [];
-    const not = [];
-
-    // phrases are must-terms too
-    for (const p of phrases) {
-      const n = normalizeText(p);
-      if (n) must.push(n);
-    }
-
-    for (let tok of parts) {
-      if (!tok) continue;
-      let neg = false;
-      if (tok.startsWith("-") && tok.length > 1) {
-        neg = true;
-        tok = tok.slice(1);
-      }
-      const n = normalizeText(tok);
-      if (!n) continue;
-
-      // keep "ai" etc, but skip stopwords
-      if (STOPWORDS.has(n)) continue;
-
-      (neg ? not : must).push(n);
-    }
-
-    return { must, not };
-  }
-
-  function itemHasTerm(item, term) {
-    const vars = termVariants(term);
-    if (vars.length === 0) return true;
-    const txt = item._searchText || "";
-    // fast includes on normalized concatenated string
-    for (const v of vars) {
-      if (txt.includes(v)) return true;
-    }
-    return false;
-  }
-
-  function matchQuery(item, parsed) {
-    // NOT terms
-    for (const n of parsed.not) {
-      if (itemHasTerm(item, n)) return false;
-    }
-    // MUST terms (AND)
-    for (const m of parsed.must) {
-      if (!itemHasTerm(item, m)) return false;
-    }
-    return true;
-  }
-
-  function scoreQuery(item, parsed) {
-    if (!parsed.must.length) return 0;
-    let score = 0;
-    const titleTxt = normalizeText(item.title || "");
-    const allTxt = item._searchText || "";
-
-    for (const m of parsed.must) {
-      const vars = termVariants(m);
-      let hit = false;
-
-      for (const v of vars) {
-        if (titleTxt.includes(v)) { score += 8; hit = true; break; }
-      }
-      if (!hit) {
-        for (const v of vars) {
-          if (allTxt.includes(v)) { score += 4; hit = true; break; }
-        }
-      }
-      if (!hit) score -= 5;
-    }
-
-    // phrase-ish boost if user wrote multiple terms and they appear close
-    if (parsed.must.length >= 2) {
-      const joined = parsed.must.join(" ");
-      if (allTxt.includes(joined)) score += 6;
-    }
-
-    return score;
-  }
-
-  // --------- Facets ----------
-  function buildTopicListFromTitles() {
-    const freq = new Map();
-
-    for (const item of state.allItems) {
-      const seen = new Set();
-      for (const w of (item._titleTokens || [])) {
-        if (!w) continue;
-        if (w.length < 4) continue;      // keep topics meaningful
-        if (STOPWORDS.has(w)) continue;
-        // avoid counting duplicates from same title
-        if (seen.has(w)) continue;
-        seen.add(w);
-        freq.set(w, (freq.get(w) || 0) + 1);
-      }
-    }
-
-    const list = Array.from(freq.entries())
-      .sort((a,b) => (b[1] - a[1]) || a[0].localeCompare(b[0]))
-      .slice(0, 60) // keep it usable
-      .map(([topic,count]) => ({ topic, count }));
-
-    state.topicList = list;
-  }
-
+  // --- Facets / filtering ---
   function buildFacetFilters() {
-    buildTopicListFromTitles();
-
     const catCounts = new Map();
     const yearCounts = new Map();
 
@@ -791,29 +253,6 @@ Output:
       });
       const y = item.year;
       if (y) yearCounts.set(y, (yearCounts.get(y) || 0) + 1);
-    });
-
-    // Topics
-    const topicContainer = document.getElementById("topicFilters");
-    topicContainer.innerHTML = "";
-    state.topicList.forEach(({topic,count}) => {
-      const id = "topic-" + topic.replace(/\W+/g, "-").toLowerCase();
-      const row = document.createElement("div");
-      row.className = "flex items-center gap-2";
-      row.innerHTML = `
-        <input type="checkbox" id="${id}" value="${escapeHtml(topic)}"
-               class="h-3 w-3 text-amber-600 border-gray-300 rounded">
-        <label for="${id}" class="cursor-pointer text-gray-700 text-sm">
-          ${escapeHtml(topic)} <span class="text-gray-400 text-xs">(${count})</span>
-        </label>
-      `;
-      const checkbox = row.querySelector("input");
-      checkbox.checked = state.selectedTopics.has(topic);
-      checkbox.addEventListener("change", () => {
-        checkbox.checked ? state.selectedTopics.add(topic) : state.selectedTopics.delete(topic);
-        applyFilters();
-      });
-      topicContainer.appendChild(row);
     });
 
     // Categories
@@ -828,12 +267,13 @@ Output:
         row.innerHTML = `
           <input type="checkbox" id="${id}" value="${escapeHtml(cat)}"
                  class="h-3 w-3 text-amber-600 border-gray-300 rounded">
-          <label for="${id}" class="cursor-pointer text-gray-700 text-sm">
+          <label for="${id}" class="cursor-pointer text-gray-700">
             ${escapeHtml(cat)} <span class="text-gray-400 text-xs">(${count})</span>
           </label>
         `;
         const checkbox = row.querySelector("input");
-        checkbox.checked = state.selectedCategories.has(cat);
+	        // Preserve UI state when rebuilding facets (e.g., after Refresh list)
+	        checkbox.checked = state.selectedCategories.has(cat);
         checkbox.addEventListener("change", () => {
           checkbox.checked ? state.selectedCategories.add(cat) : state.selectedCategories.delete(cat);
           applyFilters();
@@ -853,12 +293,13 @@ Output:
         row.innerHTML = `
           <input type="checkbox" id="${id}" value="${year}"
                  class="h-3 w-3 text-amber-600 border-gray-300 rounded">
-          <label for="${id}" class="cursor-pointer text-gray-700 text-sm">
+          <label for="${id}" class="cursor-pointer text-gray-700">
             ${year} <span class="text-gray-400 text-xs">(${count})</span>
           </label>
         `;
         const checkbox = row.querySelector("input");
-        checkbox.checked = state.selectedYears.has(String(year));
+	        // Preserve UI state when rebuilding facets (e.g., after Refresh list)
+	        checkbox.checked = state.selectedYears.has(String(year));
         checkbox.addEventListener("change", () => {
           checkbox.checked ? state.selectedYears.add(String(year)) : state.selectedYears.delete(String(year));
           applyFilters();
@@ -867,138 +308,48 @@ Output:
       });
   }
 
-  // --------- Filtering ----------
-  function applyFilters(keepPage = false) {
-    const q = state.searchQuery.trim();
-    const parsed = parseQuery(q);
-    state.scoreById = new Map();
-
-    const tagNeedles = state.wsTagFilter
-      .split(",")
-      .map(s => s.trim().toLowerCase())
-      .filter(Boolean);
-
-    const tStart = todayStartMs();
+  function applyFilters() {
+    const q = state.searchQuery.toLowerCase();
 
     state.filteredItems = state.allItems.filter(item => {
-      // Tab: Added Today
-      const matchesTab = (state.tab !== "today") || ((item.modified || 0) >= tStart);
+      const matchesText = !q ||
+        (item.title || "").toLowerCase().includes(q) ||
+        (item.summary || "").toLowerCase().includes(q);
 
-      // Search
-      const matchesText = !q || matchQuery(item, parsed);
-
-      // Topics (OR)
-      const matchesTopic = state.selectedTopics.size === 0 || (() => {
-        for (const t of state.selectedTopics) {
-          if (item._tokenSet && item._tokenSet.has(String(t).toLowerCase())) return true;
-        }
-        return false;
-      })();
-
-      // Category (OR)
       const matchesCat = state.selectedCategories.size === 0 ||
         (item.categories || []).some(c => state.selectedCategories.has(c));
 
-      // Year
       const matchesYear = state.selectedYears.size === 0 ||
         state.selectedYears.has(String(item.year));
 
-      // Workspace filters
-      const stFilter = state.wsStatusFilter;
-      const matchesStatus = (stFilter === "all") || (wsStatus(item.id) === stFilter);
-
-      const tags = wsTags(item.id);
-      const matchesTags = tagNeedles.length === 0 || tagNeedles.every(t => tags.includes(t));
-
-      if (q && matchesText) {
-        state.scoreById.set(String(item.id), scoreQuery(item, parsed));
-      }
-
-      return matchesTab && matchesText && matchesTopic && matchesCat && matchesYear && matchesStatus && matchesTags;
+      return matchesText && matchesCat && matchesYear;
     });
 
-    function titleKey(it) {
-      return String(it.title || "").toLowerCase();
-    }
-
-    function compareByMode(a, b) {
-      switch (state.sortMode) {
-        case "liked":
-          return (likeCount(b.id) - likeCount(a.id)) || ((b.modified || 0) - (a.modified || 0));
-        case "name_az":
-          return titleKey(a).localeCompare(titleKey(b));
-        case "name_za":
-          return titleKey(b).localeCompare(titleKey(a));
-        case "added_oldest":
-          return (a.modified || 0) - (b.modified || 0);
-        case "added_newest":
-        case "newest":
-        default:
-          return (b.modified || 0) - (a.modified || 0);
-      }
-    }
-
-    // Pinned items always on top; within pinned/unpinned:
-    // If search is active, sort by relevance first, then selected mode.
-    state.filteredItems.sort((a,b) => {
-      const ap = wsPinned(a.id) ? 1 : 0;
-      const bp = wsPinned(b.id) ? 1 : 0;
-      if (ap !== bp) return bp - ap;
-
-      if (q) {
-        const as = state.scoreById.get(String(a.id)) || 0;
-        const bs = state.scoreById.get(String(b.id)) || 0;
-        if (as !== bs) return bs - as;
-      }
-
-      return compareByMode(a, b);
-    });
-
-    if (!keepPage) state.page = 1;
+    state.page = 1;
     render();
   }
 
-  // --------- Rendering ----------
   function renderCard(item) {
     const thumb = item.thumbUrl || "https://via.placeholder.com/260x360?text=PDF";
-    const title = escapeHtml(item.title || "Untitled");
+    const title = escapeHtml(item.title);
     const summary = escapeHtml(item.summary || "");
     const year = item.year || "";
+    const reportUrl = reportPageUrl(item.id);
+    const viewUrl = driveDownloadUrl(item.id);
+
     const cats = (item.categories || [])
-      .slice(0, 3)
       .map(c => `<span class="px-2 py-0.5 border rounded-full bg-gray-50">${escapeHtml(c)}</span>`)
       .join("");
-
-    const pinned = wsPinned(item.id);
-    const status = wsStatus(item.id);
-    const statusLabel = status ? status.charAt(0).toUpperCase() + status.slice(1) : "Unread";
-
-    const addLabel = isInReadingList(item.id) ? "Remove from reading list" : "Add to reading list";
-    const compareLabel = isCompared(item.id) ? "Compared" : "Compare";
-    const pinLabel = pinned ? "Unpin" : "Pin";
-
-    const liked = isLiked(item.id);
-    const likes = likeCount(item.id);
 
     return `
       <article class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow transition">
         <div class="grid grid-cols-1 sm:grid-cols-[160px,1fr] gap-4">
           <div class="w-full">
             <div class="relative border border-gray-200 bg-white rounded group">
-              <button type="button" data-action="modal" data-id="${escapeHtml(item.id)}" class="block w-full text-left">
+              <button type="button" onclick="openPdfModalById('${item.id}')" class="block w-full text-left">
                 <img src="${thumb}" alt="${title}" loading="lazy" decoding="async" referrerpolicy="no-referrer"
                      onerror="this.onerror=null;this.src='https://via.placeholder.com/260x360?text=PDF';"
                      class="w-full h-auto object-cover cursor-pointer group-hover:opacity-80 transition">
-              </button>
-
-              <!-- Like (local-only) -->
-              <button type="button" data-action="like" data-id="${escapeHtml(item.id)}"
-                class="absolute bottom-2 right-2 z-30 bg-white/95 border border-gray-200 rounded-lg px-2 py-2 shadow hover:bg-white"
-                title="Like (saved in your browser)" aria-label="Like">
-                <div class="flex flex-col items-center leading-none">
-                  <span class="text-base">${liked ? "♥" : "♡"}</span>
-                  <span class="mt-0.5 text-xs font-semibold">${likes}</span>
-                </div>
               </button>
 
               ${summary ? `
@@ -1013,54 +364,19 @@ Output:
           </div>
 
           <div class="flex flex-col">
-            <div class="flex items-center gap-2 text-xs text-gray-500">
-              <span>${year}</span>
-              <span class="text-gray-300">•</span>
-              <span>${escapeHtml(statusLabel)}</span>
-              ${pinned ? `<span class="ml-auto text-amber-600 flex items-center gap-1" title="Pinned">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 2l-1 1v5.2l4.6 4.6-1.4 1.4L11 9.6V3l-1-1h4zM5 14l5 5v3H8v-2.2L3.4 15.4 5 14z"/></svg>
-                <span class="text-xs font-semibold">Pinned</span></span>` : ""}
-            </div>
+            <div class="text-xs text-gray-500 mb-1">${year}</div>
 
-            <a href="${reportPageUrl(item.id, item.title || "") }"
-               class="mt-1 text-base md:text-lg font-semibold text-amber-700 hover:underline">
+            <a href="${reportUrl}"
+               class="text-base md:text-lg font-semibold text-amber-700 hover:underline">
               ${title}
             </a>
 
             <div class="mt-3 flex flex-wrap gap-2 text-xs text-gray-500">${cats}</div>
 
-            <div class="mt-4 flex flex-wrap gap-2">
-              <button data-action="reading" data-id="${escapeHtml(item.id)}"
-                 class="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50">
-                ${escapeHtml(addLabel)}
-              </button>
-
-              <button data-action="compare" data-id="${escapeHtml(item.id)}"
-                 class="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50">
-                ${escapeHtml(compareLabel)}
-              </button>
-
-              <button data-action="notebooklm" data-id="${escapeHtml(item.id)}"
-                 class="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50">
-                NotebookLM
-              </button>
-
-              <button data-action="aisummary" data-id="${escapeHtml(item.id)}"
-                 class="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50">
-                AI summary
-              </button>
-
-              <button data-action="pin" data-id="${escapeHtml(item.id)}"
-                 class="px-3 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50">
-                <span class="inline-flex items-center gap-1">
-                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 2l-1 1v5.2l4.6 4.6-1.4 1.4L11 9.6V3l-1-1h4zM5 14l5 5v3H8v-2.2L3.4 15.4 5 14z"/></svg>
-                  <span>${escapeHtml(pinLabel)}</span>
-                </span>
-              </button>
-
-              <a href="${viewPageUrl(item.id, item.title || "")}" target="_blank" rel="noopener"
-                 class="px-3 py-1.5 text-xs font-semibold bg-amber-600 text-white rounded hover:bg-amber-700">
-                View
+            <div class="mt-3">
+              <a href="${viewUrl}" target="_blank" rel="noopener"
+                 class="inline-flex items-center px-4 py-1.5 text-xs font-semibold uppercase tracking-wide bg-amber-600 text-white rounded hover:bg-amber-700">
+                View PDF
               </a>
             </div>
           </div>
@@ -1072,313 +388,25 @@ Output:
   function render() {
     const container = document.getElementById("cardsContainer");
     const info = document.getElementById("resultsInfo");
+    const loadMoreWrap = document.getElementById("loadMoreWrap");
 
     const total = state.filteredItems.length;
     const maxShown = state.page * state.pageSize;
     const itemsToShow = state.filteredItems.slice(0, maxShown);
 
-    const label = (state.tab === "today") ? "Added today" : "publications";
-    info.textContent = `${total} ${label} found`;
-
+    info.textContent = `${total} publication(s) found`;
     container.innerHTML = itemsToShow.map(renderCard).join("");
-  }
 
-  // --------- Modal ----------
-  function openPdfModal(item) {
-    const modal = document.getElementById("pdfModal");
-    const frame = document.getElementById("pdfModalFrame");
-    const title = document.getElementById("pdfModalTitle");
-    const viewBtn = document.getElementById("pdfModalView");
-
-    title.textContent = item.title || "Report";
-    frame.src = drivePreviewUrl(item.id);
-    viewBtn.href = viewPageUrl(item.id, item.title || "");
-
-    modal.classList.remove("hidden");
-    document.body.style.overflow = "hidden";
-  }
-
-  function closePdfModal() {
-    const modal = document.getElementById("pdfModal");
-    const frame = document.getElementById("pdfModalFrame");
-    frame.src = "";
-    modal.classList.add("hidden");
-    document.body.style.overflow = "";
-  }
-
-  function openPdfModalById(id) {
-    const item = state.allItems.find(x => String(x.id) === String(id));
-    if (item) openPdfModal(item);
-  }
-
-  // --------- Reading list UI ----------
-  function renderReadingList() {
-    const wrap = document.getElementById("readingListWrap");
-    const empty = document.getElementById("readingListEmpty");
-    const ids = readingGet();
-
-    if (ids.length === 0) {
-      empty.classList.remove("hidden");
-      wrap.classList.add("hidden");
-      wrap.innerHTML = "";
-      return;
-    }
-
-    empty.classList.add("hidden");
-    wrap.classList.remove("hidden");
-
-    const itemsById = new Map(state.allItems.map(it => [String(it.id), it]));
-    wrap.innerHTML = ids.map(id => {
-      const it = itemsById.get(String(id));
-      if (!it) return "";
-      return `
-        <div class="border border-gray-200 rounded p-2 bg-gray-50">
-          <div class="text-sm font-semibold text-gray-800 truncate">${escapeHtml(it.title || "Untitled")}</div>
-          <div class="mt-2 flex flex-wrap gap-2">
-            <a href="${reportPageUrl(it.id, it.title || "")}" class="px-2 py-1 text-xs border rounded bg-white hover:bg-gray-50">Open</a>
-            <button data-action="modal" data-id="${escapeHtml(it.id)}" class="px-2 py-1 text-xs border rounded bg-white hover:bg-gray-50">Preview</button>
-            <button data-action="reading" data-id="${escapeHtml(it.id)}" class="px-2 py-1 text-xs border rounded bg-white hover:bg-gray-50">Remove</button>
-          </div>
-        </div>
-      `;
-    }).join("");
-  }
-
-  // --------- Compare UI ----------
-  function renderCompare() {
-    const wrap = document.getElementById("compareWrap");
-    const openBtn = document.getElementById("openCompareBtn");
-    const ids = compareGet();
-    const itemsById = new Map(state.allItems.map(it => [String(it.id), it]));
-
-    wrap.innerHTML = ids.map(id => {
-      const it = itemsById.get(String(id));
-      const title = it ? (it.title || "Untitled") : id;
-      return `
-        <div class="border border-gray-200 rounded p-2 bg-gray-50 flex items-start gap-2">
-          <div class="text-sm font-semibold text-gray-800 truncate flex-1">${escapeHtml(title)}</div>
-          <button class="text-xs font-semibold text-amber-700 hover:underline" data-action="compare" data-id="${escapeHtml(id)}">Remove</button>
-        </div>
-      `;
-    }).join("");
-
-    if (ids.length === 2) {
-      openBtn.classList.remove("hidden");
-      openBtn.href = `compare.html?left=${encodeURIComponent(ids[0])}&right=${encodeURIComponent(ids[1])}`;
-    } else {
-      openBtn.classList.add("hidden");
-      openBtn.href = "#";
+    loadMoreWrap.innerHTML = "";
+    if (maxShown < total) {
+      const btn = document.createElement("button");
+      btn.textContent = "Load more";
+      btn.className = "mx-auto block px-4 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50";
+      btn.onclick = () => { state.page += 1; render(); };
+      loadMoreWrap.appendChild(btn);
     }
   }
 
-  // --------- Workspace export ----------
-  function exportWorkspace() {
-    const ws = workspaceGet();
-    const data = JSON.stringify(ws, null, 2);
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "dotdock-workspace.json";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
-  }
-
-  // --------- Infinite scroll ----------
-  function setupInfiniteScroll() {
-    const sentinel = document.getElementById("infiniteSentinel");
-    if (!("IntersectionObserver" in window)) return;
-
-    let ticking = false;
-    const obs = new IntersectionObserver(entries => {
-      const e = entries[0];
-      if (!e.isIntersecting) return;
-      if (ticking) return;
-
-      const total = state.filteredItems.length;
-      const maxShown = state.page * state.pageSize;
-      if (maxShown >= total) return;
-
-      ticking = true;
-      state.page += 1;
-      render();
-      setTimeout(() => { ticking = false; }, 200);
-    }, { root: null, rootMargin: "700px 0px", threshold: 0 });
-
-    obs.observe(sentinel);
-  }
-
-  // --------- Help/Submit modal ----------
-  function openHelpModal(kind) {
-    const modal = document.getElementById("helpModal");
-    const title = document.getElementById("helpModalTitle");
-    const body = document.getElementById("helpModalBody");
-
-    let html = "";
-    if (kind === "glossary") {
-      title.textContent = "Glossary";
-      html = `
-        <div class="space-y-3">
-          <p class="text-gray-600">Add your glossary terms here (later we can make it its own page).</p>
-          <ul class="list-disc ml-5 text-gray-700">
-            <li><span class="font-semibold">Pinned</span>: Shows at the top of the catalog (local).</li>
-            <li><span class="font-semibold">Reading list</span>: Save items locally to revisit.</li>
-            <li><span class="font-semibold">Topics</span>: Auto keywords extracted from titles.</li>
-          </ul>
-        </div>
-      `;
-    } else if (kind === "faq") {
-      title.textContent = "FAQ";
-      html = `
-        <div class="space-y-3 text-gray-700">
-          <p><span class="font-semibold">Does search look inside PDFs?</span><br>
-          Not yet. This search uses title + summary. Inside-PDF search needs text extraction into the JSON index (Apps Script) or a separate search service.</p>
-
-          <p><span class="font-semibold">Are likes global?</span><br>
-          Currently likes are saved in your browser only. Global likes requires a backend/database.</p>
-        </div>
-      `;
-    } else if (kind === "submit") {
-      title.textContent = "Submit a PDF";
-      html = `
-        <div class="space-y-3">
-          <p class="text-gray-600">No backend yet — this form helps people send you info cleanly.</p>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs text-gray-600">Name</label>
-              <input id="subName" class="mt-1 w-full border border-gray-300 rounded px-2 py-1 text-sm" placeholder="Your name">
-            </div>
-            <div>
-              <label class="block text-xs text-gray-600">Email</label>
-              <input id="subEmail" class="mt-1 w-full border border-gray-300 rounded px-2 py-1 text-sm" placeholder="you@example.com">
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs text-gray-600">PDF title</label>
-            <input id="subTitle" class="mt-1 w-full border border-gray-300 rounded px-2 py-1 text-sm" placeholder="Title of the PDF">
-          </div>
-
-          <div>
-            <label class="block text-xs text-gray-600">Google Drive link</label>
-            <input id="subLink" class="mt-1 w-full border border-gray-300 rounded px-2 py-1 text-sm" placeholder="Paste share link">
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs text-gray-600">Year</label>
-              <input id="subYear" class="mt-1 w-full border border-gray-300 rounded px-2 py-1 text-sm" placeholder="2026">
-            </div>
-            <div>
-              <label class="block text-xs text-gray-600">Suggested category</label>
-              <input id="subCat" class="mt-1 w-full border border-gray-300 rounded px-2 py-1 text-sm" placeholder="e.g., AI Governance">
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs text-gray-600">Notes</label>
-            <textarea id="subNotes" rows="4" class="mt-1 w-full border border-gray-300 rounded px-2 py-1 text-sm" placeholder="Why should dotdock include it?"></textarea>
-          </div>
-
-          <div class="flex flex-wrap gap-2 pt-2">
-            <button id="subCopy" class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">Copy submission</button>
-            <button id="subSend" class="px-3 py-2 text-sm font-semibold bg-amber-600 text-white rounded hover:bg-amber-700">Send</button>
-          </div>
-
-          <div class="text-[11px] text-gray-500">
-            If you later set <code>SUBMIT_FORM_URL</code>, “Send” will open that form instead.
-          </div>
-        </div>
-      `;
-    }
-
-    body.innerHTML = html;
-
-    modal.classList.remove("hidden");
-    document.body.classList.add("modal-open");
-
-    // wire submit modal buttons (only in submit mode)
-    if (kind === "submit") {
-      const getPayload = () => {
-        const name = (document.getElementById("subName")?.value || "").trim();
-        const email = (document.getElementById("subEmail")?.value || "").trim();
-        const t = (document.getElementById("subTitle")?.value || "").trim();
-        const link = (document.getElementById("subLink")?.value || "").trim();
-        const year = (document.getElementById("subYear")?.value || "").trim();
-        const cat = (document.getElementById("subCat")?.value || "").trim();
-        const notes = (document.getElementById("subNotes")?.value || "").trim();
-        return { name, email, t, link, year, cat, notes };
-      };
-
-      const buildText = (p) =>
-`dotdock submission
-Name: ${p.name}
-Email: ${p.email}
-Title: ${p.t}
-Link: ${p.link}
-Year: ${p.year}
-Category: ${p.cat}
-Notes: ${p.notes}
-`;
-
-      document.getElementById("subCopy").addEventListener("click", async () => {
-        const p = getPayload();
-        const text = buildText(p);
-        try {
-          await navigator.clipboard.writeText(text);
-          showToast("Submission copied.");
-        } catch {
-          showToast("Copy failed — select and copy manually.");
-        }
-      });
-
-      document.getElementById("subSend").addEventListener("click", () => {
-        const p = getPayload();
-        const text = buildText(p);
-
-        if (SUBMIT_FORM_URL) {
-          window.open(SUBMIT_FORM_URL, "_blank", "noopener");
-          showToast("Opened submission form.");
-          return;
-        }
-
-        if (CONTACT_EMAIL) {
-          const subject = encodeURIComponent("dotdock submission");
-          const body = encodeURIComponent(text);
-          window.location.href = `mailto:${encodeURIComponent(CONTACT_EMAIL)}?subject=${subject}&body=${body}`;
-          return;
-        }
-
-        // fallback: copy + toast
-        navigator.clipboard?.writeText(text).then(() => {
-          showToast("Copied. Now paste it to send.");
-        }).catch(() => showToast("Set SUBMIT_FORM_URL or CONTACT_EMAIL later."));
-      });
-    }
-  }
-
-  function closeHelpModal() {
-    const modal = document.getElementById("helpModal");
-    modal.classList.add("hidden");
-    document.body.classList.remove("modal-open");
-  }
-
-  // --------- Tabs ----------
-  function setTabFromUrl() {
-    const tab = new URLSearchParams(location.search).get("tab");
-    state.tab = (tab === "today") ? "today" : "home";
-
-    // highlight menu
-    const home = document.getElementById("navHome");
-    const today = document.getElementById("navToday");
-    if (home) home.classList.toggle("text-amber-700", state.tab === "home");
-    if (today) today.classList.toggle("text-amber-700", state.tab === "today");
-  }
-
-  // --------- DOM events ----------
   document.addEventListener("DOMContentLoaded", async () => {
     const searchInput = document.getElementById("searchInput");
     const searchBtn = document.getElementById("searchBtn");
@@ -1386,158 +414,74 @@ Notes: ${p.notes}
     const refreshBtn = document.getElementById("userRefreshBtn");
     const refreshStatus = document.getElementById("userRefreshStatus");
     const backToTopBtn = document.getElementById("backToTop");
-    const toggleReading = document.getElementById("toggleReadingList");
-    const clearReading = document.getElementById("clearReadingListBtn");
-    const toggleTopics = document.getElementById("toggleTopics");
-    const toggleCats = document.getElementById("toggleCats");
-    const toggleYears = document.getElementById("toggleYears");
-    const wsStatusFilter = document.getElementById("wsStatusFilter");
-    const wsTagFilter = document.getElementById("wsTagFilter");
-    const exportWsBtn = document.getElementById("exportWorkspaceBtn");
-    const clearCompareBtn = document.getElementById("clearCompareBtn");
-    const sortSelect = document.getElementById("sortSelect");
-    const newsletterBtn = document.getElementById("newsletterBtn");
+// Category/Year filters: always start collapsed
+const toggleCats = document.getElementById("toggleCats");
+const toggleYears = document.getElementById("toggleYears");
+const catBox = document.getElementById("categoryFilters");
+const yearBox = document.getElementById("yearFilters");
 
-    // Tabs
-    setTabFromUrl();
+function wireToggle(btn, box) {
+  if (!btn || !box) return;
+  // Force collapsed on load (no persistence)
+  box.classList.add("hidden");
+  btn.textContent = "Show";
+  btn.addEventListener("click", () => {
+    const isHidden = box.classList.contains("hidden");
+    if (isHidden) {
+      box.classList.remove("hidden");
+      btn.textContent = "Hide";
+    } else {
+      box.classList.add("hidden");
+      btn.textContent = "Show";
+    }
+  });
+}
+
+wireToggle(toggleCats, catBox);
+wireToggle(toggleYears, yearBox);
+
 
     // Modal close handlers
     document.getElementById("pdfModalClose").addEventListener("click", closePdfModal);
     document.getElementById("pdfModalBackdrop").addEventListener("click", closePdfModal);
-
-    // Help dropdown
-    const helpBtn = document.getElementById("helpBtn");
-    const helpDd = document.getElementById("helpDropdown");
-    helpBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      helpDd.classList.toggle("hidden");
-    });
-    document.addEventListener("click", (e) => {
-      if (!helpDd.contains(e.target) && e.target !== helpBtn) helpDd.classList.add("hidden");
-    });
-
-    // Help/Submit modals
-    document.querySelectorAll("[data-openmodal]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        helpDd.classList.add("hidden");
-        openHelpModal(btn.getAttribute("data-openmodal"));
-      });
-    });
-    document.getElementById("helpModalBackdrop").addEventListener("click", closeHelpModal);
-    document.getElementById("helpModalClose").addEventListener("click", closeHelpModal);
-
-    // Toggle filters (collapsed by default)
-    toggleTopics.addEventListener("click", () => {
-      const el = document.getElementById("topicFilters");
-      const open = el.classList.toggle("hidden") === false;
-      toggleTopics.textContent = open ? "Hide" : "Show";
-    });
-    toggleCats.addEventListener("click", () => {
-      const el = document.getElementById("categoryFilters");
-      const open = el.classList.toggle("hidden") === false;
-      toggleCats.textContent = open ? "Hide" : "Show";
-    });
-    toggleYears.addEventListener("click", () => {
-      const el = document.getElementById("yearFilters");
-      const open = el.classList.toggle("hidden") === false;
-      toggleYears.textContent = open ? "Hide" : "Show";
-    });
-
-    // Sort
-    sortSelect.addEventListener("change", () => {
-      state.sortMode = sortSelect.value || "newest";
-      applyFilters(true);
-    });
-
-    // Newsletter
-    newsletterBtn.addEventListener("click", () => {
-      if (!NEWSLETTER_URL) {
-        showToast("Newsletter link not set yet.");
-        return;
-      }
-      window.open(NEWSLETTER_URL, "_blank", "noopener");
-    });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePdfModal(); });
 
     // Search
-    function doSearch() {
+    searchBtn.addEventListener("click", () => {
       state.searchQuery = searchInput.value.trim();
       applyFilters();
-    }
-    searchBtn.addEventListener("click", doSearch);
-    searchInput.addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
+    });
 
     // Live search debounce
     let searchTimeout = null;
     searchInput.addEventListener("input", () => {
       clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(doSearch, 220);
+      searchTimeout = setTimeout(() => {
+        state.searchQuery = searchInput.value.trim();
+        applyFilters();
+      }, 250);
     });
 
     // Clear filters
     clearBtn.addEventListener("click", () => {
       state.searchQuery = "";
       searchInput.value = "";
-      state.selectedTopics.clear();
       state.selectedCategories.clear();
       state.selectedYears.clear();
-      state.wsStatusFilter = "all";
-      state.wsTagFilter = "";
-      wsStatusFilter.value = "all";
-      wsTagFilter.value = "";
-
-      document.querySelectorAll("#topicFilters input[type=checkbox], #categoryFilters input[type=checkbox], #yearFilters input[type=checkbox]")
+      document.querySelectorAll("#categoryFilters input[type=checkbox], #yearFilters input[type=checkbox]")
         .forEach(cb => cb.checked = false);
-
       applyFilters();
     });
 
-    // Reading list toggle
-    toggleReading.addEventListener("click", () => {
-      const wrap = document.getElementById("readingListWrap");
-      const isHidden = wrap.classList.contains("hidden");
-      if (isHidden) {
-        wrap.classList.remove("hidden");
-        toggleReading.textContent = "Hide";
-      } else {
-        wrap.classList.add("hidden");
-        toggleReading.textContent = "Show";
-      }
-    });
-    clearReading.addEventListener("click", () => {
-      readingSet([]);
-      renderReadingList();
-      render();
-    });
-
-    // Workspace filters
-    wsStatusFilter.addEventListener("change", () => {
-      state.wsStatusFilter = wsStatusFilter.value;
-      applyFilters();
-    });
-    wsTagFilter.addEventListener("input", () => {
-      state.wsTagFilter = wsTagFilter.value;
-      applyFilters();
-    });
-    exportWsBtn.addEventListener("click", exportWorkspace);
-
-    // Compare clear
-    clearCompareBtn.addEventListener("click", () => {
-      compareSet([]);
-      renderCompare();
-      render();
-    });
-
-    // Refresh list
+    // Refresh list (fetch latest JSON from Apps Script)
     refreshBtn.addEventListener("click", async () => {
       refreshStatus.textContent = "Refreshing…";
       try {
-        const data = prepareItems(await loadData(true));
+        const data = await loadData(true);
         state.allItems = data;
         cacheSet(data);
         buildFacetFilters();
         applyFilters();
-        renderReadingList();
-        renderCompare();
         refreshStatus.textContent = "Last updated: " + formatTime(Date.now());
       } catch (e) {
         refreshStatus.textContent = e.message;
@@ -1551,96 +495,27 @@ Notes: ${p.notes}
     });
     backToTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
-    // Event delegation for card actions + reading list preview buttons
-    document.getElementById("cardsContainer").addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-action]");
-      if (!btn) return;
-      const action = btn.getAttribute("data-action");
-      const id = btn.getAttribute("data-id");
-      if (!id) return;
-
-      const item = state.allItems.find(x => String(x.id) === String(id));
-
-      if (action === "modal") openPdfModalById(id);
-      if (action === "reading") toggleReadingItem(id);
-      if (action === "compare") toggleCompare(id);
-
-      if (action === "pin") {
-        const pinned = wsPinned(id);
-        wsSetItem(id, { pinned: !pinned });
-        renderCompare();
-        applyFilters();
-      }
-
-      if (action === "notebooklm" && item) openInNotebookLM(item);
-      if (action === "aisummary" && item) openInChatGPT(item);
-
-      if (action === "like") {
-        toggleLike(id);
-        if (state.sortMode === "liked") applyFilters(true);
-        else render();
-        showToast(isLiked(id) ? "Liked (local)." : "Unliked (local).");
-      }
-    });
-
-    document.getElementById("readingListWrap").addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-action]");
-      if (!btn) return;
-      const action = btn.getAttribute("data-action");
-      const id = btn.getAttribute("data-id");
-      if (!id) return;
-      if (action === "modal") openPdfModalById(id);
-      if (action === "reading") toggleReadingItem(id);
-      if (action === "compare") toggleCompare(id);
-    });
-
-    document.getElementById("compareWrap").addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-action='compare']");
-      if (!btn) return;
-      const id = btn.getAttribute("data-id");
-      if (id) toggleCompare(id);
-    });
-
     // Instant-load cached data
     const cached = cacheGet();
     if (cached) {
-      state.allItems = prepareItems(cached);
+      state.allItems = cached;
       buildFacetFilters();
       applyFilters();
-      renderReadingList();
-      renderCompare();
       document.getElementById("resultsInfo").textContent = "Showing cached results… updating";
     }
 
     // Fetch fresh
     try {
-      const data = prepareItems(await loadData(false));
+      const data = await loadData(false);
       state.allItems = data;
       cacheSet(data);
       buildFacetFilters();
       applyFilters();
-      renderReadingList();
-      renderCompare();
-      refreshStatus.textContent = "Last updated: " + formatTime(Date.now());
     } catch (e) {
       if (!cached) {
         document.getElementById("resultsInfo").textContent = "Error loading data: " + e.message;
       }
     }
-
-    // Ensure sort UI matches state
-    sortSelect.value = state.sortMode;
-
-    // Close modals on Escape
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        closePdfModal();
-        closeHelpModal();
-        helpDd.classList.add("hidden");
-      }
-    });
-
-    setupInfiniteScroll();
   });
 </script>
 </body>
