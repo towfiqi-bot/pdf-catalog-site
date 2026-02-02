@@ -346,9 +346,10 @@
   const ENABLE_SEARCH_SUGGEST = true;          // Google-like suggestions dropdown
   const ENABLE_SEARCH_RECENT = true;           // Include recent searches in suggestions
   const ENABLE_AI_PROMPT_METADATA = true;      // Include Year/Category/Summary in AI prompt
+  const DEFAULT_TOPICS_OPEN = true;            // Topics expanded on page load
 
   const RECENT_SEARCH_KEY = "dotdock_recent_searches_v1";
-
+  
   // Browser cache for instant load
   const CACHE_KEY = "pdf_catalog_cache_v2";
   const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
@@ -1498,8 +1499,8 @@ Notes: ${p.notes}
     }
 
 
-    // Default filter visibility on load
-    // Topics should stay collapsed; Year expanded; Category expanded only if enabled.
+      // Default filter visibility on load
+    // Topics expanded (per your request), Year expanded; Category shown only if enabled.
     const catSection = document.getElementById("categoryFilterSection");
     if (!ENABLE_CATEGORY_FILTER && catSection) {
       catSection.classList.add("hidden");
@@ -1507,7 +1508,7 @@ Notes: ${p.notes}
     }
 
     if (ENABLE_DEFAULT_FILTER_EXPAND) {
-      setToggleState(toggleTopics, document.getElementById("topicFilters"), false);
+      setToggleState(toggleTopics, document.getElementById("topicFilters"), !!DEFAULT_TOPICS_OPEN);
       setToggleState(toggleCats, document.getElementById("categoryFilters"), !!ENABLE_CATEGORY_FILTER);
       setToggleState(toggleYears, document.getElementById("yearFilters"), true);
     }
