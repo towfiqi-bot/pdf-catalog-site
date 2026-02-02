@@ -1423,6 +1423,10 @@ Notes: ${p.notes}
     const toggleReading = document.getElementById("toggleReadingList");
     const clearReading = document.getElementById("clearReadingListBtn");
     const toggleTopics = document.getElementById("toggleTopics");
+    // Force Topics open on initial load
+    const topicEl = document.getElementById("topicFilters");
+    if (topicEl) topicEl.classList.remove("hidden");
+    if (toggleTopics) toggleTopics.textContent = "Hide";
     const toggleCats = document.getElementById("toggleCats");
     const toggleYears = document.getElementById("toggleYears");
     const wsStatusFilter = document.getElementById("wsStatusFilter");
