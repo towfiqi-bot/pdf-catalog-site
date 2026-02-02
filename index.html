@@ -89,6 +89,7 @@
     <section class="mb-6">
       <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
         <div class="max-w-3xl mx-auto">
+          <div id="searchWrap" class="relative">
           <div class="flex items-center gap-3 bg-white border border-gray-300 rounded-full px-5 py-3 shadow-sm focus-within:ring-2 focus-within:ring-amber-200">
             <svg class="h-5 w-5 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="7"></circle>
@@ -97,11 +98,18 @@
             <input id="searchInput" type="text"
                    class="w-full outline-none text-base md:text-lg"
                    placeholder="Search reports by title or summary… (try: AI + Education)" />
+            <button id="searchClearBtn" type="button" aria-label="Clear search"
+                    class="hidden shrink-0 p-2 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100">
+              &#10005;
+            </button>
             <button id="searchBtn"
                     class="shrink-0 px-5 py-2 text-sm font-semibold uppercase tracking-wide bg-amber-600 text-white rounded-full hover:bg-amber-700">
               Search
             </button>
           </div>
+          <div id="searchSuggestPanel"
+               class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50"></div>
+        </div>
           <p class="mt-2 text-xs text-gray-500 text-center">
             Strong search across <span class="font-semibold">title</span> + <span class="font-semibold">summary</span> (not inside PDF pages yet).
           </p>
@@ -131,7 +139,7 @@
             </div>
 
             <!-- Category filters -->
-            <div>
+            <div id="categoryFilterSection">
               <div class="flex items-center justify-between">
                 <h3 class="text-xs font-semibold text-gray-700">Category</h3>
                 <button id="toggleCats" class="text-xs font-semibold text-amber-700 hover:underline">Show</button>
@@ -331,6 +339,15 @@
 
 <script>
   const DATA_URL = "https://script.google.com/macros/s/AKfycbwF2IqDTG0F5acy4K1mtBRMZg1AOp3RMHzYwHEtZcZmRV8Jbpb2_ETe4Mpnkgp-lxmy/exec";
+
+  // Feature flags (safe toggles)
+  const ENABLE_DEFAULT_FILTER_EXPAND = true;   // Year expanded on load; Category expanded if enabled
+  const ENABLE_CATEGORY_FILTER = false;        // Hide Category filter section (requested)
+  const ENABLE_SEARCH_SUGGEST = true;          // Google-like suggestions dropdown
+  const ENABLE_SEARCH_RECENT = true;           // Include recent searches in suggestions
+  const ENABLE_AI_PROMPT_METADATA = true;      // Include Year/Category/Summary in AI prompt
+
+  const RECENT_SEARCH_KEY = "dotdock_recent_searches_v1";
 
   // Browser cache for instant load
   const CACHE_KEY = "pdf_catalog_cache_v2";
@@ -567,10 +584,20 @@
   async function openInChatGPT(item) {
     const link = driveShareUrl(item.id);
     const title = item.title || "Untitled report";
+    const year = item.year ? String(item.year) : "";
+    const cats = (item.categories || []).join(", ");
+    const catalogSummary = item.summary || "";
+    const meta = ENABLE_AI_PROMPT_METADATA
+      ? `Year: ${year || "—"}
+Category: ${cats || "—"}
+Catalog summary: ${catalogSummary || "—"}
+
+`
+      : "";
     const prompt =
 `Please summarize this PDF clearly:
 Title: ${title}
-Link: ${link}
+${meta}Link: ${link}
 
 Output:
 1) 8 bullet executive summary
@@ -819,27 +846,30 @@ Output:
     // Categories
     const catContainer = document.getElementById("categoryFilters");
     catContainer.innerHTML = "";
-    Array.from(catCounts.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .forEach(([cat, count]) => {
-        const id = "cat-" + cat.replace(/\W+/g, "-").toLowerCase();
-        const row = document.createElement("div");
-        row.className = "flex items-center gap-2";
-        row.innerHTML = `
-          <input type="checkbox" id="${id}" value="${escapeHtml(cat)}"
-                 class="h-3 w-3 text-amber-600 border-gray-300 rounded">
-          <label for="${id}" class="cursor-pointer text-gray-700 text-sm">
-            ${escapeHtml(cat)} <span class="text-gray-400 text-xs">(${count})</span>
-          </label>
-        `;
-        const checkbox = row.querySelector("input");
-        checkbox.checked = state.selectedCategories.has(cat);
-        checkbox.addEventListener("change", () => {
-          checkbox.checked ? state.selectedCategories.add(cat) : state.selectedCategories.delete(cat);
-          applyFilters();
+    if (ENABLE_CATEGORY_FILTER) {
+      Array.from(catCounts.entries())
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .forEach(([cat, count]) => {
+          const id = "cat-" + cat.replace(/\W+/g, "-").toLowerCase();
+          const row = document.createElement("div");
+          row.className = "flex items-center gap-2";
+          row.innerHTML = `
+            <input type="checkbox" id="${id}" value="${escapeHtml(cat)}"
+                   class="h-3 w-3 text-amber-600 border-gray-300 rounded">
+            <label for="${id}" class="cursor-pointer text-gray-700 text-sm">
+              ${escapeHtml(cat)} <span class="text-gray-400 text-xs">(${count})</span>
+            </label>
+          `;
+          const checkbox = row.querySelector("input");
+          checkbox.checked = state.selectedCategories.has(cat);
+          checkbox.addEventListener("change", () => {
+            checkbox.checked ? state.selectedCategories.add(cat) : state.selectedCategories.delete(cat);
+            applyFilters();
+          });
+          catContainer.appendChild(row);
         });
-        catContainer.appendChild(row);
-      });
+    }
+
 
     // Years
     const yearContainer = document.getElementById("yearFilters");
@@ -896,7 +926,8 @@ Output:
       })();
 
       // Category (OR)
-      const matchesCat = state.selectedCategories.size === 0 ||
+      const matchesCat = !ENABLE_CATEGORY_FILTER ||
+        state.selectedCategories.size === 0 ||
         (item.categories || []).some(c => state.selectedCategories.has(c));
 
       // Year
@@ -1382,6 +1413,9 @@ Notes: ${p.notes}
   document.addEventListener("DOMContentLoaded", async () => {
     const searchInput = document.getElementById("searchInput");
     const searchBtn = document.getElementById("searchBtn");
+    const searchClearBtn = document.getElementById("searchClearBtn");
+    const searchSuggestPanel = document.getElementById("searchSuggestPanel");
+    const searchWrap = document.getElementById("searchWrap");
     const clearBtn = document.getElementById("clearFilters");
     const refreshBtn = document.getElementById("userRefreshBtn");
     const refreshStatus = document.getElementById("userRefreshStatus");
@@ -1427,21 +1461,52 @@ Notes: ${p.notes}
     document.getElementById("helpModalClose").addEventListener("click", closeHelpModal);
 
     // Toggle filters (collapsed by default)
-    toggleTopics.addEventListener("click", () => {
-      const el = document.getElementById("topicFilters");
-      const open = el.classList.toggle("hidden") === false;
-      toggleTopics.textContent = open ? "Hide" : "Show";
-    });
-    toggleCats.addEventListener("click", () => {
-      const el = document.getElementById("categoryFilters");
-      const open = el.classList.toggle("hidden") === false;
-      toggleCats.textContent = open ? "Hide" : "Show";
-    });
-    toggleYears.addEventListener("click", () => {
-      const el = document.getElementById("yearFilters");
-      const open = el.classList.toggle("hidden") === false;
-      toggleYears.textContent = open ? "Hide" : "Show";
-    });
+    function setToggleState(btn, panel, open) {
+      if (!btn || !panel) return;
+      panel.classList.toggle("hidden", !open);
+      btn.textContent = open ? "Hide" : "Show";
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+
+    if (toggleTopics) {
+      toggleTopics.addEventListener("click", () => {
+        const el = document.getElementById("topicFilters");
+        const open = el.classList.toggle("hidden") === false;
+        toggleTopics.textContent = open ? "Hide" : "Show";
+        toggleTopics.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    }
+    if (toggleCats) {
+      toggleCats.addEventListener("click", () => {
+        const el = document.getElementById("categoryFilters");
+        const open = el.classList.toggle("hidden") === false;
+        toggleCats.textContent = open ? "Hide" : "Show";
+        toggleCats.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    }
+    if (toggleYears) {
+      toggleYears.addEventListener("click", () => {
+        const el = document.getElementById("yearFilters");
+        const open = el.classList.toggle("hidden") === false;
+        toggleYears.textContent = open ? "Hide" : "Show";
+        toggleYears.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    }
+
+
+    // Default filter visibility on load
+    // Topics should stay collapsed; Year expanded; Category expanded only if enabled.
+    const catSection = document.getElementById("categoryFilterSection");
+    if (!ENABLE_CATEGORY_FILTER && catSection) {
+      catSection.classList.add("hidden");
+      state.selectedCategories.clear();
+    }
+
+    if (ENABLE_DEFAULT_FILTER_EXPAND) {
+      setToggleState(toggleTopics, document.getElementById("topicFilters"), false);
+      setToggleState(toggleCats, document.getElementById("categoryFilters"), !!ENABLE_CATEGORY_FILTER);
+      setToggleState(toggleYears, document.getElementById("yearFilters"), true);
+    }
 
     // Sort
     sortSelect.addEventListener("change", () => {
@@ -1458,13 +1523,150 @@ Notes: ${p.notes}
       window.open(NEWSLETTER_URL, "_blank", "noopener");
     });
 
+
     // Search
-    function doSearch() {
+    const _recentMax = 12;
+
+    function loadRecentSearches() {
+      try {
+        const raw = localStorage.getItem(RECENT_SEARCH_KEY);
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr.map(String) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveRecentSearches(arr) {
+      try { localStorage.setItem(RECENT_SEARCH_KEY, JSON.stringify(arr)); } catch {}
+    }
+
+    function rememberRecentSearch(q) {
+      if (!ENABLE_SEARCH_RECENT) return;
+      const s = String(q || "").trim();
+      if (!s) return;
+      const norm = normalizeText(s);
+      let arr = loadRecentSearches();
+      arr = arr.filter(x => normalizeText(x) !== norm);
+      arr.unshift(s);
+      if (arr.length > _recentMax) arr = arr.slice(0, _recentMax);
+      saveRecentSearches(arr);
+    }
+
+    // Suggestions data (titles + topics + recent)
+    let _suggestTitles = [];
+    let _suggestTopics = [];
+    let _suggestKeywords = [];
+
+    function refreshSearchSuggestData() {
+      if (!ENABLE_SEARCH_SUGGEST) return;
+      _suggestTitles = (state.allItems || []).map(it => it && it.title).filter(Boolean);
+      _suggestTopics = (state.topicList || []).map(x => x && x.topic).filter(Boolean);
+
+      // Summary keywords (top frequency, stopwords removed)
+      const freq = new Map();
+      (state.allItems || []).forEach(it => {
+        const s = String(it && it.summary || "");
+        tokenizeLoose(s).forEach(w => {
+          if (!w || w.length < 4) return;
+          if (STOPWORDS.has(w)) return;
+          freq.set(w, (freq.get(w) || 0) + 1);
+        });
+      });
+      _suggestKeywords = Array.from(freq.entries())
+        .sort((a,b) => (b[1] - a[1]) || a[0].localeCompare(b[0]))
+        .slice(0, 80)
+        .map(([w]) => w);
+    }
+
+    function buildSuggestions(query) {
+      const q = normalizeText(query || "");
+      const out = [];
+      const seen = new Set();
+
+      function addOne(s) {
+        const v = String(s || "").trim();
+        if (!v) return;
+        const key = normalizeText(v);
+        if (seen.has(key)) return;
+        seen.add(key);
+        out.push(v);
+      }
+
+      // Recent first
+      if (ENABLE_SEARCH_RECENT) {
+        const rec = loadRecentSearches();
+        rec.forEach(r => {
+          if (!q || normalizeText(r).includes(q)) addOne(r);
+        });
+      }
+
+      // Topics next
+      _suggestTopics.forEach(t => {
+        if (out.length >= 10) return;
+        if (!q || normalizeText(t).includes(q)) addOne(t);
+      });
+
+      // Keywords from summaries
+      _suggestKeywords.forEach(k => {
+        if (out.length >= 10) return;
+        if (q && normalizeText(k).includes(q)) addOne(k);
+      });
+
+      // Titles last (only when user typed something)
+      if (q) _suggestTitles.forEach(t => {
+        if (out.length >= 10) return;
+        if (!q || normalizeText(t).includes(q)) addOne(t);
+      });
+
+      return out.slice(0, 10);
+    }
+
+    function hideSuggest() {
+      if (!searchSuggestPanel) return;
+      searchSuggestPanel.classList.add("hidden");
+      searchSuggestPanel.innerHTML = "";
+    }
+
+    function showSuggest() {
+      if (!searchSuggestPanel) return;
+      searchSuggestPanel.classList.remove("hidden");
+    }
+
+    function renderSuggestList() {
+      if (!ENABLE_SEARCH_SUGGEST || !searchSuggestPanel) return;
+      const suggestions = buildSuggestions(searchInput.value);
+      if (!suggestions.length) {
+        hideSuggest();
+        return;
+      }
+
+      searchSuggestPanel.innerHTML = suggestions.map(s =>
+        `<button type="button" data-suggest="${escapeHtml(s)}" class="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2">
+           <svg class="h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+             <circle cx="11" cy="11" r="7"></circle>
+             <path d="M21 21l-4.3-4.3"></path>
+           </svg>
+           <span class="text-sm text-gray-800">${escapeHtml(s)}</span>
+         </button>`
+      ).join("");
+
+      showSuggest();
+    }
+
+    function syncSearchClearBtn() {
+      if (!searchClearBtn) return;
+      searchClearBtn.classList.toggle("hidden", !searchInput.value);
+    }
+
+    function doSearch(opts = {}) {
       state.searchQuery = searchInput.value.trim();
+      if (opts && opts.remember) rememberRecentSearch(state.searchQuery);
+      if (opts && opts.closeSuggest) hideSuggest();
       applyFilters();
     }
-    searchBtn.addEventListener("click", doSearch);
-    searchInput.addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
+    searchBtn.addEventListener("click", () => doSearch({ remember: true, closeSuggest: true }));
+    searchInput.addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch({ remember: true, closeSuggest: true }); });
 
     // Live search debounce
     let searchTimeout = null;
@@ -1472,6 +1674,48 @@ Notes: ${p.notes}
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(doSearch, 220);
     });
+
+    // Search clear (X) + suggestions
+    if (searchClearBtn) {
+      searchClearBtn.addEventListener("click", () => {
+        searchInput.value = "";
+        syncSearchClearBtn();
+        hideSuggest();
+        doSearch();
+        searchInput.focus();
+      });
+    }
+
+    if (ENABLE_SEARCH_SUGGEST) {
+      // show suggestions on focus and on input
+      searchInput.addEventListener("focus", () => {
+        renderSuggestList();
+      });
+      searchInput.addEventListener("input", () => {
+        syncSearchClearBtn();
+        renderSuggestList();
+      });
+
+      if (searchSuggestPanel) {
+        searchSuggestPanel.addEventListener("click", (e) => {
+          const btn = e.target.closest("[data-suggest]");
+          if (!btn) return;
+          const v = btn.getAttribute("data-suggest") || "";
+          searchInput.value = v;
+          syncSearchClearBtn();
+          hideSuggest();
+          doSearch({ remember: true, closeSuggest: true });
+        });
+      }
+
+      // click outside closes
+      document.addEventListener("click", (e) => {
+        if (searchWrap && !searchWrap.contains(e.target)) hideSuggest();
+      });
+    }
+
+    // Initial clear btn state
+    syncSearchClearBtn();
 
     // Clear filters
     clearBtn.addEventListener("click", () => {
@@ -1535,6 +1779,7 @@ Notes: ${p.notes}
         state.allItems = data;
         cacheSet(data);
         buildFacetFilters();
+        refreshSearchSuggestData();
         applyFilters();
         renderReadingList();
         renderCompare();
@@ -1606,6 +1851,7 @@ Notes: ${p.notes}
     if (cached) {
       state.allItems = prepareItems(cached);
       buildFacetFilters();
+      refreshSearchSuggestData();
       applyFilters();
       renderReadingList();
       renderCompare();
@@ -1618,6 +1864,7 @@ Notes: ${p.notes}
       state.allItems = data;
       cacheSet(data);
       buildFacetFilters();
+      refreshSearchSuggestData();
       applyFilters();
       renderReadingList();
       renderCompare();
