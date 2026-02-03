@@ -1537,6 +1537,28 @@ Notes: ${p.notes}
       });
     }
 
+const AUTO_REFRESH_MS = 5 * 60 * 1000;
+setInterval(async () => {
+  try {
+    const data = prepareItems(await loadData(true));
+    // quick change detection: length + newest modified
+    const sig = (arr) => `${arr.length}|${Math.max(...arr.map(x => x.modified || 0))}`;
+
+    if (sig(data) !== sig(state.allItems || [])) {
+      state.allItems = data;
+      cacheSet(data);
+      buildFacetFilters();
+      refreshSearchSuggestData();
+      applyFilters(true); // keep page/scroll logic steadier
+      renderReadingList();
+      renderCompare();
+      showToast("New reports loaded.");
+    }
+  } catch (e) {
+    // ignore refresh errors silently
+  }
+}, AUTO_REFRESH_MS);
+
     const catSection = document.getElementById("categoryFilterSection");
     if (!ENABLE_CATEGORY_FILTER && catSection) {
       catSection.classList.add("hidden");
@@ -1910,7 +1932,7 @@ Notes: ${p.notes}
 
     // Fetch fresh
     try {
-      const data = prepareItems(await loadData(false));
+      const data = prepareItems(await loadData(true));
       state.allItems = data;
       cacheSet(data);
       buildFacetFilters();
