@@ -58,7 +58,18 @@
               <nav class="flex items-center gap-5 text-sm font-medium text-gray-700">
                 <a id="navHome" href="index.html" class="hover:text-amber-700">Home</a>
                 <a id="navToday" href="index.html?tab=today" class="hover:text-amber-700">Added Today</a>
+<!-- Live status badge -->
+<div id="liveStatus" class="hidden sm:flex items-center gap-2 text-[11px] font-semibold text-gray-600">
+  <span class="inline-flex items-center gap-2 px-2 py-1 rounded-full border border-gray-200 bg-white">
+    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+    <span id="liveUpdatedText">Updated —</span>
+  </span>
 
+  <span id="liveNewText"
+        class="hidden px-2 py-1 rounded-full border border-amber-200 bg-amber-50 text-amber-800">
+    New items: 0
+  </span>
+</div>
                 <div class="relative">
                   <button id="helpBtn" class="inline-flex items-center gap-1 hover:text-amber-700">
                     Help
@@ -353,6 +364,7 @@
   // Browser cache for instant load
   const CACHE_KEY = "pdf_catalog_cache_v2";
   const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+  const LAST_SEEN_MAX_MOD_KEY = "dotdock_last_seen_max_modified_v1";
 
   // Local-only features
   const READING_KEY = "dotdock_reading_list_v1";
@@ -1452,7 +1464,67 @@ Notes: ${p.notes}
     if (home) home.classList.toggle("text-amber-700", state.tab === "home");
     if (today) today.classList.toggle("text-amber-700", state.tab === "today");
   }
+function formatAgo(ts) {
+  if (!ts) return "—";
+  const diff = Date.now() - ts;
 
+  const sec = Math.floor(diff / 1000);
+  if (sec < 60) return `${sec}s ago`;
+
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min} min ago`;
+
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} hr ago`;
+
+  const day = Math.floor(hr / 24);
+  return `${day} day${day === 1 ? "" : "s"} ago`;
+}
+
+function setLiveHeaderStatus({ updatedAt, newCount }) {
+  const wrap = document.getElementById("liveStatus");
+  const updatedEl = document.getElementById("liveUpdatedText");
+  const newEl = document.getElementById("liveNewText");
+  wrap.setAttribute("data-updated-at", String(updatedAt || 0));
+  if (!wrap || !updatedEl || !newEl) return;
+
+  wrap.classList.remove("hidden");
+  updatedEl.textContent = `Updated ${formatAgo(updatedAt)}`;
+
+  if (newCount && newCount > 0) {
+    newEl.textContent = `New items: ${newCount}`;
+    newEl.classList.remove("hidden");
+  } else {
+    newEl.classList.add("hidden");
+  }
+}
+
+function computeNewCountSinceLastVisit(items) {
+  // Uses max "modified" timestamp from last visit as baseline.
+  let lastSeenMax = 0;
+  try {
+    lastSeenMax = Number(localStorage.getItem(LAST_SEEN_MAX_MOD_KEY) || 0) || 0;
+  } catch {}
+
+  let newest = 0;
+  let newCount = 0;
+
+  for (const it of (items || [])) {
+    const m = Number(it.modified || 0) || 0;
+    if (m > newest) newest = m;
+    if (lastSeenMax && m > lastSeenMax) newCount += 1;
+  }
+
+  // Save newest as "seen" for next visit (after we compute)
+  if (newest) {
+    try { localStorage.setItem(LAST_SEEN_MAX_MOD_KEY, String(newest)); } catch {}
+  }
+
+  // On first-ever visit, lastSeenMax = 0, we show no "new items" badge (avoids confusion)
+  return lastSeenMax ? newCount : 0;
+}
+
+  
   // --------- DOM events ----------
   document.addEventListener("DOMContentLoaded", async () => {
     const searchInput = document.getElementById("searchInput");
@@ -1537,6 +1609,18 @@ Notes: ${p.notes}
       });
     }
 
+let _lastHeaderUpdateAt = Date.now();
+setInterval(() => {
+  // If we've ever shown it once, keep updating the "ago" label
+  const updatedEl = document.getElementById("liveUpdatedText");
+  const wrap = document.getElementById("liveStatus");
+  if (!wrap || wrap.classList.contains("hidden")) return;
+
+  // We store the last update time in a data attribute
+  const ts = Number(wrap.getAttribute("data-updated-at") || 0) || 0;
+  if (ts) setLiveHeaderStatus({ updatedAt: ts, newCount: 0 }); // preserve "ago"
+}, 30000);
+    
 const AUTO_REFRESH_MS = 5 * 60 * 1000;
 setInterval(async () => {
   try {
@@ -1547,6 +1631,8 @@ setInterval(async () => {
     if (sig(data) !== sig(state.allItems || [])) {
       state.allItems = data;
       cacheSet(data);
+      const newCount = computeNewCountSinceLastVisit(data);
+      setLiveHeaderStatus({ updatedAt: Date.now(), newCount });
       buildFacetFilters();
       refreshSearchSuggestData();
       applyFilters(true); // keep page/scroll logic steadier
