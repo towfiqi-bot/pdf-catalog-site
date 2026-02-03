@@ -346,9 +346,10 @@
   const ENABLE_SEARCH_RECENT = true;           // Include recent searches in suggestions
   const ENABLE_AI_PROMPT_METADATA = true;      // Include Year/Category/Summary in AI prompt
   const DEFAULT_TOPICS_OPEN = true;            // Topics expanded on page load
+  const ENABLE_REMOTE_LIKES = true;            // Global likes via Apps Script (action=likes_get / like_toggle)
 
   const RECENT_SEARCH_KEY = "dotdock_recent_searches_v1";
-  
+
   // Browser cache for instant load
   const CACHE_KEY = "pdf_catalog_cache_v2";
   const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
@@ -542,7 +543,7 @@
     return compareGet().includes(String(id));
   }
 
-  // --------- Likes (local-only, non-spam) ----------
+  // --------- Likes (local fallback) ----------
   function likesGetAll() {
     try {
       const raw = localStorage.getItem(LIKE_KEY);
@@ -555,7 +556,17 @@
   function likesSetAll(payload) {
     try { localStorage.setItem(LIKE_KEY, JSON.stringify(payload || {counts:{},liked:{}})); } catch {}
   }
+
+  // Remote likes state
+  const DEVICE_ID_KEY = "dotdock_device_id_v1";
+  let REMOTE_LIKES_READY = false;
+  let REMOTE_LIKE_COUNTS = new Map(); // id -> count
+  let REMOTE_LIKED = {};              // id -> true
+
   function likeCount(id) {
+    if (ENABLE_REMOTE_LIKES && REMOTE_LIKES_READY) {
+      return Number(REMOTE_LIKE_COUNTS.get(String(id)) || 0) || 0;
+    }
     const { counts } = likesGetAll();
     return Number(counts[String(id)] || 0) || 0;
   }
@@ -573,11 +584,74 @@
       s.counts[k] = Math.max(0, (Number(s.counts[k] || 1) || 1) - 1);
     } else {
       s.liked[k] = true;
-      // cap at 1 per user (no spam). If you later add backend, remove this cap.
       s.counts[k] = Math.min(1, (Number(s.counts[k] || 0) || 0) + 1);
     }
     likesSetAll(s);
     return { liked: !!s.liked[k], count: Number(s.counts[k] || 0) || 0 };
+  }
+
+  // --------- Remote likes (Apps Script + Google Sheet) ----------
+  function getDeviceId_() {
+    try {
+      let v = localStorage.getItem(DEVICE_ID_KEY);
+      if (!v) {
+        v = (typeof crypto !== "undefined" && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : ("dev_" + Math.random().toString(16).slice(2) + Date.now());
+        localStorage.setItem(DEVICE_ID_KEY, v);
+      }
+      return v;
+    } catch {
+      return "dev_fallback";
+    }
+  }
+
+  async function remoteLikesPrime_() {
+    if (!ENABLE_REMOTE_LIKES) return;
+
+    const base = DATA_URL + (DATA_URL.includes("?") ? "&" : "?");
+    const url = base + "action=likes_get&device=" + encodeURIComponent(getDeviceId_()) + "&cb=" + Date.now();
+
+    const res = await fetch(url, { cache: "no-store", mode: "cors", credentials: "omit" });
+    if (!res.ok) throw new Error("likes_get failed: " + res.status);
+
+    const data = await res.json();
+    if (!data || data.ok !== true) throw new Error("likes_get returned invalid payload");
+
+    REMOTE_LIKES_READY = true;
+    REMOTE_LIKE_COUNTS = new Map(Object.entries(data.counts || {}).map(([k,v]) => [String(k), Number(v||0)||0]));
+    REMOTE_LIKED = (data.liked && typeof data.liked === "object") ? data.liked : {};
+
+    // Merge into local liked map so isLiked() remains unchanged
+    const s = likesGetAll();
+    s.liked = { ...s.liked, ...REMOTE_LIKED };
+    likesSetAll(s);
+  }
+
+  async function remoteToggleLike_(id) {
+    if (!ENABLE_REMOTE_LIKES) return null;
+
+    const base = DATA_URL + (DATA_URL.includes("?") ? "&" : "?");
+    const url = base +
+      "action=like_toggle&id=" + encodeURIComponent(String(id)) +
+      "&device=" + encodeURIComponent(getDeviceId_()) +
+      "&cb=" + Date.now();
+
+    const res = await fetch(url, { cache: "no-store", mode: "cors", credentials: "omit" });
+    if (!res.ok) throw new Error("like_toggle failed: " + res.status);
+
+    const out = await res.json();
+    if (!out || out.ok !== true) throw new Error(out?.error || "like_toggle returned invalid payload");
+
+    REMOTE_LIKES_READY = true;
+    REMOTE_LIKE_COUNTS.set(String(id), Number(out.count || 0) || 0);
+
+    // Keep local liked map consistent for UI heart
+    const s = likesGetAll();
+    s.liked[String(id)] = !!out.liked;
+    likesSetAll(s);
+
+    return { liked: !!out.liked, count: Number(out.count || 0) || 0 };
   }
 
   // --------- AI summary UX ----------
@@ -666,19 +740,15 @@ Output:
     if (!t) return [];
     const out = new Set([t]);
 
-    // allow partial / near matches (education → educa / educat)
     if (t.length >= 6) {
       out.add(t.slice(0, 5));
       out.add(t.slice(0, 4));
     }
-    // simple singularization
     if (t.endsWith("s") && t.length >= 4) out.add(t.slice(0, -1));
-    // common suffix trims
     if (t.endsWith("ing") && t.length >= 7) out.add(t.slice(0, -3));
     if (t.endsWith("tion") && t.length >= 7) out.add(t.slice(0, -3));
     if (t.endsWith("ment") && t.length >= 8) out.add(t.slice(0, -4));
 
-    // keep meaningful
     return Array.from(out).filter(x => x.length >= 2);
   }
 
@@ -686,14 +756,12 @@ Output:
     const raw = String(q || "").trim();
     if (!raw) return { must: [], not: [] };
 
-    // support quotes "ai in education"
     const phrases = [];
     const withoutPhrases = raw.replace(/"([^"]+)"/g, (m, p1) => {
       phrases.push(p1);
       return " ";
     });
 
-    // treat + as AND, spaces also AND
     const parts = withoutPhrases
       .split("+")
       .map(s => s.trim())
@@ -703,7 +771,6 @@ Output:
     const must = [];
     const not = [];
 
-    // phrases are must-terms too
     for (const p of phrases) {
       const n = normalizeText(p);
       if (n) must.push(n);
@@ -718,10 +785,7 @@ Output:
       }
       const n = normalizeText(tok);
       if (!n) continue;
-
-      // keep "ai" etc, but skip stopwords
       if (STOPWORDS.has(n)) continue;
-
       (neg ? not : must).push(n);
     }
 
@@ -732,7 +796,6 @@ Output:
     const vars = termVariants(term);
     if (vars.length === 0) return true;
     const txt = item._searchText || "";
-    // fast includes on normalized concatenated string
     for (const v of vars) {
       if (txt.includes(v)) return true;
     }
@@ -740,11 +803,9 @@ Output:
   }
 
   function matchQuery(item, parsed) {
-    // NOT terms
     for (const n of parsed.not) {
       if (itemHasTerm(item, n)) return false;
     }
-    // MUST terms (AND)
     for (const m of parsed.must) {
       if (!itemHasTerm(item, m)) return false;
     }
@@ -772,7 +833,6 @@ Output:
       if (!hit) score -= 5;
     }
 
-    // phrase-ish boost if user wrote multiple terms and they appear close
     if (parsed.must.length >= 2) {
       const joined = parsed.must.join(" ");
       if (allTxt.includes(joined)) score += 6;
@@ -789,9 +849,8 @@ Output:
       const seen = new Set();
       for (const w of (item._titleTokens || [])) {
         if (!w) continue;
-        if (w.length < 4) continue;      // keep topics meaningful
+        if (w.length < 4) continue;
         if (STOPWORDS.has(w)) continue;
-        // avoid counting duplicates from same title
         if (seen.has(w)) continue;
         seen.add(w);
         freq.set(w, (freq.get(w) || 0) + 1);
@@ -800,7 +859,7 @@ Output:
 
     const list = Array.from(freq.entries())
       .sort((a,b) => (b[1] - a[1]) || a[0].localeCompare(b[0]))
-      .slice(0, 60) // keep it usable
+      .slice(0, 60)
       .map(([topic,count]) => ({ topic, count }));
 
     state.topicList = list;
@@ -820,7 +879,6 @@ Output:
       if (y) yearCounts.set(y, (yearCounts.get(y) || 0) + 1);
     });
 
-    // Topics
     const topicContainer = document.getElementById("topicFilters");
     topicContainer.innerHTML = "";
     state.topicList.forEach(({topic,count}) => {
@@ -843,7 +901,6 @@ Output:
       topicContainer.appendChild(row);
     });
 
-    // Categories
     const catContainer = document.getElementById("categoryFilters");
     catContainer.innerHTML = "";
     if (ENABLE_CATEGORY_FILTER) {
@@ -870,8 +927,6 @@ Output:
         });
     }
 
-
-    // Years
     const yearContainer = document.getElementById("yearFilters");
     yearContainer.innerHTML = "";
     Array.from(yearCounts.entries())
@@ -911,13 +966,9 @@ Output:
     const tStart = todayStartMs();
 
     state.filteredItems = state.allItems.filter(item => {
-      // Tab: Added Today
       const matchesTab = (state.tab !== "today") || ((item.modified || 0) >= tStart);
-
-      // Search
       const matchesText = !q || matchQuery(item, parsed);
 
-      // Topics (OR)
       const matchesTopic = state.selectedTopics.size === 0 || (() => {
         for (const t of state.selectedTopics) {
           if (item._tokenSet && item._tokenSet.has(String(t).toLowerCase())) return true;
@@ -925,16 +976,13 @@ Output:
         return false;
       })();
 
-      // Category (OR)
       const matchesCat = !ENABLE_CATEGORY_FILTER ||
         state.selectedCategories.size === 0 ||
         (item.categories || []).some(c => state.selectedCategories.has(c));
 
-      // Year
       const matchesYear = state.selectedYears.size === 0 ||
         state.selectedYears.has(String(item.year));
 
-      // Workspace filters
       const stFilter = state.wsStatusFilter;
       const matchesStatus = (stFilter === "all") || (wsStatus(item.id) === stFilter);
 
@@ -969,8 +1017,6 @@ Output:
       }
     }
 
-    // Pinned items always on top; within pinned/unpinned:
-    // If search is active, sort by relevance first, then selected mode.
     state.filteredItems.sort((a,b) => {
       const ap = wsPinned(a.id) ? 1 : 0;
       const bp = wsPinned(b.id) ? 1 : 0;
@@ -1010,6 +1056,7 @@ Output:
 
     const liked = isLiked(item.id);
     const likes = likeCount(item.id);
+    const likeTitle = ENABLE_REMOTE_LIKES ? "Like" : "Like (saved in your browser)";
 
     return `
       <article class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow transition">
@@ -1022,10 +1069,10 @@ Output:
                      class="w-full h-auto object-cover cursor-pointer group-hover:opacity-80 transition">
               </button>
 
-              <!-- Like (local-only) -->
+              <!-- Like -->
               <button type="button" data-action="like" data-id="${escapeHtml(item.id)}"
                 class="absolute bottom-2 right-2 z-30 bg-white/95 border border-gray-200 rounded-lg px-2 py-2 shadow hover:bg-white"
-                title="Like (saved in your browser)" aria-label="Like">
+                title="${escapeHtml(likeTitle)}" aria-label="Like">
                 <div class="flex flex-col items-center leading-none">
                   <span class="text-base">${liked ? "♥" : "♡"}</span>
                   <span class="mt-0.5 text-xs font-semibold">${likes}</span>
@@ -1268,7 +1315,7 @@ Output:
           Not yet. This search uses title + summary. Inside-PDF search needs text extraction into the JSON index (Apps Script) or a separate search service.</p>
 
           <p><span class="font-semibold">Are likes global?</span><br>
-          Currently likes are saved in your browser only. Global likes requires a backend/database.</p>
+          ${ENABLE_REMOTE_LIKES ? "Yes — likes are shared across users (stored in a Google Sheet via Apps Script)." : "Currently likes are saved in your browser only. Global likes requires a backend/database."}</p>
         </div>
       `;
     } else if (kind === "submit") {
@@ -1331,7 +1378,6 @@ Output:
     modal.classList.remove("hidden");
     document.body.classList.add("modal-open");
 
-    // wire submit modal buttons (only in submit mode)
     if (kind === "submit") {
       const getPayload = () => {
         const name = (document.getElementById("subName")?.value || "").trim();
@@ -1383,7 +1429,6 @@ Notes: ${p.notes}
           return;
         }
 
-        // fallback: copy + toast
         navigator.clipboard?.writeText(text).then(() => {
           showToast("Copied. Now paste it to send.");
         }).catch(() => showToast("Set SUBMIT_FORM_URL or CONTACT_EMAIL later."));
@@ -1402,7 +1447,6 @@ Notes: ${p.notes}
     const tab = new URLSearchParams(location.search).get("tab");
     state.tab = (tab === "today") ? "today" : "home";
 
-    // highlight menu
     const home = document.getElementById("navHome");
     const today = document.getElementById("navToday");
     if (home) home.classList.toggle("text-amber-700", state.tab === "home");
@@ -1423,10 +1467,11 @@ Notes: ${p.notes}
     const toggleReading = document.getElementById("toggleReadingList");
     const clearReading = document.getElementById("clearReadingListBtn");
     const toggleTopics = document.getElementById("toggleTopics");
-    // Force Topics open on initial load
+
     const topicEl = document.getElementById("topicFilters");
     if (topicEl) topicEl.classList.remove("hidden");
     if (toggleTopics) toggleTopics.textContent = "Hide";
+
     const toggleCats = document.getElementById("toggleCats");
     const toggleYears = document.getElementById("toggleYears");
     const wsStatusFilter = document.getElementById("wsStatusFilter");
@@ -1436,14 +1481,11 @@ Notes: ${p.notes}
     const sortSelect = document.getElementById("sortSelect");
     const newsletterBtn = document.getElementById("newsletterBtn");
 
-    // Tabs
     setTabFromUrl();
 
-    // Modal close handlers
     document.getElementById("pdfModalClose").addEventListener("click", closePdfModal);
     document.getElementById("pdfModalBackdrop").addEventListener("click", closePdfModal);
 
-    // Help dropdown
     const helpBtn = document.getElementById("helpBtn");
     const helpDd = document.getElementById("helpDropdown");
     helpBtn.addEventListener("click", (e) => {
@@ -1454,7 +1496,6 @@ Notes: ${p.notes}
       if (!helpDd.contains(e.target) && e.target !== helpBtn) helpDd.classList.add("hidden");
     });
 
-    // Help/Submit modals
     document.querySelectorAll("[data-openmodal]").forEach(btn => {
       btn.addEventListener("click", () => {
         helpDd.classList.add("hidden");
@@ -1464,7 +1505,6 @@ Notes: ${p.notes}
     document.getElementById("helpModalBackdrop").addEventListener("click", closeHelpModal);
     document.getElementById("helpModalClose").addEventListener("click", closeHelpModal);
 
-    // Toggle filters (collapsed by default)
     function setToggleState(btn, panel, open) {
       if (!btn || !panel) return;
       panel.classList.toggle("hidden", !open);
@@ -1497,9 +1537,6 @@ Notes: ${p.notes}
       });
     }
 
-
-      // Default filter visibility on load
-    // Topics expanded (per your request), Year expanded; Category shown only if enabled.
     const catSection = document.getElementById("categoryFilterSection");
     if (!ENABLE_CATEGORY_FILTER && catSection) {
       catSection.classList.add("hidden");
@@ -1512,13 +1549,11 @@ Notes: ${p.notes}
       setToggleState(toggleYears, document.getElementById("yearFilters"), true);
     }
 
-    // Sort
     sortSelect.addEventListener("change", () => {
       state.sortMode = sortSelect.value || "newest";
       applyFilters(true);
     });
 
-    // Newsletter
     newsletterBtn.addEventListener("click", () => {
       if (!NEWSLETTER_URL) {
         showToast("Newsletter link not set yet.");
@@ -1527,8 +1562,6 @@ Notes: ${p.notes}
       window.open(NEWSLETTER_URL, "_blank", "noopener");
     });
 
-
-    // Search
     const _recentMax = 12;
 
     function loadRecentSearches() {
@@ -1557,7 +1590,6 @@ Notes: ${p.notes}
       saveRecentSearches(arr);
     }
 
-    // Suggestions data (titles + topics + recent)
     let _suggestTitles = [];
     let _suggestTopics = [];
     let _suggestKeywords = [];
@@ -1567,7 +1599,6 @@ Notes: ${p.notes}
       _suggestTitles = (state.allItems || []).map(it => it && it.title).filter(Boolean);
       _suggestTopics = (state.topicList || []).map(x => x && x.topic).filter(Boolean);
 
-      // Summary keywords (top frequency, stopwords removed)
       const freq = new Map();
       (state.allItems || []).forEach(it => {
         const s = String(it && it.summary || "");
@@ -1597,7 +1628,6 @@ Notes: ${p.notes}
         out.push(v);
       }
 
-      // Recent first
       if (ENABLE_SEARCH_RECENT) {
         const rec = loadRecentSearches();
         rec.forEach(r => {
@@ -1605,19 +1635,16 @@ Notes: ${p.notes}
         });
       }
 
-      // Topics next
       _suggestTopics.forEach(t => {
         if (out.length >= 10) return;
         if (!q || normalizeText(t).includes(q)) addOne(t);
       });
 
-      // Keywords from summaries
       _suggestKeywords.forEach(k => {
         if (out.length >= 10) return;
         if (q && normalizeText(k).includes(q)) addOne(k);
       });
 
-      // Titles last (only when user typed something)
       if (q) _suggestTitles.forEach(t => {
         if (out.length >= 10) return;
         if (!q || normalizeText(t).includes(q)) addOne(t);
@@ -1672,14 +1699,12 @@ Notes: ${p.notes}
     searchBtn.addEventListener("click", () => doSearch({ remember: true, closeSuggest: true }));
     searchInput.addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch({ remember: true, closeSuggest: true }); });
 
-    // Live search debounce
     let searchTimeout = null;
     searchInput.addEventListener("input", () => {
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(doSearch, 220);
     });
 
-    // Search clear (X) + suggestions
     if (searchClearBtn) {
       searchClearBtn.addEventListener("click", () => {
         searchInput.value = "";
@@ -1691,7 +1716,6 @@ Notes: ${p.notes}
     }
 
     if (ENABLE_SEARCH_SUGGEST) {
-      // show suggestions on focus and on input
       searchInput.addEventListener("focus", () => {
         renderSuggestList();
       });
@@ -1712,16 +1736,13 @@ Notes: ${p.notes}
         });
       }
 
-      // click outside closes
       document.addEventListener("click", (e) => {
         if (searchWrap && !searchWrap.contains(e.target)) hideSuggest();
       });
     }
 
-    // Initial clear btn state
     syncSearchClearBtn();
 
-    // Clear filters
     clearBtn.addEventListener("click", () => {
       state.searchQuery = "";
       searchInput.value = "";
@@ -1739,7 +1760,6 @@ Notes: ${p.notes}
       applyFilters();
     });
 
-    // Reading list toggle
     toggleReading.addEventListener("click", () => {
       const wrap = document.getElementById("readingListWrap");
       const isHidden = wrap.classList.contains("hidden");
@@ -1757,7 +1777,6 @@ Notes: ${p.notes}
       render();
     });
 
-    // Workspace filters
     wsStatusFilter.addEventListener("change", () => {
       state.wsStatusFilter = wsStatusFilter.value;
       applyFilters();
@@ -1768,14 +1787,12 @@ Notes: ${p.notes}
     });
     exportWsBtn.addEventListener("click", exportWorkspace);
 
-    // Compare clear
     clearCompareBtn.addEventListener("click", () => {
       compareSet([]);
       renderCompare();
       render();
     });
 
-    // Refresh list
     refreshBtn.addEventListener("click", async () => {
       refreshStatus.textContent = "Refreshing…";
       try {
@@ -1784,6 +1801,11 @@ Notes: ${p.notes}
         cacheSet(data);
         buildFacetFilters();
         refreshSearchSuggestData();
+
+        if (ENABLE_REMOTE_LIKES) {
+          try { await remoteLikesPrime_(); } catch (e) {}
+        }
+
         applyFilters();
         renderReadingList();
         renderCompare();
@@ -1793,7 +1815,6 @@ Notes: ${p.notes}
       }
     });
 
-    // Back-to-top
     window.addEventListener("scroll", () => {
       if (window.scrollY > 300) backToTopBtn.classList.remove("hidden");
       else backToTopBtn.classList.add("hidden");
@@ -1801,7 +1822,7 @@ Notes: ${p.notes}
     backToTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
     // Event delegation for card actions + reading list preview buttons
-    document.getElementById("cardsContainer").addEventListener("click", (e) => {
+    document.getElementById("cardsContainer").addEventListener("click", async (e) => {
       const btn = e.target.closest("[data-action]");
       if (!btn) return;
       const action = btn.getAttribute("data-action");
@@ -1825,10 +1846,27 @@ Notes: ${p.notes}
       if (action === "aisummary" && item) openInChatGPT(item);
 
       if (action === "like") {
-        toggleLike(id);
-        if (state.sortMode === "liked") applyFilters(true);
-        else render();
-        showToast(isLiked(id) ? "Liked (local)." : "Unliked (local).");
+        try {
+          if (ENABLE_REMOTE_LIKES) {
+            btn.disabled = true;
+            await remoteToggleLike_(id);
+            if (state.sortMode === "liked") applyFilters(true);
+            else render();
+            showToast(isLiked(id) ? "Liked." : "Unliked.");
+          } else {
+            toggleLike(id);
+            if (state.sortMode === "liked") applyFilters(true);
+            else render();
+            showToast(isLiked(id) ? "Liked (local)." : "Unliked (local).");
+          }
+        } catch (err) {
+          // fallback so UX still works
+          toggleLike(id);
+          render();
+          showToast("Like backend failed. Using local like.");
+        } finally {
+          btn.disabled = false;
+        }
       }
     });
 
@@ -1856,6 +1894,14 @@ Notes: ${p.notes}
       state.allItems = prepareItems(cached);
       buildFacetFilters();
       refreshSearchSuggestData();
+
+      if (ENABLE_REMOTE_LIKES) {
+        remoteLikesPrime_().then(() => {
+          if (state.sortMode === "liked") applyFilters(true);
+          else render();
+        }).catch(() => {});
+      }
+
       applyFilters();
       renderReadingList();
       renderCompare();
@@ -1869,6 +1915,11 @@ Notes: ${p.notes}
       cacheSet(data);
       buildFacetFilters();
       refreshSearchSuggestData();
+
+      if (ENABLE_REMOTE_LIKES) {
+        try { await remoteLikesPrime_(); } catch (e) {}
+      }
+
       applyFilters();
       renderReadingList();
       renderCompare();
@@ -1879,10 +1930,8 @@ Notes: ${p.notes}
       }
     }
 
-    // Ensure sort UI matches state
     sortSelect.value = state.sortMode;
 
-    // Close modals on Escape
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         closePdfModal();
