@@ -55,37 +55,41 @@
               </div>
 
               <!-- Top menu -->
-              <nav class="flex items-center gap-5 text-sm font-medium text-gray-700">
-                <a id="navHome" href="index.html" class="hover:text-amber-700">Home</a>
-                <a id="navToday" href="index.html?tab=today" class="hover:text-amber-700">Added Today</a>
-<!-- Live status badge -->
-<div id="liveStatus" class="flex items-center gap-2 text-[11px] font-semibold text-gray-600">
-  <span class="inline-flex items-center gap-2 px-2 py-1 rounded-full border border-gray-200 bg-white">
-    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-    <span id="liveUpdatedText">Updated —</span>
-  </span>
+              <div class="flex flex-col items-end gap-1">
+                <nav class="flex items-center gap-5 text-sm font-medium text-gray-700">
+                  <a id="navHome" href="index.html" class="hover:text-amber-700">Home</a>
+                  <a id="navToday" href="index.html?tab=today" class="hover:text-amber-700">Added Today</a>
 
-  <span id="liveNewText"
-        class="hidden px-2 py-1 rounded-full border border-amber-200 bg-amber-50 text-amber-800">
-    New: 0
-  </span>
-</div>
-                <div class="relative">
-                  <button id="helpBtn" class="inline-flex items-center gap-1 hover:text-amber-700">
-                    Help
-                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                      <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
-                    </svg>
-                  </button>
+                  <div class="relative">
+                    <button id="helpBtn" class="inline-flex items-center gap-1 hover:text-amber-700">
+                      Help
+                      <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
+                      </svg>
+                    </button>
 
-                  <div id="helpDropdown" class="hidden absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-lg dd-shadow overflow-hidden">
-                    <button data-openmodal="glossary" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">Glossary</button>
-                    <button data-openmodal="faq" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">FAQ</button>
-                    <div class="border-t border-gray-200"></div>
-                    <button data-openmodal="submit" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">Submit a PDF</button>
+                    <div id="helpDropdown" class="hidden absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-lg dd-shadow overflow-hidden">
+                      <button data-openmodal="glossary" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">Glossary</button>
+                      <button data-openmodal="faq" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">FAQ</button>
+                      <div class="border-t border-gray-200"></div>
+                      <button data-openmodal="submit" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">Submit a PDF</button>
+                    </div>
                   </div>
+                </nav>
+
+                <!-- Live status badge -->
+                <div id="liveStatus" class="flex items-center gap-2 text-[11px] font-semibold text-gray-600">
+                  <span class="inline-flex items-center gap-2 px-2 py-1 rounded-full border border-gray-200 bg-white">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                    <span id="liveUpdatedText">Updated —</span>
+                  </span>
+
+                  <span id="liveNewText"
+                        class="hidden px-2 py-1 rounded-full border border-amber-200 bg-amber-50 text-amber-800">
+                    New: 0
+                  </span>
                 </div>
-              </nav>
+              </div>
             </div>
           </div>
         </div>
