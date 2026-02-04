@@ -288,6 +288,16 @@
           </div>
         </div>
 
+        
+        <!-- New posts (appears when there are new items and you scroll down) -->
+        <div id="newPostsBar" class="hidden fixed top-24 left-1/2 -translate-x-1/2 z-50">
+          <button id="newPostsBtn" type="button"
+                  class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-blue-600 text-white text-sm font-semibold shadow-lg hover:brightness-95 transition">
+            <span aria-hidden="true">↑</span>
+            <span id="newPostsText">New reports</span>
+          </button>
+        </div>
+
         <div id="cardsContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
         <div id="infiniteSentinel" class="h-1"></div>
 
@@ -402,7 +412,8 @@
     sortMode: "newest",
     scoreById: new Map(),
     topicList: [],                // [{topic,count}]
-    lastSeenBaseline: 0          // max modified timestamp from previous visit (for NEW markers)
+    lastSeenBaseline: 0,         // max modified timestamp from previous visit (for NEW markers)
+    newCount: 0                 // number of new items since last visit (for New posts pill)
   };
 
   // --------- Utilities ----------
@@ -1077,7 +1088,8 @@ Output:
 
     const m = Number(item.modified || 0) || 0;
     const isNew = state.lastSeenBaseline && m > state.lastSeenBaseline;
-    const articleClass = "bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow transition" + (isNew ? " ring-2 ring-red-200 border-red-200" : "");
+    const articleClass = "relative bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow transition" + (isNew ? " ring-2 ring-red-200 border-red-200" : "");
+    const newAttrs = isNew ? ' data-is-new="1"' : "";
 
     const pinned = wsPinned(item.id);
     const status = wsStatus(item.id);
@@ -1092,11 +1104,11 @@ Output:
     const likeTitle = ENABLE_REMOTE_LIKES ? "Like" : "Like (saved in your browser)";
 
     return `
-      <article class="${articleClass}">
+      <article class="${articleClass}"${newAttrs}>
         <div class="grid grid-cols-1 sm:grid-cols-[160px,1fr] gap-4">
           <div class="w-full">
             <div class="relative border border-gray-200 bg-white rounded group overflow-hidden">
-              ${isNew ? '<div class="pointer-events-none absolute -left-10 top-4 -rotate-45 bg-red-600 text-white text-[10px] sm:text-xs font-bold uppercase tracking-wider px-14 py-1 shadow-md">NEW</div>' : ''}
+              
               <button type="button" data-action="modal" data-id="${escapeHtml(item.id)}" class="block w-full text-left">
                 <img src="${thumb}" alt="${title}" loading="lazy" decoding="async" referrerpolicy="no-referrer"
                      onerror="this.onerror=null;this.src='https://via.placeholder.com/260x360?text=PDF';"
@@ -1129,6 +1141,7 @@ Output:
               <span>${year}</span>
               <span class="text-gray-300">•</span>
               <span>${escapeHtml(statusLabel)}</span>
+              ${isNew ? `<span class="px-2 py-0.5 rounded-full bg-red-50 border border-red-200 text-red-700 text-[11px] font-semibold">NEW</span>` : ""}
               ${pinned ? `<span class="ml-auto text-amber-600 flex items-center gap-1" title="Pinned">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 2l-1 1v5.2l4.6 4.6-1.4 1.4L11 9.6V3l-1-1h4zM5 14l5 5v3H8v-2.2L3.4 15.4 5 14z"/></svg>
                 <span class="text-xs font-semibold">Pinned</span></span>` : ""}
@@ -1193,6 +1206,9 @@ Output:
     info.textContent = `${total} ${label} found`;
 
     container.innerHTML = itemsToShow.map(renderCard).join("");
+
+    // Keep the floating "New reports" pill in sync
+    updateNewPostsBar_();
   }
 
   // --------- Modal ----------
@@ -1503,7 +1519,37 @@ function formatAgo(ts) {
   return `${day}d ago`;
 }
 
-function setLiveHeaderStatus({ updatedAt, newCount }) {
+function setLiveHeaderStatus({ updatedAt, newCount }
+
+  // --------- "New posts" floating pill (LinkedIn-style) ----------
+  function updateNewPostsBar_() {
+    const bar = document.getElementById("newPostsBar");
+    const text = document.getElementById("newPostsText");
+    if (!bar || !text) return;
+
+    const n = Number(state.newCount || 0) || 0;
+    if (n <= 0) {
+      bar.classList.add("hidden");
+      return;
+    }
+
+    text.textContent = `New reports (${n})`;
+
+    // Only show when user has scrolled down a bit (so it acts like "new posts" in feeds)
+    const shouldShow = window.scrollY > 260;
+    bar.classList.toggle("hidden", !shouldShow);
+  }
+
+  function scrollToFirstNew_() {
+    const first = document.querySelector('[data-is-new="1"]');
+    if (first) {
+      first.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
+) {
   const wrap = document.getElementById("liveStatus");
   const updatedEl = document.getElementById("liveUpdatedText");
   const newEl = document.getElementById("liveNewText");
@@ -2042,7 +2088,9 @@ setInterval(async () => {
 
       // Header pills: show cache time + "new" count without advancing baseline yet
       const peekNew = computeNewCountSinceLastVisit(state.allItems, false);
+      state.newCount = peekNew;
       setLiveHeaderStatus({ updatedAt: cachedMeta?.time || 0, newCount: peekNew });
+      updateNewPostsBar_();
 
       if (ENABLE_REMOTE_LIKES) {
         remoteLikesPrime_().then(() => {
@@ -2069,7 +2117,9 @@ setInterval(async () => {
       refreshSearchSuggestData();
 
       const newCount = computeNewCountSinceLastVisit(data, true);
+      state.newCount = newCount;
       setLiveHeaderStatus({ updatedAt: Date.now(), newCount });
+      updateNewPostsBar_();
 
       if (ENABLE_REMOTE_LIKES) {
         try { await remoteLikesPrime_(); } catch (e) {}
@@ -2094,6 +2144,26 @@ setInterval(async () => {
         helpDd.classList.add("hidden");
       }
     });
+
+
+    // "New reports" pill actions
+    const newPostsBtn = document.getElementById("newPostsBtn");
+    if (newPostsBtn) {
+      newPostsBtn.addEventListener("click", () => {
+        scrollToFirstNew_();
+        document.getElementById("newPostsBar")?.classList.add("hidden");
+      });
+    }
+
+    let _newBarTick = false;
+    window.addEventListener("scroll", () => {
+      if (_newBarTick) return;
+      _newBarTick = true;
+      requestAnimationFrame(() => {
+        _newBarTick = false;
+        updateNewPostsBar_();
+      });
+    }, { passive: true });
 
     setupInfiniteScroll();
   });
