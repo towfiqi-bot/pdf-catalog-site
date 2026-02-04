@@ -215,6 +215,8 @@
       if (!raw) return null;
       const parsed = JSON.parse(raw);
       if (!parsed?.time || !parsed?.data) return null;
+      // stale cache is still used for instant load; this page fetches fresh after render.
+      // if (Date.now() - parsed.time > CACHE_TTL_MS) return null;
       return parsed.data;
     } catch { return null; }
   }

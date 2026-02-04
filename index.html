@@ -58,16 +58,18 @@
               <nav class="flex items-center gap-5 text-sm font-medium text-gray-700">
                 <a id="navHome" href="index.html" class="hover:text-amber-700">Home</a>
                 <a id="navToday" href="index.html?tab=today" class="hover:text-amber-700">Added Today</a>
+<!-- Live status badge -->
+<div id="liveStatus" class="flex items-center gap-2 text-[11px] font-semibold text-gray-600">
+  <span class="inline-flex items-center gap-2 px-2 py-1 rounded-full border border-gray-200 bg-white">
+    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+    <span id="liveUpdatedText">Updated —</span>
+  </span>
 
-                <!-- Live status (updates automatically) -->
-                <button id="liveStatusBtn" type="button"
-                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 bg-white text-xs text-gray-600 hover:bg-gray-50"
-                        title="Refresh list">
-                  <span id="liveStatusDot" class="h-2 w-2 rounded-full bg-gray-300"></span>
-                  <span id="liveStatusText">Updated —</span>
-                  <span id="liveStatusNew" class="hidden ml-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold">+0 new</span>
-                </button>
-
+  <span id="liveNewText"
+        class="hidden px-2 py-1 rounded-full border border-amber-200 bg-amber-50 text-amber-800">
+    New: 0
+  </span>
+</div>
                 <div class="relative">
                   <button id="helpBtn" class="inline-flex items-center gap-1 hover:text-amber-700">
                     Help
@@ -98,6 +100,7 @@
     <section class="mb-6">
       <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
         <div class="max-w-3xl mx-auto">
+          <div id="searchWrap" class="relative">
           <div class="flex items-center gap-3 bg-white border border-gray-300 rounded-full px-5 py-3 shadow-sm focus-within:ring-2 focus-within:ring-amber-200">
             <svg class="h-5 w-5 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="7"></circle>
@@ -106,11 +109,18 @@
             <input id="searchInput" type="text"
                    class="w-full outline-none text-base md:text-lg"
                    placeholder="Search reports by title or summary… (try: AI + Education)" />
+            <button id="searchClearBtn" type="button" aria-label="Clear search"
+                    class="hidden shrink-0 p-2 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100">
+              &#10005;
+            </button>
             <button id="searchBtn"
                     class="shrink-0 px-5 py-2 text-sm font-semibold uppercase tracking-wide bg-amber-600 text-white rounded-full hover:bg-amber-700">
               Search
             </button>
           </div>
+          <div id="searchSuggestPanel"
+               class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50"></div>
+        </div>
           <p class="mt-2 text-xs text-gray-500 text-center">
             Strong search across <span class="font-semibold">title</span> + <span class="font-semibold">summary</span> (not inside PDF pages yet).
           </p>
@@ -133,14 +143,13 @@
             <div>
               <div class="flex items-center justify-between">
                 <h3 class="text-xs font-semibold text-gray-700">Topics</h3>
-                <button id="toggleTopics" class="text-xs font-semibold text-amber-700 hover:underline">Show</button>
+                <button id="toggleTopics" class="text-xs font-semibold text-amber-700 hover:underline">Hide</button>
               </div>
-              <div id="topicFilters" class="hidden mt-2 text-sm max-h-56 overflow-y-auto grid grid-cols-2 gap-x-4 gap-y-1"></div>
-              <div class="mt-2 text-[11px] text-gray-500">Auto-generated from report titles.</div>
-            </div>
+              <div id="topicFilters" class="mt-2 text-sm max-h-56 overflow-y-auto grid grid-cols-2 gap-x-4 gap-y-1"></div>
+              </div>
 
             <!-- Category filters -->
-            <div>
+            <div id="categoryFilterSection">
               <div class="flex items-center justify-between">
                 <h3 class="text-xs font-semibold text-gray-700">Category</h3>
                 <button id="toggleCats" class="text-xs font-semibold text-amber-700 hover:underline">Show</button>
@@ -339,11 +348,23 @@
   </div>
 
 <script>
-  const DATA_URL = "https://script.google.com/macros/s/AKfycbwF2IqDTG0F5acy4K1mtBRMZg1AOp3RMHzYwHEtZcZmRV8Jbpb2_ETe4Mpnkgp-lxmy/exec";
+  const DATA_URL = "https://script.google.com/macros/s/AKfycbxme0FmUWdOmNG5EVHKxkQkbm0alqCo6vWJgESo8SBzwIQunlTU0f9MdGlEqu2AqkQa/exec";
+
+  // Feature flags (safe toggles)
+  const ENABLE_DEFAULT_FILTER_EXPAND = true;   // Year expanded on load; Category expanded if enabled
+  const ENABLE_CATEGORY_FILTER = false;        // Hide Category filter section (requested)
+  const ENABLE_SEARCH_SUGGEST = true;          // Google-like suggestions dropdown
+  const ENABLE_SEARCH_RECENT = true;           // Include recent searches in suggestions
+  const ENABLE_AI_PROMPT_METADATA = true;      // Include Year/Category/Summary in AI prompt
+  const DEFAULT_TOPICS_OPEN = true;            // Topics expanded on page load
+  const ENABLE_REMOTE_LIKES = true;            // Global likes via Apps Script (action=likes_get / like_toggle)
+
+  const RECENT_SEARCH_KEY = "dotdock_recent_searches_v1";
 
   // Browser cache for instant load
   const CACHE_KEY = "pdf_catalog_cache_v2";
   const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+  const LAST_SEEN_MAX_MOD_KEY = "dotdock_last_seen_max_modified_v1";
 
   // Local-only features
   const READING_KEY = "dotdock_reading_list_v1";
@@ -376,9 +397,7 @@
     wsTagFilter: "",
     sortMode: "newest",
     scoreById: new Map(),
-    topicList: []                 // [{topic,count}]    ,
-    live: { fetchedAt: 0, source: "", newCount: 0, updating: false }
-
+    topicList: []                 // [{topic,count}]
   };
 
   // --------- Utilities ----------
@@ -400,86 +419,6 @@
     clearTimeout(showToast._to);
     showToast._to = setTimeout(() => t.classList.add("hidden"), 2200);
   }
-
-  // --------- Live header status ----------
-  function humanAgo_(ms) {
-    const s = Math.max(0, Math.floor(ms / 1000));
-    if (s < 15) return "just now";
-    if (s < 60) return `${s}s ago`;
-    const m = Math.floor(s / 60);
-    if (m < 60) return `${m}m ago`;
-    const h = Math.floor(m / 60);
-    if (h < 24) return `${h}h ago`;
-    const d = Math.floor(h / 24);
-    return `${d}d ago`;
-  }
-
-  function updateLiveHeaderStatus_() {
-    const btn = document.getElementById("liveStatusBtn");
-    if (!btn) return;
-    const dot = document.getElementById("liveStatusDot");
-    const text = document.getElementById("liveStatusText");
-    const badge = document.getElementById("liveStatusNew");
-    if (!dot || !text || !badge) return;
-
-    if (state.live.updating) {
-      dot.className = "h-2 w-2 rounded-full bg-emerald-500 animate-pulse";
-      if (state.live.fetchedAt) {
-        const age = Date.now() - state.live.fetchedAt;
-        text.textContent = "Updated " + humanAgo_(age);
-        btn.title = "Last refresh: " + formatTime(state.live.fetchedAt) + " (updating)";
-      } else {
-        text.textContent = "Updating…";
-      }
-    } else if (!state.live.fetchedAt) {
-      dot.className = "h-2 w-2 rounded-full bg-gray-300";
-      text.textContent = "Updated —";
-    } else {
-      const age = Date.now() - state.live.fetchedAt;
-      const stale = age > 10 * 60 * 1000;
-      dot.className = "h-2 w-2 rounded-full " + (stale ? "bg-amber-500" : "bg-emerald-500");
-      text.textContent = "Updated " + humanAgo_(age);
-      btn.title = "Last refresh: " + formatTime(state.live.fetchedAt);
-    }
-
-    if (typeof state.live.newCount === "number" && state.live.newCount > 0) {
-      badge.classList.remove("hidden");
-      badge.textContent = "New: " + state.live.newCount;
-    } else {
-      badge.classList.add("hidden");
-      badge.textContent = "New: 0";
-    }
-  } else if (!state.live.fetchedAt) {
-      dot.className = "h-2 w-2 rounded-full bg-gray-300";
-      text.textContent = "Updated —";
-    } else {
-      const age = Date.now() - state.live.fetchedAt;
-      const stale = age > 10 * 60 * 1000;
-      dot.className = "h-2 w-2 rounded-full " + (stale ? "bg-amber-500" : "bg-emerald-500");
-      text.textContent = "Updated " + humanAgo_(age);
-      btn.title = "Last refresh: " + formatTime(state.live.fetchedAt);
-    }
-
-    if (state.live.newCount && state.live.newCount > 0) {
-      badge.classList.remove("hidden");
-      badge.textContent = "+" + state.live.newCount + " new";
-    } else {
-      badge.classList.add("hidden");
-      badge.textContent = "+0 new";
-    }
-  }
-
-  function setLive_(patch) {
-    state.live = { ...state.live, ...(patch || {}) };
-    updateLiveHeaderStatus_();
-  }
-
-  function startLiveHeaderTicker_() {
-    if (startLiveHeaderTicker_._started) return;
-    startLiveHeaderTicker_._started = true;
-    setInterval(updateLiveHeaderStatus_, 60 * 1000);
-  }
-
 
   function normalizeText(s) {
     const str = String(s ?? "");
@@ -524,8 +463,7 @@
 
   // --------- Cache helpers ----------
   function cacheSet(data) {
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ time: Date.now(), data })); } catch (e) {
-      setLive_({ updating: false });}
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ time: Date.now(), data })); } catch (e) {}
   }
   function cacheGet() {
     try {
@@ -533,7 +471,9 @@
       if (!raw) return null;
       const parsed = JSON.parse(raw);
       if (!parsed?.time || !parsed?.data) return null;
-      return parsed; // { time, data }
+      // stale cache is still returned instantly; fresh fetch runs on load
+      // if (Date.now() - parsed.time > CACHE_TTL_MS) return null;
+      return parsed.data;
     } catch { return null; }
   }
 
@@ -616,7 +556,7 @@
     return compareGet().includes(String(id));
   }
 
-  // --------- Likes (local-only, non-spam) ----------
+  // --------- Likes (local fallback) ----------
   function likesGetAll() {
     try {
       const raw = localStorage.getItem(LIKE_KEY);
@@ -629,7 +569,17 @@
   function likesSetAll(payload) {
     try { localStorage.setItem(LIKE_KEY, JSON.stringify(payload || {counts:{},liked:{}})); } catch {}
   }
+
+  // Remote likes state
+  const DEVICE_ID_KEY = "dotdock_device_id_v1";
+  let REMOTE_LIKES_READY = false;
+  let REMOTE_LIKE_COUNTS = new Map(); // id -> count
+  let REMOTE_LIKED = {};              // id -> true
+
   function likeCount(id) {
+    if (ENABLE_REMOTE_LIKES && REMOTE_LIKES_READY) {
+      return Number(REMOTE_LIKE_COUNTS.get(String(id)) || 0) || 0;
+    }
     const { counts } = likesGetAll();
     return Number(counts[String(id)] || 0) || 0;
   }
@@ -647,21 +597,94 @@
       s.counts[k] = Math.max(0, (Number(s.counts[k] || 1) || 1) - 1);
     } else {
       s.liked[k] = true;
-      // cap at 1 per user (no spam). If you later add backend, remove this cap.
       s.counts[k] = Math.min(1, (Number(s.counts[k] || 0) || 0) + 1);
     }
     likesSetAll(s);
     return { liked: !!s.liked[k], count: Number(s.counts[k] || 0) || 0 };
   }
 
+  // --------- Remote likes (Apps Script + Google Sheet) ----------
+  function getDeviceId_() {
+    try {
+      let v = localStorage.getItem(DEVICE_ID_KEY);
+      if (!v) {
+        v = (typeof crypto !== "undefined" && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : ("dev_" + Math.random().toString(16).slice(2) + Date.now());
+        localStorage.setItem(DEVICE_ID_KEY, v);
+      }
+      return v;
+    } catch {
+      return "dev_fallback";
+    }
+  }
+
+  async function remoteLikesPrime_() {
+    if (!ENABLE_REMOTE_LIKES) return;
+
+    const base = DATA_URL + (DATA_URL.includes("?") ? "&" : "?");
+    const url = base + "action=likes_get&device=" + encodeURIComponent(getDeviceId_()) + "&cb=" + Date.now();
+
+    const res = await fetch(url, { cache: "no-store", mode: "cors", credentials: "omit" });
+    if (!res.ok) throw new Error("likes_get failed: " + res.status);
+
+    const data = await res.json();
+    if (!data || data.ok !== true) throw new Error("likes_get returned invalid payload");
+
+    REMOTE_LIKES_READY = true;
+    REMOTE_LIKE_COUNTS = new Map(Object.entries(data.counts || {}).map(([k,v]) => [String(k), Number(v||0)||0]));
+    REMOTE_LIKED = (data.liked && typeof data.liked === "object") ? data.liked : {};
+
+    // Merge into local liked map so isLiked() remains unchanged
+    const s = likesGetAll();
+    s.liked = { ...s.liked, ...REMOTE_LIKED };
+    likesSetAll(s);
+  }
+
+  async function remoteToggleLike_(id) {
+    if (!ENABLE_REMOTE_LIKES) return null;
+
+    const base = DATA_URL + (DATA_URL.includes("?") ? "&" : "?");
+    const url = base +
+      "action=like_toggle&id=" + encodeURIComponent(String(id)) +
+      "&device=" + encodeURIComponent(getDeviceId_()) +
+      "&cb=" + Date.now();
+
+    const res = await fetch(url, { cache: "no-store", mode: "cors", credentials: "omit" });
+    if (!res.ok) throw new Error("like_toggle failed: " + res.status);
+
+    const out = await res.json();
+    if (!out || out.ok !== true) throw new Error(out?.error || "like_toggle returned invalid payload");
+
+    REMOTE_LIKES_READY = true;
+    REMOTE_LIKE_COUNTS.set(String(id), Number(out.count || 0) || 0);
+
+    // Keep local liked map consistent for UI heart
+    const s = likesGetAll();
+    s.liked[String(id)] = !!out.liked;
+    likesSetAll(s);
+
+    return { liked: !!out.liked, count: Number(out.count || 0) || 0 };
+  }
+
   // --------- AI summary UX ----------
   async function openInChatGPT(item) {
     const link = driveShareUrl(item.id);
     const title = item.title || "Untitled report";
+    const year = item.year ? String(item.year) : "";
+    const cats = (item.categories || []).join(", ");
+    const catalogSummary = item.summary || "";
+    const meta = ENABLE_AI_PROMPT_METADATA
+      ? `Year: ${year || "—"}
+Category: ${cats || "—"}
+Catalog summary: ${catalogSummary || "—"}
+
+`
+      : "";
     const prompt =
 `Please summarize this PDF clearly:
 Title: ${title}
-Link: ${link}
+${meta}Link: ${link}
 
 Output:
 1) 8 bullet executive summary
@@ -695,7 +718,10 @@ Output:
 
   // --------- Data loading ----------
   async function loadData(forceFresh) {
-    // Always fetch network. (Cache is handled separately for instant UI.)
+    if (!forceFresh) {
+      const cached = cacheGet();
+      if (cached) return cached;
+    }
     const url = DATA_URL + (DATA_URL.includes("?") ? "&" : "?") + "cb=" + Date.now();
     const res = await fetch(url, { cache: "no-store", mode: "cors", credentials: "omit" });
     if (!res.ok) throw new Error("Failed to load catalog (" + res.status + ")");
@@ -727,19 +753,15 @@ Output:
     if (!t) return [];
     const out = new Set([t]);
 
-    // allow partial / near matches (education → educa / educat)
     if (t.length >= 6) {
       out.add(t.slice(0, 5));
       out.add(t.slice(0, 4));
     }
-    // simple singularization
     if (t.endsWith("s") && t.length >= 4) out.add(t.slice(0, -1));
-    // common suffix trims
     if (t.endsWith("ing") && t.length >= 7) out.add(t.slice(0, -3));
     if (t.endsWith("tion") && t.length >= 7) out.add(t.slice(0, -3));
     if (t.endsWith("ment") && t.length >= 8) out.add(t.slice(0, -4));
 
-    // keep meaningful
     return Array.from(out).filter(x => x.length >= 2);
   }
 
@@ -747,14 +769,12 @@ Output:
     const raw = String(q || "").trim();
     if (!raw) return { must: [], not: [] };
 
-    // support quotes "ai in education"
     const phrases = [];
     const withoutPhrases = raw.replace(/"([^"]+)"/g, (m, p1) => {
       phrases.push(p1);
       return " ";
     });
 
-    // treat + as AND, spaces also AND
     const parts = withoutPhrases
       .split("+")
       .map(s => s.trim())
@@ -764,7 +784,6 @@ Output:
     const must = [];
     const not = [];
 
-    // phrases are must-terms too
     for (const p of phrases) {
       const n = normalizeText(p);
       if (n) must.push(n);
@@ -779,10 +798,7 @@ Output:
       }
       const n = normalizeText(tok);
       if (!n) continue;
-
-      // keep "ai" etc, but skip stopwords
       if (STOPWORDS.has(n)) continue;
-
       (neg ? not : must).push(n);
     }
 
@@ -793,7 +809,6 @@ Output:
     const vars = termVariants(term);
     if (vars.length === 0) return true;
     const txt = item._searchText || "";
-    // fast includes on normalized concatenated string
     for (const v of vars) {
       if (txt.includes(v)) return true;
     }
@@ -801,11 +816,9 @@ Output:
   }
 
   function matchQuery(item, parsed) {
-    // NOT terms
     for (const n of parsed.not) {
       if (itemHasTerm(item, n)) return false;
     }
-    // MUST terms (AND)
     for (const m of parsed.must) {
       if (!itemHasTerm(item, m)) return false;
     }
@@ -833,7 +846,6 @@ Output:
       if (!hit) score -= 5;
     }
 
-    // phrase-ish boost if user wrote multiple terms and they appear close
     if (parsed.must.length >= 2) {
       const joined = parsed.must.join(" ");
       if (allTxt.includes(joined)) score += 6;
@@ -850,9 +862,8 @@ Output:
       const seen = new Set();
       for (const w of (item._titleTokens || [])) {
         if (!w) continue;
-        if (w.length < 4) continue;      // keep topics meaningful
+        if (w.length < 4) continue;
         if (STOPWORDS.has(w)) continue;
-        // avoid counting duplicates from same title
         if (seen.has(w)) continue;
         seen.add(w);
         freq.set(w, (freq.get(w) || 0) + 1);
@@ -861,7 +872,7 @@ Output:
 
     const list = Array.from(freq.entries())
       .sort((a,b) => (b[1] - a[1]) || a[0].localeCompare(b[0]))
-      .slice(0, 60) // keep it usable
+      .slice(0, 60)
       .map(([topic,count]) => ({ topic, count }));
 
     state.topicList = list;
@@ -881,7 +892,6 @@ Output:
       if (y) yearCounts.set(y, (yearCounts.get(y) || 0) + 1);
     });
 
-    // Topics
     const topicContainer = document.getElementById("topicFilters");
     topicContainer.innerHTML = "";
     state.topicList.forEach(({topic,count}) => {
@@ -904,32 +914,32 @@ Output:
       topicContainer.appendChild(row);
     });
 
-    // Categories
     const catContainer = document.getElementById("categoryFilters");
     catContainer.innerHTML = "";
-    Array.from(catCounts.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .forEach(([cat, count]) => {
-        const id = "cat-" + cat.replace(/\W+/g, "-").toLowerCase();
-        const row = document.createElement("div");
-        row.className = "flex items-center gap-2";
-        row.innerHTML = `
-          <input type="checkbox" id="${id}" value="${escapeHtml(cat)}"
-                 class="h-3 w-3 text-amber-600 border-gray-300 rounded">
-          <label for="${id}" class="cursor-pointer text-gray-700 text-sm">
-            ${escapeHtml(cat)} <span class="text-gray-400 text-xs">(${count})</span>
-          </label>
-        `;
-        const checkbox = row.querySelector("input");
-        checkbox.checked = state.selectedCategories.has(cat);
-        checkbox.addEventListener("change", () => {
-          checkbox.checked ? state.selectedCategories.add(cat) : state.selectedCategories.delete(cat);
-          applyFilters();
+    if (ENABLE_CATEGORY_FILTER) {
+      Array.from(catCounts.entries())
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .forEach(([cat, count]) => {
+          const id = "cat-" + cat.replace(/\W+/g, "-").toLowerCase();
+          const row = document.createElement("div");
+          row.className = "flex items-center gap-2";
+          row.innerHTML = `
+            <input type="checkbox" id="${id}" value="${escapeHtml(cat)}"
+                   class="h-3 w-3 text-amber-600 border-gray-300 rounded">
+            <label for="${id}" class="cursor-pointer text-gray-700 text-sm">
+              ${escapeHtml(cat)} <span class="text-gray-400 text-xs">(${count})</span>
+            </label>
+          `;
+          const checkbox = row.querySelector("input");
+          checkbox.checked = state.selectedCategories.has(cat);
+          checkbox.addEventListener("change", () => {
+            checkbox.checked ? state.selectedCategories.add(cat) : state.selectedCategories.delete(cat);
+            applyFilters();
+          });
+          catContainer.appendChild(row);
         });
-        catContainer.appendChild(row);
-      });
+    }
 
-    // Years
     const yearContainer = document.getElementById("yearFilters");
     yearContainer.innerHTML = "";
     Array.from(yearCounts.entries())
@@ -969,13 +979,9 @@ Output:
     const tStart = todayStartMs();
 
     state.filteredItems = state.allItems.filter(item => {
-      // Tab: Added Today
       const matchesTab = (state.tab !== "today") || ((item.modified || 0) >= tStart);
-
-      // Search
       const matchesText = !q || matchQuery(item, parsed);
 
-      // Topics (OR)
       const matchesTopic = state.selectedTopics.size === 0 || (() => {
         for (const t of state.selectedTopics) {
           if (item._tokenSet && item._tokenSet.has(String(t).toLowerCase())) return true;
@@ -983,15 +989,13 @@ Output:
         return false;
       })();
 
-      // Category (OR)
-      const matchesCat = state.selectedCategories.size === 0 ||
+      const matchesCat = !ENABLE_CATEGORY_FILTER ||
+        state.selectedCategories.size === 0 ||
         (item.categories || []).some(c => state.selectedCategories.has(c));
 
-      // Year
       const matchesYear = state.selectedYears.size === 0 ||
         state.selectedYears.has(String(item.year));
 
-      // Workspace filters
       const stFilter = state.wsStatusFilter;
       const matchesStatus = (stFilter === "all") || (wsStatus(item.id) === stFilter);
 
@@ -1026,8 +1030,6 @@ Output:
       }
     }
 
-    // Pinned items always on top; within pinned/unpinned:
-    // If search is active, sort by relevance first, then selected mode.
     state.filteredItems.sort((a,b) => {
       const ap = wsPinned(a.id) ? 1 : 0;
       const bp = wsPinned(b.id) ? 1 : 0;
@@ -1067,6 +1069,7 @@ Output:
 
     const liked = isLiked(item.id);
     const likes = likeCount(item.id);
+    const likeTitle = ENABLE_REMOTE_LIKES ? "Like" : "Like (saved in your browser)";
 
     return `
       <article class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow transition">
@@ -1079,10 +1082,10 @@ Output:
                      class="w-full h-auto object-cover cursor-pointer group-hover:opacity-80 transition">
               </button>
 
-              <!-- Like (local-only) -->
+              <!-- Like -->
               <button type="button" data-action="like" data-id="${escapeHtml(item.id)}"
                 class="absolute bottom-2 right-2 z-30 bg-white/95 border border-gray-200 rounded-lg px-2 py-2 shadow hover:bg-white"
-                title="Like (saved in your browser)" aria-label="Like">
+                title="${escapeHtml(likeTitle)}" aria-label="Like">
                 <div class="flex flex-col items-center leading-none">
                   <span class="text-base">${liked ? "♥" : "♡"}</span>
                   <span class="mt-0.5 text-xs font-semibold">${likes}</span>
@@ -1325,7 +1328,7 @@ Output:
           Not yet. This search uses title + summary. Inside-PDF search needs text extraction into the JSON index (Apps Script) or a separate search service.</p>
 
           <p><span class="font-semibold">Are likes global?</span><br>
-          Currently likes are saved in your browser only. Global likes requires a backend/database.</p>
+          ${ENABLE_REMOTE_LIKES ? "Yes — likes are shared across users (stored in a Google Sheet via Apps Script)." : "Currently likes are saved in your browser only. Global likes requires a backend/database."}</p>
         </div>
       `;
     } else if (kind === "submit") {
@@ -1388,7 +1391,6 @@ Output:
     modal.classList.remove("hidden");
     document.body.classList.add("modal-open");
 
-    // wire submit modal buttons (only in submit mode)
     if (kind === "submit") {
       const getPayload = () => {
         const name = (document.getElementById("subName")?.value || "").trim();
@@ -1440,7 +1442,6 @@ Notes: ${p.notes}
           return;
         }
 
-        // fallback: copy + toast
         navigator.clipboard?.writeText(text).then(() => {
           showToast("Copied. Now paste it to send.");
         }).catch(() => showToast("Set SUBMIT_FORM_URL or CONTACT_EMAIL later."));
@@ -1459,17 +1460,84 @@ Notes: ${p.notes}
     const tab = new URLSearchParams(location.search).get("tab");
     state.tab = (tab === "today") ? "today" : "home";
 
-    // highlight menu
     const home = document.getElementById("navHome");
     const today = document.getElementById("navToday");
     if (home) home.classList.toggle("text-amber-700", state.tab === "home");
     if (today) today.classList.toggle("text-amber-700", state.tab === "today");
   }
+function formatAgo(ts) {
+  if (!ts) return "—";
+  const diff = Date.now() - ts;
 
+  const sec = Math.floor(diff / 1000);
+  if (sec < 60) return `${sec}s ago`;
+
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+
+  const day = Math.floor(hr / 24);
+  return `${day}d ago`;
+}
+
+function setLiveHeaderStatus({ updatedAt, newCount }) {
+  const wrap = document.getElementById("liveStatus");
+  const updatedEl = document.getElementById("liveUpdatedText");
+  const newEl = document.getElementById("liveNewText");
+  if (!wrap || !updatedEl || !newEl) return;
+
+  const ts = Number(updatedAt || 0) || 0;
+  const nc = Number(newCount || 0) || 0;
+
+  wrap.classList.remove("hidden");
+  wrap.setAttribute("data-updated-at", String(ts));
+  wrap.setAttribute("data-new-count", String(nc));
+
+  updatedEl.textContent = `Updated ${formatAgo(ts)}`;
+
+  if (nc > 0) {
+    newEl.textContent = `New: ${nc}`;
+    newEl.classList.remove("hidden");
+  } else {
+    newEl.classList.add("hidden");
+  }
+}
+
+function computeNewCountSinceLastVisit(items, commit = true) {
+  // Uses max "modified" timestamp from last visit as baseline.
+  let lastSeenMax = 0;
+  try {
+    lastSeenMax = Number(localStorage.getItem(LAST_SEEN_MAX_MOD_KEY) || 0) || 0;
+  } catch {}
+
+  let newest = 0;
+  let newCount = 0;
+
+  for (const it of (items || [])) {
+    const m = Number(it.modified || 0) || 0;
+    if (m > newest) newest = m;
+    if (lastSeenMax && m > lastSeenMax) newCount += 1;
+  }
+
+  // Save newest as "seen" for next visit (after we compute)
+  if (commit && newest) {
+    try { localStorage.setItem(LAST_SEEN_MAX_MOD_KEY, String(newest)); } catch {}
+  }
+
+  // On first-ever visit, lastSeenMax = 0, we show no "new items" badge (avoids confusion)
+  return lastSeenMax ? newCount : 0;
+}
+
+  
   // --------- DOM events ----------
   document.addEventListener("DOMContentLoaded", async () => {
     const searchInput = document.getElementById("searchInput");
     const searchBtn = document.getElementById("searchBtn");
+    const searchClearBtn = document.getElementById("searchClearBtn");
+    const searchSuggestPanel = document.getElementById("searchSuggestPanel");
+    const searchWrap = document.getElementById("searchWrap");
     const clearBtn = document.getElementById("clearFilters");
     const refreshBtn = document.getElementById("userRefreshBtn");
     const refreshStatus = document.getElementById("userRefreshStatus");
@@ -1477,6 +1545,11 @@ Notes: ${p.notes}
     const toggleReading = document.getElementById("toggleReadingList");
     const clearReading = document.getElementById("clearReadingListBtn");
     const toggleTopics = document.getElementById("toggleTopics");
+
+    const topicEl = document.getElementById("topicFilters");
+    if (topicEl) topicEl.classList.remove("hidden");
+    if (toggleTopics) toggleTopics.textContent = "Hide";
+
     const toggleCats = document.getElementById("toggleCats");
     const toggleYears = document.getElementById("toggleYears");
     const wsStatusFilter = document.getElementById("wsStatusFilter");
@@ -1485,20 +1558,12 @@ Notes: ${p.notes}
     const clearCompareBtn = document.getElementById("clearCompareBtn");
     const sortSelect = document.getElementById("sortSelect");
     const newsletterBtn = document.getElementById("newsletterBtn");
-    const liveStatusBtn = document.getElementById("liveStatusBtn");
 
-    // Start live header ticker
-    startLiveHeaderTicker_();
-    setLive_({ updating: true });
-
-    // Tabs
     setTabFromUrl();
 
-    // Modal close handlers
     document.getElementById("pdfModalClose").addEventListener("click", closePdfModal);
     document.getElementById("pdfModalBackdrop").addEventListener("click", closePdfModal);
 
-    // Help dropdown
     const helpBtn = document.getElementById("helpBtn");
     const helpDd = document.getElementById("helpDropdown");
     helpBtn.addEventListener("click", (e) => {
@@ -1509,7 +1574,6 @@ Notes: ${p.notes}
       if (!helpDd.contains(e.target) && e.target !== helpBtn) helpDd.classList.add("hidden");
     });
 
-    // Help/Submit modals
     document.querySelectorAll("[data-openmodal]").forEach(btn => {
       btn.addEventListener("click", () => {
         helpDd.classList.add("hidden");
@@ -1519,30 +1583,92 @@ Notes: ${p.notes}
     document.getElementById("helpModalBackdrop").addEventListener("click", closeHelpModal);
     document.getElementById("helpModalClose").addEventListener("click", closeHelpModal);
 
-    // Toggle filters (collapsed by default)
-    toggleTopics.addEventListener("click", () => {
-      const el = document.getElementById("topicFilters");
-      const open = el.classList.toggle("hidden") === false;
-      toggleTopics.textContent = open ? "Hide" : "Show";
-    });
-    toggleCats.addEventListener("click", () => {
-      const el = document.getElementById("categoryFilters");
-      const open = el.classList.toggle("hidden") === false;
-      toggleCats.textContent = open ? "Hide" : "Show";
-    });
-    toggleYears.addEventListener("click", () => {
-      const el = document.getElementById("yearFilters");
-      const open = el.classList.toggle("hidden") === false;
-      toggleYears.textContent = open ? "Hide" : "Show";
-    });
+    function setToggleState(btn, panel, open) {
+      if (!btn || !panel) return;
+      panel.classList.toggle("hidden", !open);
+      btn.textContent = open ? "Hide" : "Show";
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+    }
 
-    // Sort
+    if (toggleTopics) {
+      toggleTopics.addEventListener("click", () => {
+        const el = document.getElementById("topicFilters");
+        const open = el.classList.toggle("hidden") === false;
+        toggleTopics.textContent = open ? "Hide" : "Show";
+        toggleTopics.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    }
+    if (toggleCats) {
+      toggleCats.addEventListener("click", () => {
+        const el = document.getElementById("categoryFilters");
+        const open = el.classList.toggle("hidden") === false;
+        toggleCats.textContent = open ? "Hide" : "Show";
+        toggleCats.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    }
+    if (toggleYears) {
+      toggleYears.addEventListener("click", () => {
+        const el = document.getElementById("yearFilters");
+        const open = el.classList.toggle("hidden") === false;
+        toggleYears.textContent = open ? "Hide" : "Show";
+        toggleYears.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    }
+
+let _lastHeaderUpdateAt = Date.now();
+setInterval(() => {
+  // If we've ever shown it once, keep updating the "ago" label
+  const updatedEl = document.getElementById("liveUpdatedText");
+  const wrap = document.getElementById("liveStatus");
+  if (!wrap || wrap.classList.contains("hidden")) return;
+
+  // We store the last update time in a data attribute
+  const ts = Number(wrap.getAttribute("data-updated-at") || 0) || 0;
+  const nc = Number(wrap.getAttribute("data-new-count") || 0) || 0;
+  if (ts) setLiveHeaderStatus({ updatedAt: ts, newCount: nc }); // preserve "ago" + "new"
+}, 30000);
+    
+const AUTO_REFRESH_MS = 5 * 60 * 1000;
+setInterval(async () => {
+  try {
+    const data = prepareItems(await loadData(true));
+    // quick change detection: length + newest modified
+    const sig = (arr) => `${arr.length}|${Math.max(...arr.map(x => x.modified || 0))}`;
+
+    if (sig(data) !== sig(state.allItems || [])) {
+      state.allItems = data;
+      cacheSet(data);
+      const newCount = computeNewCountSinceLastVisit(data);
+      setLiveHeaderStatus({ updatedAt: Date.now(), newCount });
+      buildFacetFilters();
+      refreshSearchSuggestData();
+      applyFilters(true); // keep page/scroll logic steadier
+      renderReadingList();
+      renderCompare();
+      showToast("New reports loaded.");
+    }
+  } catch (e) {
+    // ignore refresh errors silently
+  }
+}, AUTO_REFRESH_MS);
+
+    const catSection = document.getElementById("categoryFilterSection");
+    if (!ENABLE_CATEGORY_FILTER && catSection) {
+      catSection.classList.add("hidden");
+      state.selectedCategories.clear();
+    }
+
+    if (ENABLE_DEFAULT_FILTER_EXPAND) {
+      setToggleState(toggleTopics, document.getElementById("topicFilters"), !!DEFAULT_TOPICS_OPEN);
+      setToggleState(toggleCats, document.getElementById("categoryFilters"), !!ENABLE_CATEGORY_FILTER);
+      setToggleState(toggleYears, document.getElementById("yearFilters"), true);
+    }
+
     sortSelect.addEventListener("change", () => {
       state.sortMode = sortSelect.value || "newest";
       applyFilters(true);
     });
 
-    // Newsletter
     newsletterBtn.addEventListener("click", () => {
       if (!NEWSLETTER_URL) {
         showToast("Newsletter link not set yet.");
@@ -1551,22 +1677,187 @@ Notes: ${p.notes}
       window.open(NEWSLETTER_URL, "_blank", "noopener");
     });
 
-    // Search
-    function doSearch() {
+    const _recentMax = 12;
+
+    function loadRecentSearches() {
+      try {
+        const raw = localStorage.getItem(RECENT_SEARCH_KEY);
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr.map(String) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveRecentSearches(arr) {
+      try { localStorage.setItem(RECENT_SEARCH_KEY, JSON.stringify(arr)); } catch {}
+    }
+
+    function rememberRecentSearch(q) {
+      if (!ENABLE_SEARCH_RECENT) return;
+      const s = String(q || "").trim();
+      if (!s) return;
+      const norm = normalizeText(s);
+      let arr = loadRecentSearches();
+      arr = arr.filter(x => normalizeText(x) !== norm);
+      arr.unshift(s);
+      if (arr.length > _recentMax) arr = arr.slice(0, _recentMax);
+      saveRecentSearches(arr);
+    }
+
+    let _suggestTitles = [];
+    let _suggestTopics = [];
+    let _suggestKeywords = [];
+
+    function refreshSearchSuggestData() {
+      if (!ENABLE_SEARCH_SUGGEST) return;
+      _suggestTitles = (state.allItems || []).map(it => it && it.title).filter(Boolean);
+      _suggestTopics = (state.topicList || []).map(x => x && x.topic).filter(Boolean);
+
+      const freq = new Map();
+      (state.allItems || []).forEach(it => {
+        const s = String(it && it.summary || "");
+        tokenizeLoose(s).forEach(w => {
+          if (!w || w.length < 4) return;
+          if (STOPWORDS.has(w)) return;
+          freq.set(w, (freq.get(w) || 0) + 1);
+        });
+      });
+      _suggestKeywords = Array.from(freq.entries())
+        .sort((a,b) => (b[1] - a[1]) || a[0].localeCompare(b[0]))
+        .slice(0, 80)
+        .map(([w]) => w);
+    }
+
+    function buildSuggestions(query) {
+      const q = normalizeText(query || "");
+      const out = [];
+      const seen = new Set();
+
+      function addOne(s) {
+        const v = String(s || "").trim();
+        if (!v) return;
+        const key = normalizeText(v);
+        if (seen.has(key)) return;
+        seen.add(key);
+        out.push(v);
+      }
+
+      if (ENABLE_SEARCH_RECENT) {
+        const rec = loadRecentSearches();
+        rec.forEach(r => {
+          if (!q || normalizeText(r).includes(q)) addOne(r);
+        });
+      }
+
+      _suggestTopics.forEach(t => {
+        if (out.length >= 10) return;
+        if (!q || normalizeText(t).includes(q)) addOne(t);
+      });
+
+      _suggestKeywords.forEach(k => {
+        if (out.length >= 10) return;
+        if (q && normalizeText(k).includes(q)) addOne(k);
+      });
+
+      if (q) _suggestTitles.forEach(t => {
+        if (out.length >= 10) return;
+        if (!q || normalizeText(t).includes(q)) addOne(t);
+      });
+
+      return out.slice(0, 10);
+    }
+
+    function hideSuggest() {
+      if (!searchSuggestPanel) return;
+      searchSuggestPanel.classList.add("hidden");
+      searchSuggestPanel.innerHTML = "";
+    }
+
+    function showSuggest() {
+      if (!searchSuggestPanel) return;
+      searchSuggestPanel.classList.remove("hidden");
+    }
+
+    function renderSuggestList() {
+      if (!ENABLE_SEARCH_SUGGEST || !searchSuggestPanel) return;
+      const suggestions = buildSuggestions(searchInput.value);
+      if (!suggestions.length) {
+        hideSuggest();
+        return;
+      }
+
+      searchSuggestPanel.innerHTML = suggestions.map(s =>
+        `<button type="button" data-suggest="${escapeHtml(s)}" class="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2">
+           <svg class="h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+             <circle cx="11" cy="11" r="7"></circle>
+             <path d="M21 21l-4.3-4.3"></path>
+           </svg>
+           <span class="text-sm text-gray-800">${escapeHtml(s)}</span>
+         </button>`
+      ).join("");
+
+      showSuggest();
+    }
+
+    function syncSearchClearBtn() {
+      if (!searchClearBtn) return;
+      searchClearBtn.classList.toggle("hidden", !searchInput.value);
+    }
+
+    function doSearch(opts = {}) {
       state.searchQuery = searchInput.value.trim();
+      if (opts && opts.remember) rememberRecentSearch(state.searchQuery);
+      if (opts && opts.closeSuggest) hideSuggest();
       applyFilters();
     }
-    searchBtn.addEventListener("click", doSearch);
-    searchInput.addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
+    searchBtn.addEventListener("click", () => doSearch({ remember: true, closeSuggest: true }));
+    searchInput.addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch({ remember: true, closeSuggest: true }); });
 
-    // Live search debounce
     let searchTimeout = null;
     searchInput.addEventListener("input", () => {
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(doSearch, 220);
     });
 
-    // Clear filters
+    if (searchClearBtn) {
+      searchClearBtn.addEventListener("click", () => {
+        searchInput.value = "";
+        syncSearchClearBtn();
+        hideSuggest();
+        doSearch();
+        searchInput.focus();
+      });
+    }
+
+    if (ENABLE_SEARCH_SUGGEST) {
+      searchInput.addEventListener("focus", () => {
+        renderSuggestList();
+      });
+      searchInput.addEventListener("input", () => {
+        syncSearchClearBtn();
+        renderSuggestList();
+      });
+
+      if (searchSuggestPanel) {
+        searchSuggestPanel.addEventListener("click", (e) => {
+          const btn = e.target.closest("[data-suggest]");
+          if (!btn) return;
+          const v = btn.getAttribute("data-suggest") || "";
+          searchInput.value = v;
+          syncSearchClearBtn();
+          hideSuggest();
+          doSearch({ remember: true, closeSuggest: true });
+        });
+      }
+
+      document.addEventListener("click", (e) => {
+        if (searchWrap && !searchWrap.contains(e.target)) hideSuggest();
+      });
+    }
+
+    syncSearchClearBtn();
+
     clearBtn.addEventListener("click", () => {
       state.searchQuery = "";
       searchInput.value = "";
@@ -1584,7 +1875,6 @@ Notes: ${p.notes}
       applyFilters();
     });
 
-    // Reading list toggle
     toggleReading.addEventListener("click", () => {
       const wrap = document.getElementById("readingListWrap");
       const isHidden = wrap.classList.contains("hidden");
@@ -1602,7 +1892,6 @@ Notes: ${p.notes}
       render();
     });
 
-    // Workspace filters
     wsStatusFilter.addEventListener("change", () => {
       state.wsStatusFilter = wsStatusFilter.value;
       applyFilters();
@@ -1613,44 +1902,37 @@ Notes: ${p.notes}
     });
     exportWsBtn.addEventListener("click", exportWorkspace);
 
-    // Compare clear
     clearCompareBtn.addEventListener("click", () => {
       compareSet([]);
       renderCompare();
       render();
     });
 
-    // Refresh list
-    if (liveStatusBtn) {
-      liveStatusBtn.addEventListener("click", () => refreshBtn.click());
-    }
-
     refreshBtn.addEventListener("click", async () => {
       refreshStatus.textContent = "Refreshing…";
-      setLive_({ updating: true });
-      const prevIds = new Set((state.allItems || []).map(it => String(it.id)));
       try {
         const data = prepareItems(await loadData(true));
-        const nextIds = new Set((data || []).map(it => String(it.id)));
-        let newCount = 0;
-        if (prevIds.size > 0) {
-          for (const id of nextIds) { if (!prevIds.has(id)) newCount++; }
-        }
         state.allItems = data;
         cacheSet(data);
         buildFacetFilters();
+        refreshSearchSuggestData();
+
+        const newCount = computeNewCountSinceLastVisit(data, true);
+        setLiveHeaderStatus({ updatedAt: Date.now(), newCount });
+
+        if (ENABLE_REMOTE_LIKES) {
+          try { await remoteLikesPrime_(); } catch (e) {}
+        }
+
         applyFilters();
         renderReadingList();
         renderCompare();
-        setLive_({ fetchedAt: Date.now(), source: "live", updating: false, newCount });
         refreshStatus.textContent = "Last updated: " + formatTime(Date.now());
       } catch (e) {
-        setLive_({ updating: false });
         refreshStatus.textContent = e.message;
       }
     });
 
-    // Back-to-top
     window.addEventListener("scroll", () => {
       if (window.scrollY > 300) backToTopBtn.classList.remove("hidden");
       else backToTopBtn.classList.add("hidden");
@@ -1658,7 +1940,7 @@ Notes: ${p.notes}
     backToTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
     // Event delegation for card actions + reading list preview buttons
-    document.getElementById("cardsContainer").addEventListener("click", (e) => {
+    document.getElementById("cardsContainer").addEventListener("click", async (e) => {
       const btn = e.target.closest("[data-action]");
       if (!btn) return;
       const action = btn.getAttribute("data-action");
@@ -1682,10 +1964,27 @@ Notes: ${p.notes}
       if (action === "aisummary" && item) openInChatGPT(item);
 
       if (action === "like") {
-        toggleLike(id);
-        if (state.sortMode === "liked") applyFilters(true);
-        else render();
-        showToast(isLiked(id) ? "Liked (local)." : "Unliked (local).");
+        try {
+          if (ENABLE_REMOTE_LIKES) {
+            btn.disabled = true;
+            await remoteToggleLike_(id);
+            if (state.sortMode === "liked") applyFilters(true);
+            else render();
+            showToast(isLiked(id) ? "Liked." : "Unliked.");
+          } else {
+            toggleLike(id);
+            if (state.sortMode === "liked") applyFilters(true);
+            else render();
+            showToast(isLiked(id) ? "Liked (local)." : "Unliked (local).");
+          }
+        } catch (err) {
+          // fallback so UX still works
+          toggleLike(id);
+          render();
+          showToast("Like backend failed. Using local like.");
+        } finally {
+          btn.disabled = false;
+        }
       }
     });
 
@@ -1709,45 +2008,60 @@ Notes: ${p.notes}
 
     // Instant-load cached data
     const cached = cacheGet();
-    if (cached && cached.data) {
-      state.allItems = prepareItems(cached.data);
-      setLive_({ fetchedAt: cached.time, source: "cache", updating: true, newCount: 0 });
+    const cachedMeta = cacheGetMeta_();
+    if (cached) {
+      state.allItems = prepareItems(cached);
       buildFacetFilters();
+      refreshSearchSuggestData();
+
+      // Header pills: show cache time + "new" count without advancing baseline yet
+      const peekNew = computeNewCountSinceLastVisit(state.allItems, false);
+      setLiveHeaderStatus({ updatedAt: cachedMeta?.time || 0, newCount: peekNew });
+
+      if (ENABLE_REMOTE_LIKES) {
+        remoteLikesPrime_().then(() => {
+          if (state.sortMode === "liked") applyFilters(true);
+          else render();
+        }).catch(() => {});
+      }
+
       applyFilters();
       renderReadingList();
       renderCompare();
       document.getElementById("resultsInfo").textContent = "Showing cached results… updating";
+    } else {
+      // Keep header pill visible while first load runs
+      setLiveHeaderStatus({ updatedAt: 0, newCount: 0 });
     }
 
     // Fetch fresh
     try {
-      const prevIds = new Set((state.allItems || []).map(it => String(it.id)));
-      setLive_({ updating: true });
       const data = prepareItems(await loadData(true));
-      const nextIds = new Set((data || []).map(it => String(it.id)));
-      let newCount = 0;
-      if (prevIds.size > 0) {
-        for (const id of nextIds) { if (!prevIds.has(id)) newCount++; }
-      }
       state.allItems = data;
       cacheSet(data);
       buildFacetFilters();
+      refreshSearchSuggestData();
+
+      const newCount = computeNewCountSinceLastVisit(data, true);
+      setLiveHeaderStatus({ updatedAt: Date.now(), newCount });
+
+      if (ENABLE_REMOTE_LIKES) {
+        try { await remoteLikesPrime_(); } catch (e) {}
+      }
+
       applyFilters();
       renderReadingList();
       renderCompare();
-      setLive_({ fetchedAt: Date.now(), source: "live", updating: false, newCount });
       refreshStatus.textContent = "Last updated: " + formatTime(Date.now());
     } catch (e) {
-      setLive_({ updating: false });
       if (!cached) {
         document.getElementById("resultsInfo").textContent = "Error loading data: " + e.message;
       }
     }
+    }
 
-    // Ensure sort UI matches state
     sortSelect.value = state.sortMode;
 
-    // Close modals on Escape
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         closePdfModal();
