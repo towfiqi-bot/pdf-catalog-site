@@ -476,6 +476,17 @@
       return parsed.data;
     } catch { return null; }
   }
+  // Read cache metadata (timestamp) without forcing TTL
+  function cacheGetMeta_() {
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed.time !== "number") return null;
+      return { time: parsed.time };
+    } catch (e) { return null; }
+  }
+
 
   // --------- Reading list ----------
   function readingGet() {
