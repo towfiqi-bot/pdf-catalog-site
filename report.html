@@ -215,7 +215,6 @@
       if (!raw) return null;
       const parsed = JSON.parse(raw);
       if (!parsed?.time || !parsed?.data) return null;
-      if (Date.now() - parsed.time > CACHE_TTL_MS) return null;
       return parsed.data;
     } catch { return null; }
   }
