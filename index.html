@@ -288,16 +288,6 @@
           </div>
         </div>
 
-        
-        <!-- New posts (appears when there are new items and you scroll down) -->
-        <div id="newPostsBar" class="hidden fixed top-24 left-1/2 -translate-x-1/2 z-50">
-          <button id="newPostsBtn" type="button"
-                  class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-blue-600 text-white text-sm font-semibold shadow-lg hover:brightness-95 transition">
-            <span aria-hidden="true">↑</span>
-            <span id="newPostsText">New reports</span>
-          </button>
-        </div>
-
         <div id="cardsContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
         <div id="infiniteSentinel" class="h-1"></div>
 
@@ -411,9 +401,7 @@
     wsTagFilter: "",
     sortMode: "newest",
     scoreById: new Map(),
-    topicList: [],                // [{topic,count}]
-    lastSeenBaseline: 0,         // max modified timestamp from previous visit (for NEW markers)
-    newCount: 0                 // number of new items since last visit (for New posts pill)
+    topicList: []                 // [{topic,count}]
   };
 
   // --------- Utilities ----------
@@ -1086,11 +1074,6 @@ Output:
       .map(c => `<span class="px-2 py-0.5 border rounded-full bg-gray-50">${escapeHtml(c)}</span>`)
       .join("");
 
-    const m = Number(item.modified || 0) || 0;
-    const isNew = state.lastSeenBaseline && m > state.lastSeenBaseline;
-    const articleClass = "relative bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow transition" + (isNew ? " ring-2 ring-red-200 border-red-200" : "");
-    const newAttrs = isNew ? ' data-is-new="1"' : "";
-
     const pinned = wsPinned(item.id);
     const status = wsStatus(item.id);
     const statusLabel = status ? status.charAt(0).toUpperCase() + status.slice(1) : "Unread";
@@ -1102,13 +1085,13 @@ Output:
     const liked = isLiked(item.id);
     const likes = likeCount(item.id);
     const likeTitle = ENABLE_REMOTE_LIKES ? "Like" : "Like (saved in your browser)";
+    const isNew = !!(state.newIds && state.newIds.has(String(item.id)));
 
     return `
-      <article class="${articleClass}"${newAttrs}>
+      <article data-card-id="${escapeHtml(item.id)}" data-new="${isNew ? "1" : "0"}" class="bg-white border ${isNew ? "border-red-200 ring-2 ring-red-100" : "border-gray-200"} rounded-lg p-4 shadow-sm hover:shadow transition">
         <div class="grid grid-cols-1 sm:grid-cols-[160px,1fr] gap-4">
           <div class="w-full">
-            <div class="relative border border-gray-200 bg-white rounded group overflow-hidden">
-              
+            <div class="relative border border-gray-200 bg-white rounded group">
               <button type="button" data-action="modal" data-id="${escapeHtml(item.id)}" class="block w-full text-left">
                 <img src="${thumb}" alt="${title}" loading="lazy" decoding="async" referrerpolicy="no-referrer"
                      onerror="this.onerror=null;this.src='https://via.placeholder.com/260x360?text=PDF';"
@@ -1141,7 +1124,7 @@ Output:
               <span>${year}</span>
               <span class="text-gray-300">•</span>
               <span>${escapeHtml(statusLabel)}</span>
-              ${isNew ? `<span class="px-2 py-0.5 rounded-full bg-red-50 border border-red-200 text-red-700 text-[11px] font-semibold">NEW</span>` : ""}
+              ${isNew ? `<span class="ml-2 px-2 py-0.5 rounded-full border border-red-200 bg-red-50 text-red-700 text-[10px] font-bold tracking-wide">NEW</span>` : ``}
               ${pinned ? `<span class="ml-auto text-amber-600 flex items-center gap-1" title="Pinned">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 2l-1 1v5.2l4.6 4.6-1.4 1.4L11 9.6V3l-1-1h4zM5 14l5 5v3H8v-2.2L3.4 15.4 5 14z"/></svg>
                 <span class="text-xs font-semibold">Pinned</span></span>` : ""}
@@ -1206,9 +1189,6 @@ Output:
     info.textContent = `${total} ${label} found`;
 
     container.innerHTML = itemsToShow.map(renderCard).join("");
-
-    // Keep the floating "New reports" pill in sync
-    updateNewPostsBar_();
   }
 
   // --------- Modal ----------
@@ -1519,37 +1499,7 @@ function formatAgo(ts) {
   return `${day}d ago`;
 }
 
-function setLiveHeaderStatus({ updatedAt, newCount }
-
-  // --------- "New posts" floating pill (LinkedIn-style) ----------
-  function updateNewPostsBar_() {
-    const bar = document.getElementById("newPostsBar");
-    const text = document.getElementById("newPostsText");
-    if (!bar || !text) return;
-
-    const n = Number(state.newCount || 0) || 0;
-    if (n <= 0) {
-      bar.classList.add("hidden");
-      return;
-    }
-
-    text.textContent = `New reports (${n})`;
-
-    // Only show when user has scrolled down a bit (so it acts like "new posts" in feeds)
-    const shouldShow = window.scrollY > 260;
-    bar.classList.toggle("hidden", !shouldShow);
-  }
-
-  function scrollToFirstNew_() {
-    const first = document.querySelector('[data-is-new="1"]');
-    if (first) {
-      first.scrollIntoView({ behavior: "smooth", block: "start" });
-    } else {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  }
-
-) {
+function setLiveHeaderStatus({ updatedAt, newCount }) {
   const wrap = document.getElementById("liveStatus");
   const updatedEl = document.getElementById("liveUpdatedText");
   const newEl = document.getElementById("liveNewText");
@@ -1596,6 +1546,69 @@ function computeNewCountSinceLastVisit(items, commit = true) {
   // On first-ever visit, lastSeenMax = 0, we show no "new items" badge (avoids confusion)
   return lastSeenMax ? newCount : 0;
 }
+
+// Compute "new since last visit" markers based on a baseline read once per session.
+// This avoids the badge disappearing immediately after we store the newest timestamp.
+function ensureNewBaseline_() {
+  if (typeof state.lastSeenBaseline === "number") return state.lastSeenBaseline;
+  let v = 0;
+  try { v = Number(localStorage.getItem(LAST_SEEN_MAX_MOD_KEY) || 0) || 0; } catch {}
+  state.lastSeenBaseline = v;
+  return v;
+}
+
+function computeNewMarkers_(items) {
+  const baseline = ensureNewBaseline_();
+  const set = new Set();
+  let newest = 0;
+  for (const it of (items || [])) {
+    const m = Number(it.modified || 0) || 0;
+    if (m > newest) newest = m;
+    if (baseline && m > baseline) set.add(String(it.id));
+  }
+  state.newIds = set;
+  return { newCount: baseline ? set.size : 0, newest };
+}
+
+function commitSeenMaxOnce_(items) {
+  if (state._seenCommitted) return;
+  const { newest } = computeNewMarkers_(items);
+  if (newest) {
+    try { localStorage.setItem(LAST_SEEN_MAX_MOD_KEY, String(newest)); } catch {}
+  }
+  state._seenCommitted = true;
+}
+
+function setupNewPostsBtn_() {
+  const btn = document.getElementById("newPostsBtn");
+  if (!btn) return;
+
+  function updateBtn() {
+    const n = Number(document.getElementById("liveStatus")?.getAttribute("data-new-count") || 0) || 0;
+    if (n <= 0) { btn.classList.add("hidden"); return; }
+
+    // Only show after user scrolls a bit (LinkedIn-style)
+    if (window.scrollY < 220) { btn.classList.add("hidden"); return; }
+
+    btn.textContent = `↑ New reports (${n})`;
+    btn.classList.remove("hidden");
+  }
+
+  window.addEventListener("scroll", updateBtn, { passive: true });
+
+  btn.addEventListener("click", () => {
+    // Scroll to the first NEW card
+    const first = document.querySelector('article[data-new="1"]');
+    if (first) {
+      first.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  });
+
+  updateBtn();
+}
+
 
   
   // --------- DOM events ----------
@@ -1705,8 +1718,10 @@ setInterval(async () => {
     if (sig(data) !== sig(state.allItems || [])) {
       state.allItems = data;
       cacheSet(data);
-      const newCount = computeNewCountSinceLastVisit(data);
+      const { newCount } = computeNewMarkers_(data);
       setLiveHeaderStatus({ updatedAt: Date.now(), newCount });
+      commitSeenMaxOnce_(data);
+      commitSeenMaxOnce_(data);
       buildFacetFilters();
       refreshSearchSuggestData();
       applyFilters(true); // keep page/scroll logic steadier
@@ -1984,8 +1999,10 @@ setInterval(async () => {
         buildFacetFilters();
         refreshSearchSuggestData();
 
-        const newCount = computeNewCountSinceLastVisit(data, true);
+        const { newCount } = computeNewMarkers_(data);
         setLiveHeaderStatus({ updatedAt: Date.now(), newCount });
+      commitSeenMaxOnce_(data);
+      commitSeenMaxOnce_(data);
 
         if (ENABLE_REMOTE_LIKES) {
           try { await remoteLikesPrime_(); } catch (e) {}
@@ -2076,21 +2093,14 @@ setInterval(async () => {
     // Instant-load cached data
     const cached = cacheGet();
     const cachedMeta = cacheGetMeta_();
-
-    // Capture baseline for NEW markers (before we commit newest modified time)
-    if (!state.lastSeenBaseline) {
-      try { state.lastSeenBaseline = Number(localStorage.getItem(LAST_SEEN_MAX_MOD_KEY) || 0) || 0; } catch {}
-    }
     if (cached) {
       state.allItems = prepareItems(cached);
       buildFacetFilters();
       refreshSearchSuggestData();
 
       // Header pills: show cache time + "new" count without advancing baseline yet
-      const peekNew = computeNewCountSinceLastVisit(state.allItems, false);
-      state.newCount = peekNew;
+      const peekNew = (computeNewMarkers_(state.allItems).newCount || 0);
       setLiveHeaderStatus({ updatedAt: cachedMeta?.time || 0, newCount: peekNew });
-      updateNewPostsBar_();
 
       if (ENABLE_REMOTE_LIKES) {
         remoteLikesPrime_().then(() => {
@@ -2116,10 +2126,10 @@ setInterval(async () => {
       buildFacetFilters();
       refreshSearchSuggestData();
 
-      const newCount = computeNewCountSinceLastVisit(data, true);
-      state.newCount = newCount;
+      const { newCount } = computeNewMarkers_(data);
       setLiveHeaderStatus({ updatedAt: Date.now(), newCount });
-      updateNewPostsBar_();
+      commitSeenMaxOnce_(data);
+      commitSeenMaxOnce_(data);
 
       if (ENABLE_REMOTE_LIKES) {
         try { await remoteLikesPrime_(); } catch (e) {}
@@ -2145,28 +2155,16 @@ setInterval(async () => {
       }
     });
 
-
-    // "New reports" pill actions
-    const newPostsBtn = document.getElementById("newPostsBtn");
-    if (newPostsBtn) {
-      newPostsBtn.addEventListener("click", () => {
-        scrollToFirstNew_();
-        document.getElementById("newPostsBar")?.classList.add("hidden");
-      });
-    }
-
-    let _newBarTick = false;
-    window.addEventListener("scroll", () => {
-      if (_newBarTick) return;
-      _newBarTick = true;
-      requestAnimationFrame(() => {
-        _newBarTick = false;
-        updateNewPostsBar_();
-      });
-    }, { passive: true });
-
+    setupNewPostsBtn_();
     setupInfiniteScroll();
   });
 </script>
+
+  <!-- New reports floating button (shows only when there are unseen new items) -->
+  <button id="newPostsBtn"
+          class="hidden fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white px-4 py-2 rounded-full shadow hover:bg-blue-700 text-sm font-semibold">
+    ↑ New reports
+  </button>
+
 </body>
 </html>
