@@ -402,7 +402,7 @@
     sortMode: "newest",
     scoreById: new Map(),
     topicList: [],                // [{topic,count}]
-    newIds: new Set()           // ids new since last visit (this session)
+    lastSeenBaseline: 0          // max modified timestamp from previous visit (for NEW markers)
   };
 
   // --------- Utilities ----------
@@ -1075,6 +1075,10 @@ Output:
       .map(c => `<span class="px-2 py-0.5 border rounded-full bg-gray-50">${escapeHtml(c)}</span>`)
       .join("");
 
+    const m = Number(item.modified || 0) || 0;
+    const isNew = state.lastSeenBaseline && m > state.lastSeenBaseline;
+    const articleClass = "bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow transition" + (isNew ? " ring-2 ring-red-200 border-red-200" : "");
+
     const pinned = wsPinned(item.id);
     const status = wsStatus(item.id);
     const statusLabel = status ? status.charAt(0).toUpperCase() + status.slice(1) : "Unread";
@@ -1087,22 +1091,12 @@ Output:
     const likes = likeCount(item.id);
     const likeTitle = ENABLE_REMOTE_LIKES ? "Like" : "Like (saved in your browser)";
 
-    const isNew = !!(state.newIds && state.newIds.has(String(item.id)));
-    const articleBorder = isNew ? "border-amber-300 ring-1 ring-amber-100" : "border-gray-200";
-    const newChip = isNew
-      ? `<span class="px-2 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-amber-800 text-[10px] font-semibold">New</span>`
-      : "";
-    const pinnedChip = pinned
-      ? `<span class="text-amber-600 flex items-center gap-1" title="Pinned">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 2l-1 1v5.2l4.6 4.6-1.4 1.4L11 9.6V3l-1-1h4zM5 14l5 5v3H8v-2.2L3.4 15.4 5 14z"/></svg>
-                <span class="text-xs font-semibold">Pinned</span></span>`
-      : "";
-
     return `
-      <article class="bg-white border ${articleBorder} rounded-lg p-4 shadow-sm hover:shadow transition">
+      <article class="${articleClass}">
         <div class="grid grid-cols-1 sm:grid-cols-[160px,1fr] gap-4">
           <div class="w-full">
-            <div class="relative border border-gray-200 bg-white rounded group">
+            <div class="relative border border-gray-200 bg-white rounded group overflow-hidden">
+              ${isNew ? '<div class="pointer-events-none absolute -left-10 top-4 -rotate-45 bg-red-600 text-white text-[10px] sm:text-xs font-bold uppercase tracking-wider px-14 py-1 shadow-md">NEW</div>' : ''}
               <button type="button" data-action="modal" data-id="${escapeHtml(item.id)}" class="block w-full text-left">
                 <img src="${thumb}" alt="${title}" loading="lazy" decoding="async" referrerpolicy="no-referrer"
                      onerror="this.onerror=null;this.src='https://via.placeholder.com/260x360?text=PDF';"
@@ -1135,7 +1129,9 @@ Output:
               <span>${year}</span>
               <span class="text-gray-300">•</span>
               <span>${escapeHtml(statusLabel)}</span>
-              ${(newChip || pinnedChip) ? `<span class="ml-auto flex items-center gap-2">${newChip}${pinnedChip}</span>` : ""}
+              ${pinned ? `<span class="ml-auto text-amber-600 flex items-center gap-1" title="Pinned">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 2l-1 1v5.2l4.6 4.6-1.4 1.4L11 9.6V3l-1-1h4zM5 14l5 5v3H8v-2.2L3.4 15.4 5 14z"/></svg>
+                <span class="text-xs font-semibold">Pinned</span></span>` : ""}
             </div>
 
             <a href="${reportPageUrl(item.id, item.title || "") }"
@@ -1539,15 +1535,11 @@ function computeNewCountSinceLastVisit(items, commit = true) {
 
   let newest = 0;
   let newCount = 0;
-  const newIds = new Set();
 
   for (const it of (items || [])) {
     const m = Number(it.modified || 0) || 0;
     if (m > newest) newest = m;
-    if (lastSeenMax && m > lastSeenMax) {
-      newCount += 1;
-      newIds.add(String(it.id));
-    }
+    if (lastSeenMax && m > lastSeenMax) newCount += 1;
   }
 
   // Save newest as "seen" for next visit (after we compute)
@@ -1555,13 +1547,11 @@ function computeNewCountSinceLastVisit(items, commit = true) {
     try { localStorage.setItem(LAST_SEEN_MAX_MOD_KEY, String(newest)); } catch {}
   }
 
-  // Persist "new" ids for this session so we can mark cards
-  try { state.newIds = lastSeenMax ? newIds : new Set(); } catch {}
-
   // On first-ever visit, lastSeenMax = 0, we show no "new items" badge (avoids confusion)
   return lastSeenMax ? newCount : 0;
 }
 
+  
   // --------- DOM events ----------
   document.addEventListener("DOMContentLoaded", async () => {
     const searchInput = document.getElementById("searchInput");
@@ -2040,6 +2030,11 @@ setInterval(async () => {
     // Instant-load cached data
     const cached = cacheGet();
     const cachedMeta = cacheGetMeta_();
+
+    // Capture baseline for NEW markers (before we commit newest modified time)
+    if (!state.lastSeenBaseline) {
+      try { state.lastSeenBaseline = Number(localStorage.getItem(LAST_SEEN_MAX_MOD_KEY) || 0) || 0; } catch {}
+    }
     if (cached) {
       state.allItems = prepareItems(cached);
       buildFacetFilters();
