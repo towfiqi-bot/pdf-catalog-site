@@ -594,6 +594,29 @@
   let REMOTE_LIKES_READY = false;
   let REMOTE_LIKE_COUNTS = new Map();
   let REMOTE_COMMENT_COUNTS = new Map();
+
+
+// Comments count cache (for faster page load)
+const COMMENTS_COUNTS_CACHE_KEY = "dotdock_comments_counts_v1";
+const COMMENTS_COUNTS_TTL_MS = 60 * 1000; // 60s
+
+function commentsCountsCacheGet_() {
+  try {
+    const raw = localStorage.getItem(COMMENTS_COUNTS_CACHE_KEY);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (!obj || typeof obj.ts !== "number" || !obj.counts) return null;
+    if ((Date.now() - obj.ts) > COMMENTS_COUNTS_TTL_MS) return null;
+    return obj.counts;
+  } catch { return null; }
+}
+
+function commentsCountsCacheSet_(countsObj) {
+  try {
+    localStorage.setItem(COMMENTS_COUNTS_CACHE_KEY, JSON.stringify({ ts: Date.now(), counts: countsObj || {} }));
+  } catch {}
+}
+
  // id -> count
   let REMOTE_LIKED = {};              // id -> true
 
@@ -690,15 +713,30 @@
 
 
   // --------- Remote comments (Apps Script) ----------
-  async function remoteCommentsPrime_() {
-    const base = DATA_URL + (DATA_URL.includes("?") ? "&" : "?");
-    const url = base + "action=comments_counts&cb=" + Date.now();
-    const res = await fetch(url, { cache: "no-store", mode: "cors", credentials: "omit" });
-    if (!res.ok) throw new Error("comments_counts failed: " + res.status);
-    const data = await res.json();
-    if (!data || data.ok !== true) throw new Error("comments_counts returned invalid payload");
-    REMOTE_COMMENT_COUNTS = new Map(Object.entries(data.counts || {}).map(([k,v]) => [String(k), Number(v||0)||0]));
+  async function remoteCommentsPrime_(opts = {}) {
+  // 1) Use short-lived local cache immediately (instant UI)
+  const useCache = opts.useCache !== false;
+  if (useCache) {
+    const cached = commentsCountsCacheGet_();
+    if (cached && typeof cached === "object") {
+      REMOTE_COMMENT_COUNTS = new Map(Object.entries(cached).map(([k,v]) => [String(k), Number(v||0)||0]));
+      updateCommentCountBadges_();
+    }
   }
+
+  // 2) Always fetch fresh counts (but only once per call)
+  const base = DATA_URL + (DATA_URL.includes("?") ? "&" : "?");
+  const url = base + "action=comments_counts&cb=" + Date.now();
+  const res = await fetch(url, { cache: "no-store", mode: "cors", credentials: "omit" });
+  if (!res.ok) throw new Error("comments_counts failed: " + res.status);
+  const data = await res.json();
+  if (!data || data.ok !== true) throw new Error("comments_counts returned invalid payload");
+
+  const countsObj = (data.counts && typeof data.counts === "object") ? data.counts : {};
+  REMOTE_COMMENT_COUNTS = new Map(Object.entries(countsObj).map(([k,v]) => [String(k), Number(v||0)||0]));
+  commentsCountsCacheSet_(countsObj);
+  updateCommentCountBadges_();
+}
 
   async function remoteCommentsGet_(id, limit=10, offset=0) {
     const base = DATA_URL + (DATA_URL.includes("?") ? "&" : "?");
@@ -758,6 +796,11 @@
 
     try {
       const data = await remoteCommentsGet_(id, 5, 0);
+      // keep the per-card count accurate even if global counts haven't loaded yet
+      if (typeof data.total === "number") {
+        REMOTE_COMMENT_COUNTS.set(String(id), Number(data.total || 0) || 0);
+        updateCommentCountBadges_();
+      }
       const items = Array.isArray(data.items) ? data.items : [];
       if (items.length === 0) {
         statusEl.textContent = "No comments yet.";
@@ -2294,11 +2337,13 @@ setInterval(async () => {
       setLiveHeaderStatus({ updatedAt: cachedMeta?.time || 0, newCount: peekNew });
 
       if (ENABLE_REMOTE_LIKES) {
-        remoteLikesPrime_().then(() => {
-          if (state.sortMode === "liked") applyFilters(true);
-          else render();
-        }).catch(() => {});
-      }
+  remoteLikesPrime_().then(() => {
+    if (state.sortMode === "liked") applyFilters(true);
+    else render();
+  }).catch(() => {});
+}
+// Prime comment counts (cached instantly, then fresh)
+remoteCommentsPrime_({ useCache: true }).catch(() => {});
 
       applyFilters();
       renderReadingList();
@@ -2325,6 +2370,8 @@ setInterval(async () => {
       if (ENABLE_REMOTE_LIKES) {
         try { await remoteLikesPrime_(); } catch (e) {}
       }
+      // Prime comment counts (cached instantly, then fresh)
+      try { await remoteCommentsPrime_({ useCache: true }); } catch (e) {}
 
       applyFilters();
       renderReadingList();
