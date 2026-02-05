@@ -367,6 +367,9 @@
   const DEFAULT_TOPICS_OPEN = true;            // Topics expanded on page load
   const ENABLE_REMOTE_LIKES = true;            // Global likes via Apps Script (action=likes_get / like_toggle)
 
+  const ENABLE_REMOTE_COMMENTS = true;         // Global comments via Apps Script (action=comments_counts / comments_get / comment_add)
+  const COMMENTS_KEY = "dotdock_comments_v1";  // local fallback cache for comment counts (optional)
+
   const RECENT_SEARCH_KEY = "dotdock_recent_searches_v1";
 
   // Browser cache for instant load
@@ -595,6 +598,10 @@
   let REMOTE_LIKE_COUNTS = new Map(); // id -> count
   let REMOTE_LIKED = {};              // id -> true
 
+  // Remote comments state (counts + per-report fetch)
+  let REMOTE_COMMENTS_READY = false;
+  let REMOTE_COMMENT_COUNTS = new Map(); // id -> count
+
   function likeCount(id) {
     if (ENABLE_REMOTE_LIKES && REMOTE_LIKES_READY) {
       return Number(REMOTE_LIKE_COUNTS.get(String(id)) || 0) || 0;
@@ -685,6 +692,127 @@
 
     return { liked: !!out.liked, count: Number(out.count || 0) || 0 };
   }
+  // --------- Remote comments (Apps Script + Google Sheet) ----------
+  async function remoteCommentsPrime_() {
+    if (!ENABLE_REMOTE_COMMENTS) return;
+
+    const base = DATA_URL + (DATA_URL.includes("?") ? "&" : "?");
+    const url = base + "action=comments_counts&cb=" + Date.now();
+
+    const res = await fetch(url, { cache: "no-store", mode: "cors", credentials: "omit" });
+    if (!res.ok) throw new Error("comments_counts failed: " + res.status);
+
+    const data = await res.json();
+    if (!data || data.ok !== true) throw new Error("comments_counts returned invalid payload");
+
+    REMOTE_COMMENTS_READY = true;
+    REMOTE_COMMENT_COUNTS = new Map(Object.entries(data.counts || {}).map(([k,v]) => [String(k), Number(v||0)||0]));
+  }
+
+  function commentCount(id) {
+    if (ENABLE_REMOTE_COMMENTS && REMOTE_COMMENTS_READY) {
+      return Number(REMOTE_COMMENT_COUNTS.get(String(id)) || 0) || 0;
+    }
+    return 0;
+  }
+
+  async function remoteCommentsGet_(reportId, limit = 5, offset = 0) {
+    const base = DATA_URL + (DATA_URL.includes("?") ? "&" : "?");
+    const url = base +
+      "action=comments_get&id=" + encodeURIComponent(String(reportId)) +
+      "&limit=" + encodeURIComponent(String(limit)) +
+      "&offset=" + encodeURIComponent(String(offset)) +
+      "&cb=" + Date.now();
+
+    const res = await fetch(url, { cache: "no-store", mode: "cors", credentials: "omit" });
+    if (!res.ok) throw new Error("comments_get failed: " + res.status);
+
+    const out = await res.json();
+    if (!out || out.ok !== true) throw new Error(out?.error || "comments_get returned invalid payload");
+    return out;
+  }
+
+  async function remoteCommentAdd_(reportId, text, name) {
+    const base = DATA_URL + (DATA_URL.includes("?") ? "&" : "?");
+    const url = base +
+      "action=comment_add&id=" + encodeURIComponent(String(reportId)) +
+      "&device=" + encodeURIComponent(getDeviceId_()) +
+      "&name=" + encodeURIComponent(String(name || "Anonymous").slice(0, 40)) +
+      "&text=" + encodeURIComponent(String(text || "").slice(0, 800)) +
+      "&cb=" + Date.now();
+
+    const res = await fetch(url, { cache: "no-store", mode: "cors", credentials: "omit" });
+    if (!res.ok) throw new Error("comment_add failed: " + res.status);
+
+    const out = await res.json();
+    if (!out || out.ok !== true) throw new Error(out?.error || "comment_add returned invalid payload");
+
+    REMOTE_COMMENTS_READY = true;
+    REMOTE_COMMENT_COUNTS.set(String(reportId), Number(out.count || 0) || 0);
+    return out;
+  }
+
+  function fmtShortDate_(ts) {
+    try {
+      return new Date(Number(ts||0)).toLocaleString();
+    } catch { return ""; }
+  }
+
+  function renderInlineComments_(cardEl, reportId, payload) {
+    const panel = cardEl.querySelector("[data-comments-panel]");
+    const list = cardEl.querySelector("[data-comments-list]");
+    const meta = cardEl.querySelector("[data-comments-meta]");
+    if (!panel || !list || !meta) return;
+
+    const items = (payload && payload.items) ? payload.items : [];
+    const total = Number(payload && payload.total || items.length || 0) || 0;
+
+    meta.textContent = total ? `${total} comment${total===1?"":"s"}` : "No comments yet";
+
+    list.innerHTML = items.map(c => {
+      const who = escapeHtml(c.name || "Anonymous");
+      const when = c.createdAt ? escapeHtml(fmtShortDate_(c.createdAt)) : "";
+      const text = escapeHtml(c.text || "");
+      return `
+        <div class="border border-gray-200 rounded p-2 bg-gray-50">
+          <div class="flex items-center justify-between gap-2">
+            <div class="text-xs font-semibold text-gray-800 truncate">${who}</div>
+            <div class="text-[11px] text-gray-500">${when}</div>
+          </div>
+          <div class="mt-1 text-sm text-gray-700 whitespace-pre-wrap">${text}</div>
+        </div>
+      `;
+    }).join("") || `<div class="text-xs text-gray-500">Be the first to comment.</div>`;
+
+    const allLink = cardEl.querySelector("[data-comments-all]");
+    if (allLink) {
+      allLink.href = reportPageUrl(reportId, (state.allItems.find(x => String(x.id)===String(reportId))||{}).title || "");
+      allLink.classList.toggle("hidden", total <= items.length);
+    }
+  }
+
+  async function toggleCommentsPanel_(cardEl, reportId) {
+    const panel = cardEl.querySelector("[data-comments-panel]");
+    if (!panel) return;
+
+    const opening = panel.classList.contains("hidden");
+    panel.classList.toggle("hidden", !opening);
+
+    if (!opening) return;
+
+    // Load comments once on open
+    if (panel.getAttribute("data-loaded") === "1") return;
+
+    try {
+      const payload = await remoteCommentsGet_(reportId, 5, 0);
+      renderInlineComments_(cardEl, reportId, payload);
+      panel.setAttribute("data-loaded", "1");
+    } catch (e) {
+      const list = cardEl.querySelector("[data-comments-list]");
+      if (list) list.innerHTML = `<div class="text-xs text-red-600">Comments unavailable.</div>`;
+    }
+  }
+
 
   // --------- AI summary UX ----------
   async function openInChatGPT(item) {
@@ -1174,7 +1302,58 @@ Output:
                  class="px-3 py-1.5 text-xs font-semibold bg-amber-600 text-white rounded hover:bg-amber-700">
                 View
               </a>
+
             </div>
+
+            <!-- Social actions (Facebook-style) -->
+            <div class="mt-4 border-t border-gray-200 pt-2">
+              <div class="flex items-center justify-between text-sm text-gray-600">
+                <button data-action="like" data-id="${escapeHtml(item.id)}"
+                        class="flex-1 inline-flex items-center justify-center gap-2 py-2 rounded hover:bg-gray-50">
+                  <span>${liked ? "♥" : "♡"}</span>
+                  <span class="font-medium">Like</span>
+                </button>
+
+                <button data-action="comment" data-id="${escapeHtml(item.id)}"
+                        class="flex-1 inline-flex items-center justify-center gap-2 py-2 rounded hover:bg-gray-50">
+                  <span>💬</span>
+                  <span class="font-medium">Comment</span>
+                  <span class="text-xs text-gray-500">(${commentCount(item.id)})</span>
+                </button>
+
+                <button data-action="share" data-id="${escapeHtml(item.id)}"
+                        class="flex-1 inline-flex items-center justify-center gap-2 py-2 rounded hover:bg-gray-50">
+                  <span>↗</span>
+                  <span class="font-medium">Share</span>
+                </button>
+              </div>
+
+              <div data-comments-panel class="hidden mt-2 bg-white border border-gray-200 rounded p-3">
+                <div class="flex items-center justify-between gap-2">
+                  <div data-comments-meta class="text-xs font-semibold text-gray-700">Comments</div>
+                  <a data-comments-all class="hidden text-xs font-semibold text-amber-700 hover:underline" href="#">View all</a>
+                </div>
+
+                <div data-comments-list class="mt-2 space-y-2"></div>
+
+                <div class="mt-3">
+                  <label class="block text-[11px] text-gray-600">Add a comment</label>
+                  <textarea data-comment-text rows="2"
+                            class="mt-1 w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                            placeholder="Write something…"></textarea>
+
+                  <div class="mt-2 flex items-center justify-end gap-2">
+                    <button data-action="comment_post" data-id="${escapeHtml(item.id)}"
+                            class="px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded hover:bg-blue-700">
+                      Post
+                    </button>
+                  </div>
+
+                  <div class="mt-1 text-[11px] text-gray-500">Be respectful — comments are public.</div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </article>
@@ -2011,6 +2190,9 @@ setInterval(async () => {
         if (ENABLE_REMOTE_LIKES) {
           try { await remoteLikesPrime_(); } catch (e) {}
         }
+        if (ENABLE_REMOTE_COMMENTS) {
+          try { await remoteCommentsPrime_(); } catch (e) {}
+        }
 
         applyFilters();
         renderReadingList();
@@ -2051,7 +2233,65 @@ setInterval(async () => {
       if (action === "notebooklm" && item) openInNotebookLM(item);
       if (action === "aisummary" && item) openInChatGPT(item);
 
-      if (action === "like") {
+      
+      if (action === "comment") {
+        const cardEl = e.target.closest("article[data-card-id]");
+        if (cardEl) await toggleCommentsPanel_(cardEl, id);
+      }
+
+      if (action === "comment_post") {
+        const cardEl = e.target.closest("article[data-card-id]");
+        if (!cardEl) return;
+
+        const ta = cardEl.querySelector("[data-comment-text]");
+        const text = (ta && ta.value || "").trim();
+        if (!text) { showToast("Write a comment first."); return; }
+
+        btn.disabled = true;
+        try {
+          await remoteCommentAdd_(id, text, "Anonymous");
+          // refresh list + counts
+          const payload = await remoteCommentsGet_(id, 5, 0);
+          renderInlineComments_(cardEl, id, payload);
+          // update count label on the Comment button
+          const count = commentCount(id);
+          const commentBtn = cardEl.querySelector('[data-action="comment"][data-id="'+id+'"]');
+          if (commentBtn) {
+            const badge = commentBtn.querySelector("span.text-xs");
+            if (badge) badge.textContent = `(${count})`;
+          }
+          if (ta) ta.value = "";
+          showToast("Comment posted.");
+        } catch (e) {
+          showToast("Comment failed. Try again.");
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      if (action === "share" && item) {
+        const url = new URL(reportPageUrl(item.id, item.title || ""), location.href);
+        const shareUrl = url.toString();
+
+        try {
+          if (navigator.share) {
+            await navigator.share({ title: item.title || "dotdock report", url: shareUrl });
+            showToast("Shared.");
+          } else {
+            await navigator.clipboard.writeText(shareUrl);
+            showToast("Link copied.");
+          }
+        } catch {
+          try {
+            await navigator.clipboard.writeText(shareUrl);
+            showToast("Link copied.");
+          } catch {
+            prompt("Copy link:", shareUrl);
+          }
+        }
+      }
+
+if (action === "like") {
         try {
           if (ENABLE_REMOTE_LIKES) {
             btn.disabled = true;
@@ -2107,10 +2347,13 @@ setInterval(async () => {
       setLiveHeaderStatus({ updatedAt: cachedMeta?.time || 0, newCount: peekNew });
 
       if (ENABLE_REMOTE_LIKES) {
-        remoteLikesPrime_().then(() => {
+        Promise.all([
+          remoteLikesPrime_().catch(() => {}),
+          (ENABLE_REMOTE_COMMENTS ? remoteCommentsPrime_().catch(() => {}) : Promise.resolve())
+        ]).then(() => {
           if (state.sortMode === "liked") applyFilters(true);
           else render();
-        }).catch(() => {});
+        });
       }
 
       applyFilters();
@@ -2137,6 +2380,9 @@ setInterval(async () => {
 
       if (ENABLE_REMOTE_LIKES) {
         try { await remoteLikesPrime_(); } catch (e) {}
+      }
+      if (ENABLE_REMOTE_COMMENTS) {
+        try { await remoteCommentsPrime_(); } catch (e) {}
       }
 
       applyFilters();
