@@ -414,7 +414,7 @@
 
   async function fetchCatalogFresh() {
     const url = DATA_URL + (DATA_URL.includes("?") ? "&" : "?") + "cb=" + Date.now();
-    const res = await fetch(url, { cache: "no-store", mode: "cors", credentials: "omit" });
+    const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error("Failed to load catalog (" + res.status + ")");
     const text = await res.text();
     let json;
@@ -669,7 +669,7 @@
       "&limit=" + encodeURIComponent(String(limit)) +
       "&offset=" + encodeURIComponent(String(offset)) +
       "&cb=" + Date.now();
-    const res = await fetch(url, { cache: "no-store", mode: "cors", credentials: "omit" });
+    const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error("comments_get failed: " + res.status);
     const data = await res.json();
     if (!data || data.ok !== true) throw new Error(data?.error || "comments_get invalid payload");
@@ -680,10 +680,10 @@
     const url = commentsBase_() +
       "action=comment_add&id=" + encodeURIComponent(String(reportId)) +
       "&device=" + encodeURIComponent(getDeviceId_()) +
-      "&name=" + encodeURIComponent("Anonymous") +
+      "&name=" + encodeURIComponent(getUserName_()) +
       "&text=" + encodeURIComponent(text || "") +
       "&cb=" + Date.now();
-    const res = await fetch(url, { cache: "no-store", mode: "cors", credentials: "omit" });
+    const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error("comment_add failed: " + res.status);
     const data = await res.json();
     if (!data || data.ok !== true) throw new Error(data?.error || "comment_add invalid payload");
@@ -726,7 +726,7 @@
       status.textContent = "";
       renderComments_(items);
     } catch (e) {
-      status.textContent = "Comments unavailable. (Did you redeploy Apps Script with Comments sheet?)";
+      status.textContent = "Comments unavailable: " + (e && e.message ? e.message : e);
     }
   }
 

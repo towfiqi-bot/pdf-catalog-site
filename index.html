@@ -30,7 +30,15 @@
       aside::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 999px; }
       aside::-webkit-scrollbar-track { background: transparent; }
     }
-  </style>
+  
+  /* Sticky search bar compact mode */
+  #searchBar.dd-compact #searchCard { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+  #searchBar.dd-compact #searchCard .dd-searchWrap { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+  #searchBar.dd-compact #searchInput { font-size: 0.95rem; }
+  #searchBar.dd-compact #searchBtn { padding-top: 0.4rem; padding-bottom: 0.4rem; }
+  #searchBar.dd-compact .dd-searchHelp { display:none; }
+
+\1
 </head>
 
 <body class="bg-gray-50" id="top">
@@ -105,11 +113,11 @@
   <!-- Main layout -->
   <main class="max-w-6xl mx-auto px-4 py-6" id="top">
     <!-- Top search -->
-    <section class="mb-6">
-      <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+    <section id="searchBar" class="mb-6 sticky top-0 z-40 pt-3 pb-3 bg-gray-50/90 backdrop-blur">
+      <div id="searchCard" class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
         <div class="max-w-3xl mx-auto">
           <div id="searchWrap" class="relative">
-          <div class="flex items-center gap-3 bg-white border border-gray-300 rounded-full px-5 py-3 shadow-sm focus-within:ring-2 focus-within:ring-amber-200">
+          <div class="dd-searchWrap flex items-center gap-3 bg-white border border-gray-300 rounded-full px-5 py-3 shadow-sm focus-within:ring-2 focus-within:ring-amber-200">
             <svg class="h-5 w-5 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="7"></circle>
               <path d="M21 21l-4.3-4.3"></path>
@@ -129,7 +137,7 @@
           <div id="searchSuggestPanel"
                class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50"></div>
         </div>
-          <p class="mt-2 text-xs text-gray-500 text-center">
+          <p class="dd-searchHelp mt-2 text-xs text-gray-500 text-center">
             Strong search across <span class="font-semibold">title</span> + <span class="font-semibold">summary</span> (not inside PDF pages yet).
           </p>
         </div>
@@ -737,6 +745,22 @@ function commentsCountsCacheSet_(countsObj) {
   commentsCountsCacheSet_(countsObj);
   updateCommentCountBadges_();
 }
+
+
+function getUserName_() {
+  try {
+    const key = "dotdock_user_name_v1";
+    let name = (localStorage.getItem(key) || "").trim();
+    if (name) return name;
+    name = prompt("Your name (optional):") || "";
+    name = String(name).trim().slice(0, 40);
+    if (name) localStorage.setItem(key, name);
+    return name || "Anonymous";
+  } catch (e) {
+    return "Anonymous";
+  }
+}
+
 
   async function remoteCommentsGet_(id, limit=10, offset=0) {
     const base = DATA_URL + (DATA_URL.includes("?") ? "&" : "?");
