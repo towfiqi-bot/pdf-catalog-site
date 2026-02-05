@@ -30,6 +30,15 @@
       aside::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 999px; }
       aside::-webkit-scrollbar-track { background: transparent; }
     }
+  
+    /* Sticky search bar (keeps search usable while scrolling) */
+    #searchSection { position: sticky; top: 96px; z-index: 40; }
+    #searchInner { transition: max-width .18s ease, margin .18s ease; }
+    #searchCard { transition: padding .18s ease, box-shadow .18s ease; }
+    #searchSection.compact #searchInner { max-width: 520px; margin-left: auto; margin-right: 0; }
+    #searchSection.compact #searchCard { padding: 10px; box-shadow: 0 12px 30px rgba(0,0,0,0.10); }
+    #searchSection.compact #searchHelpText { display: none; }
+
   </style>
 </head>
 
@@ -105,9 +114,9 @@
   <!-- Main layout -->
   <main class="max-w-6xl mx-auto px-4 py-6" id="top">
     <!-- Top search -->
-    <section class="mb-6">
-      <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-        <div class="max-w-3xl mx-auto">
+    <section id="searchSection" class="mb-6">
+      <div id="searchCard" class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+        <div id="searchInner" class="max-w-3xl mx-auto">
           <div id="searchWrap" class="relative">
           <div class="flex items-center gap-3 bg-white border border-gray-300 rounded-full px-5 py-3 shadow-sm focus-within:ring-2 focus-within:ring-amber-200">
             <svg class="h-5 w-5 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -129,7 +138,7 @@
           <div id="searchSuggestPanel"
                class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50"></div>
         </div>
-          <p class="mt-2 text-xs text-gray-500 text-center">
+          <p id="searchHelpText" class="mt-2 text-xs text-gray-500 text-center">
             Strong search across <span class="font-semibold">title</span> + <span class="font-semibold">summary</span> (not inside PDF pages yet).
           </p>
         </div>
@@ -591,6 +600,29 @@
 
   // Remote likes state
   const DEVICE_ID_KEY = "dotdock_device_id_v1";
+
+  const USER_NAME_KEY = "dotdock_comment_name_v1";
+  function getUserName_(promptIfMissing=false) {
+    try {
+      let v = localStorage.getItem(USER_NAME_KEY) || "";
+      if (v === "__anon__") return "";
+      v = String(v).trim();
+      if (v) return v;
+
+      if (!promptIfMissing) return "";
+
+      let entered = (prompt("Display name for comments (optional). Leave blank to stay Anonymous:", "") || "").trim();
+      entered = entered.slice(0, 40);
+      if (entered) {
+        localStorage.setItem(USER_NAME_KEY, entered);
+        return entered;
+      }
+      localStorage.setItem(USER_NAME_KEY, "__anon__");
+      return "";
+    } catch {
+      return "";
+    }
+  }
   let REMOTE_LIKES_READY = false;
   let REMOTE_LIKE_COUNTS = new Map();
   let REMOTE_COMMENT_COUNTS = new Map();
@@ -2089,6 +2121,19 @@ setInterval(async () => {
       searchClearBtn.addEventListener("click", () => {
         searchInput.value = "";
         syncSearchClearBtn();
+
+    // Sticky search: optionally compact the bar after scrolling
+    const searchSectionEl = document.getElementById("searchSection");
+    let _searchCompact = false;
+    function syncSearchCompact_() {
+      if (!searchSectionEl) return;
+      const want = window.scrollY > 220;
+      if (want === _searchCompact) return;
+      _searchCompact = want;
+      searchSectionEl.classList.toggle("compact", want);
+    }
+    window.addEventListener("scroll", syncSearchCompact_, { passive: true });
+    syncSearchCompact_();
         hideSuggest();
         doSearch();
         searchInput.focus();
@@ -2292,7 +2337,7 @@ setInterval(async () => {
         if (!text) { showToast("Write a comment first."); return; }
         btn.disabled = true;
         try {
-          await remoteCommentAdd_(id, text, "");
+          await remoteCommentAdd_(id, text, getUserName_(true));
           if (ta) ta.value = "";
           updateCommentCountBadges_();
           await loadCommentsPreview_(id, true);

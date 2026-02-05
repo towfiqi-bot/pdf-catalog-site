@@ -211,7 +211,7 @@
   <div id="toast" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] bg-gray-900 text-white text-sm px-4 py-2 rounded shadow-lg"></div>
 
 <script>
-  const DATA_URL = "https://script.google.com/macros/s/AKfycbwF2IqDTG0F5acy4K1mtBRMZg1AOp3RMHzYwHEtZcZmRV8Jbpb2_ETe4Mpnkgp-lxmy/exec";
+  const DATA_URL = "https://script.google.com/macros/s/AKfycbxme0FmUWdOmNG5EVHKxkQkbm0alqCo6vWJgESo8SBzwIQunlTU0f9MdGlEqu2AqkQa/exec";
 
   const CACHE_KEY = "pdf_catalog_cache_v2";
   const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
@@ -225,6 +225,50 @@
       .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
       .replaceAll('"',"&quot;").replaceAll("'","&#039;");
   }
+
+
+  function escapeHtml(s) { return esc(s); }
+
+  const DEVICE_ID_KEY = "dotdock_device_id_v1";
+  const USER_NAME_KEY = "dotdock_comment_name_v1";
+
+  function getDeviceId_() {
+    try {
+      let v = localStorage.getItem(DEVICE_ID_KEY);
+      if (!v) {
+        v = (typeof crypto !== "undefined" && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : ("dev_" + Math.random().toString(16).slice(2) + Date.now());
+        localStorage.setItem(DEVICE_ID_KEY, v);
+      }
+      return v;
+    } catch {
+      return "dev_fallback";
+    }
+  }
+
+  function getUserName_(promptIfMissing=false) {
+    try {
+      let v = localStorage.getItem(USER_NAME_KEY) || "";
+      if (v === "__anon__") return "";
+      v = String(v).trim();
+      if (v) return v;
+
+      if (!promptIfMissing) return "";
+
+      let entered = (prompt("Display name for comments (optional). Leave blank to stay Anonymous:", "") || "").trim();
+      entered = entered.slice(0, 40);
+      if (entered) {
+        localStorage.setItem(USER_NAME_KEY, entered);
+        return entered;
+      }
+      localStorage.setItem(USER_NAME_KEY, "__anon__");
+      return "";
+    } catch {
+      return "";
+    }
+  }
+
 
   function showToast(msg) {
     const t = document.getElementById("toast");
@@ -680,7 +724,7 @@
     const url = commentsBase_() +
       "action=comment_add&id=" + encodeURIComponent(String(reportId)) +
       "&device=" + encodeURIComponent(getDeviceId_()) +
-      "&name=" + encodeURIComponent(getUserName_()) +
+      "&name=" + encodeURIComponent(getUserName_(true) || "Anonymous") +
       "&text=" + encodeURIComponent(text || "") +
       "&cb=" + Date.now();
     const res = await fetch(url, { cache: "no-store" });
