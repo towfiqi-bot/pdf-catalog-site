@@ -60,6 +60,15 @@
       </div>
     </div>
 
+
+    <!-- AI summary -->
+    <section id="aiSummarySection" class="mb-6 bg-white border border-gray-200 rounded-lg p-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-base font-semibold text-gray-900">AI summary</h2>
+      </div>
+      <div id="aiSummaryText" class="mt-3 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed"></div>
+    </section>
+
     <!-- Content grid -->
     <div id="grid" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <!-- Left: details (sticky + scrollable on desktop) -->
@@ -408,14 +417,19 @@
     const year = item.year ? esc(item.year) : "—";
     const cats = (item.categories || []).length ? esc(item.categories.join(", ")) : "—";
     const updated = item.modified ? new Date(item.modified).toLocaleString() : "—";
-    const summary = item.summary ? esc(item.summary) : "—";
 
     rows.push(`<tr><td class="border border-gray-200 px-3 py-2 font-semibold w-32">Year</td><td class="border border-gray-200 px-3 py-2">${year}</td></tr>`);
     rows.push(`<tr><td class="border border-gray-200 px-3 py-2 font-semibold">Category</td><td class="border border-gray-200 px-3 py-2">${cats}</td></tr>`);
     rows.push(`<tr><td class="border border-gray-200 px-3 py-2 font-semibold">Updated</td><td class="border border-gray-200 px-3 py-2">${esc(updated)}</td></tr>`);
-    rows.push(`<tr><td class="border border-gray-200 px-3 py-2 font-semibold">Summary</td><td class="border border-gray-200 px-3 py-2">${summary}</td></tr>`);
 
     document.getElementById("metaTableBody").innerHTML = rows.join("");
+
+    // AI summary (full text, no truncation)
+    const sumEl = document.getElementById("aiSummaryText");
+    if (sumEl) {
+      const sum = (item && item.summary) ? String(item.summary) : "";
+      sumEl.textContent = sum ? sum : "—";
+    }
   }
 
   function renderItem(item) {
@@ -592,6 +606,8 @@
       document.getElementById("detailsCol").classList.add("hidden");
       document.getElementById("readerCol").className = "lg:col-span-12";
       document.getElementById("topRow").classList.add("hidden");
+      const aiSec = document.getElementById("aiSummarySection");
+      if (aiSec) aiSec.classList.add("hidden");
       return;
     }
 
