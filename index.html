@@ -14,6 +14,9 @@
     body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     .brand-title { font-family: 'Playfair Display', serif; letter-spacing: 0.03em; }
     .brand-tagline { font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; }
+    .tooltip-summary { pointer-events: none; }
+    .group:hover .tooltip-summary { pointer-events: auto; }
+
     /* Help dropdown */
     .dd-shadow { box-shadow: 0 12px 30px rgba(0,0,0,0.10); }
 
@@ -27,25 +30,13 @@
       aside::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 999px; }
       aside::-webkit-scrollbar-track { background: transparent; }
     }
-  
-    /* --- UX tweaks (2026-02) --- */
-    #stickySearchDock { transition: transform 180ms ease, opacity 180ms ease; transform: translateY(-6px); opacity: 0; }
-    #stickySearchDock.is-on { transform: translateY(0); opacity: 1; }
-    #searchSection { scroll-margin-top: 96px; }
-
-    /* Hide sticky UI while an overlay (PDF/Compare) is open */
-    body.dd-overlay-open #stickySearchDock,
-    body.dd-overlay-open #sidebarShowBtn {
-      display: none !important;
-    }
-
-</style>
+  </style>
 </head>
 
 <body class="bg-gray-50" id="top">
   <!-- Header -->
   <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-    <div class="max-w-[1600px] mx-auto px-4 py-4">
+    <div class="max-w-6xl mx-auto px-4 py-4">
       <div class="flex flex-col gap-3">
         <div class="flex items-center gap-4">
           <a href="index.html" class="block" aria-label="Back to top">
@@ -106,16 +97,16 @@
       </div>
     </div>
   </header>
-<div class="max-w-[1600px] mx-auto px-4 mt-4 mb-2">
+<div class="max-w-6xl mx-auto px-8 mt-8">
   <div class="text-center text-sm md:text-base text-gray-600">
     A living intelligence library: curated reports, tracked updates, and faster answers—so you never miss what matters.
   </div>
 </div>
   <!-- Main layout -->
-  <main class="max-w-[1600px] mx-auto px-4 py-4" id="top">
+  <main class="max-w-6xl mx-auto px-4 py-6" id="top">
     <!-- Top search -->
-    <section id="searchSection" class="mb-4">
-      <div class="bg-white border border-gray-200 rounded-lg p-3 md:p-4 shadow-sm">
+    <section class="mb-6">
+      <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
         <div class="max-w-3xl mx-auto">
           <div id="searchWrap" class="relative">
           <div class="flex items-center gap-3 bg-white border border-gray-300 rounded-full px-5 py-3 shadow-sm focus-within:ring-2 focus-within:ring-amber-200">
@@ -148,21 +139,7 @@
     <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
 
       <!-- Sidebar -->
-      <aside id="sidebar" class="md:col-span-3 space-y-6 md:sticky md:top-28 self-start md:max-h-[calc(100vh-7rem)] md:overflow-auto md:pr-1">
-
-        <!-- Sidebar collapse (desktop) -->
-        <div class="hidden md:flex items-center justify-end -mt-1">
-          <button id="sidebarHideBtn" type="button"
-                  class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  aria-label="Hide sidebar">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M10 6H20"></path>
-              <path d="M10 12H20"></path>
-              <path d="M10 18H20"></path>
-              <path d="M6 6l-3 3 3 3"></path>
-            </svg>
-          </button>
-        </div>
+      <aside class="md:col-span-3 space-y-6 md:sticky md:top-28 self-start md:max-h-[calc(100vh-7rem)] md:overflow-auto md:pr-1">
 
         <!-- Filters -->
         <section class="bg-white rounded-lg border border-gray-200 p-4">
@@ -299,7 +276,7 @@
       </aside>
 
       <!-- Catalogue -->
-      <section id="catalogue" class="md:col-span-9">
+      <section class="md:col-span-9">
         <div class="flex items-center justify-between gap-3 mb-3">
           <p id="resultsInfo" class="text-sm text-gray-600">Loading publications…</p>
           <div class="flex items-center gap-2">
@@ -333,51 +310,14 @@
   <!-- Toast -->
   <div id="toast" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] bg-gray-900 text-white text-sm px-4 py-2 rounded shadow-lg"></div>
 
-  <!-- Sticky Search Dock (desktop): appears after scrolling past the main search -->
-  <div id="stickySearchDock" class="hidden md:hidden fixed top-20 right-4 z-[65]">
-    <div class="bg-white/95 backdrop-blur border border-gray-200 rounded-full shadow-lg px-3 py-2 flex items-center gap-2">
-      <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="7"></circle>
-        <path d="M21 21l-4.3-4.3"></path>
-      </svg>
-      <input id="stickySearchInput" type="text"
-             class="w-56 lg:w-72 outline-none text-sm"
-             placeholder="Search title or summary…" />
-      <button id="stickySearchClearBtn" type="button" aria-label="Clear"
-              class="hidden shrink-0 p-1.5 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100">
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M18 6L6 18"></path>
-          <path d="M6 6l12 12"></path>
-        </svg>
-      </button>
-      <button id="stickySearchBtn" type="button"
-              class="shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full bg-amber-600 text-white hover:bg-amber-700">
-        Search
-      </button>
-    </div>
-  </div>
-
-  <!-- Sidebar show button (desktop): appears when sidebar is collapsed -->
-  <button id="sidebarShowBtn" type="button"
-          class="hidden md:hidden fixed top-28 left-3 z-[65] items-center justify-center w-10 h-10 rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm hover:bg-gray-50"
-          aria-label="Show sidebar">
-    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M14 6H4"></path>
-      <path d="M14 12H4"></path>
-      <path d="M14 18H4"></path>
-      <path d="M18 9l3 3-3 3"></path>
-    </svg>
-  </button>
-
-
   <!-- PDF Modal -->
   <div id="pdfModal" class="hidden fixed inset-0 z-50">
     <div class="absolute inset-0 bg-black/60" id="pdfModalBackdrop"></div>
 
-    <div class="relative mx-auto h-full p-0 md:p-2 flex flex-col">
-      <div class="bg-white shadow-xl overflow-hidden flex flex-col h-full rounded-none md:rounded-lg md:max-w-none md:w-[98vw] md:h-[98vh] md:mx-auto">
-        <div class="flex items-center gap-3 px-3 md:px-4 py-1.5 md:py-2 border-b border-gray-200">
-          <div class="font-semibold text-gray-900 truncate text-sm md:text-base" id="pdfModalTitle">Report</div>
+    <div class="relative mx-auto h-full p-0 md:p-3 flex flex-col">
+      <div class="bg-white shadow-xl overflow-hidden flex flex-col h-full rounded-none md:rounded-lg md:max-w-none md:w-[96vw] md:h-[92vh] md:mx-auto">
+        <div class="flex items-center gap-3 px-3 md:px-4 py-2 border-b border-gray-200">
+          <div class="font-semibold text-gray-900 truncate" id="pdfModalTitle">Report</div>
           <div class="ml-auto flex gap-2">
             <a id="pdfModalView"
                target="_blank" rel="noopener"
@@ -414,49 +354,6 @@
       </div>
     </div>
   </div>
-  <!-- Compare Modal (opens automatically when 2 items are selected) -->
-  <div id="compareModal" class="hidden fixed inset-0 z-[85]">
-    <div class="absolute inset-0 bg-black/50" id="compareModalBackdrop"></div>
-
-    <div class="relative h-full w-full p-0 md:p-2 flex items-center justify-center">
-      <div class="bg-white w-full h-full md:rounded-xl md:shadow-2xl overflow-hidden md:w-[99vw] md:h-[98vh] flex flex-col">
-        <div class="flex items-center gap-3 px-3 md:px-4 py-1.5 border-b border-gray-200">
-          <div class="font-semibold text-gray-900 truncate">Compare</div>
-          <div class="ml-auto flex items-center gap-2">
-            <button id="compareModalClose" type="button"
-                    class="px-3 py-1.5 text-xs md:text-sm font-semibold rounded-md border border-gray-200 hover:bg-gray-50">
-              Close
-            </button>
-          </div>
-        </div>
-
-        <iframe id="compareModalFrame" class="w-full flex-1" src="" title="Compare" loading="lazy"></iframe>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- Summary Modal (AI-generated catalog summary) -->
-  <div id="summaryModal" class="hidden fixed inset-0 z-[80]" aria-hidden="true">
-    <div id="summaryModalBackdrop" class="absolute inset-0 bg-black/60"></div>
-    <div class="relative max-w-2xl mx-auto mt-10 md:mt-14 p-3 modal-anim">
-      <div class="bg-white rounded-lg border border-gray-200 shadow-xl overflow-hidden">
-        <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-200">
-          <div class="min-w-0">
-            <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Summary</div>
-            <div id="summaryModalTitle" class="font-semibold text-gray-900 truncate">—</div>
-          </div>
-          <div class="flex items-center gap-2 shrink-0">
-            <button id="summaryCopyBtn" class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">Copy</button>
-            <button id="summaryModalClose" class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">Close</button>
-          </div>
-        </div>
-        <div id="summaryModalBody" class="px-4 py-4 text-sm text-gray-700 whitespace-pre-wrap max-h-[70vh] overflow-auto"></div>
-        <div id="summaryModalHint" class="px-4 pb-4 text-[11px] text-gray-500"></div>
-      </div>
-    </div>
-  </div>
-
 
 <script>
   const DATA_URL = "https://script.google.com/macros/s/AKfycbxme0FmUWdOmNG5EVHKxkQkbm0alqCo6vWJgESo8SBzwIQunlTU0f9MdGlEqu2AqkQa/exec";
@@ -476,6 +373,7 @@
   const CACHE_KEY = "pdf_catalog_cache_v2";
   const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
   const LAST_SEEN_MAX_MOD_KEY = "dotdock_last_seen_max_modified_v1";
+  const LAST_SEEN_MAX_ADD_KEY = "dotdock_last_seen_max_added_v1";
 
   // Local-only features
   const READING_KEY = "dotdock_reading_list_v1";
@@ -553,6 +451,32 @@
     d.setHours(0,0,0,0);
     return d.getTime();
   }
+
+  function getAddedTs(it) {
+    // Stable "added" time: prefers addedAt (from backend), falls back safely
+    return Number((it && (it.addedAt || it.createdAt || it.created || it.modified)) || 0) || 0;
+  }
+
+  function getUpdatedTs(it) {
+    return Number((it && it.modified) || 0) || 0;
+  }
+
+  function extractTagTokensFromSummary(summary) {
+    const s = String(summary || "");
+    // Look for a line like: "Tags: a, b, c"
+    const m = s.match(/(?:^|\n)\s*(?:3\)\s*)?Tags\s*:\s*([^\n]+)/i);
+    if (!m) return [];
+    const raw = m[1] || "";
+    const parts = raw.split(/[,;|]+/g).map(x => x.trim()).filter(Boolean);
+    const out = [];
+    for (const p of parts) {
+      // keep words; allow multiword tags to contribute multiple tokens
+      out.push(...tokenizeLoose(p));
+    }
+    return out;
+  }
+
+
 
   function drivePreviewUrl(fileId) {
     return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
@@ -673,10 +597,6 @@
     compareSet(next);
     renderCompare();
     render(); // update button states
-
-    // Auto-open Compare when exactly 2 items are selected.
-    if (next.length === 2) openCompareModal(next[0], next[1]);
-    else closeCompareModalUIOnly();
   }
   function isCompared(id) {
     return compareGet().includes(String(id));
@@ -969,54 +889,7 @@ Output:
     }
   }
 
-  
-  // --------- Summary modal UX (shows catalog summary without extra clicks) ----------
-  let _currentSummaryText = "";
-
-  function openSummaryModal(item) {
-    const modal = document.getElementById("summaryModal");
-    const titleEl = document.getElementById("summaryModalTitle");
-    const bodyEl = document.getElementById("summaryModalBody");
-    const hintEl = document.getElementById("summaryModalHint");
-    const copyBtn = document.getElementById("summaryCopyBtn");
-
-    const title = String(item?.title || "Untitled report");
-    const summary = String(item?.summary || "").trim();
-
-    titleEl.textContent = title;
-
-    if (summary) {
-      _currentSummaryText = summary;
-      bodyEl.textContent = summary;
-      hintEl.textContent = "AI-generated catalog summary.";
-      copyBtn.disabled = false;
-      copyBtn.classList.remove("opacity-50");
-    } else {
-      _currentSummaryText = "";
-      bodyEl.textContent = "Summary not available yet.";
-      hintEl.textContent = "This will appear automatically once the summary worker processes this PDF.";
-      copyBtn.disabled = true;
-      copyBtn.classList.add("opacity-50");
-    }
-
-    modal.classList.remove("hidden");
-    document.body.style.overflow = "hidden";
-    document.body.classList.add("dd-overlay-open");
-    modal.setAttribute("aria-hidden", "false");
-    document.body.classList.add("modal-open");
-  }
-
-  function closeSummaryModal() {
-    const modal = document.getElementById("summaryModal");
-    modal.classList.add("hidden");
-    document.body.style.overflow = "";
-    document.body.classList.remove("dd-overlay-open");
-    modal.setAttribute("aria-hidden", "true");
-    document.body.classList.remove("modal-open");
-  }
-
-
-// --------- NotebookLM UX ----------
+  // --------- NotebookLM UX ----------
   async function openInNotebookLM(item) {
     const link = driveShareUrl(item.id);
     try {
@@ -1054,6 +927,7 @@ Output:
       const normSummary = normalizeText(s);
       it._searchText = (normTitle + " " + normSummary).trim();
       it._titleTokens = tokenizeLoose(t);
+      it._tagTokens = extractTagTokensFromSummary(s);
       it._allTokens = tokenizeLoose(t + " " + s);
       it._tokenSet = new Set(it._allTokens);
     }
@@ -1173,7 +1047,19 @@ Output:
 
     for (const item of state.allItems) {
       const seen = new Set();
+
+      // Title keywords
       for (const w of (item._titleTokens || [])) {
+        if (!w) continue;
+        if (w.length < 4) continue;
+        if (STOPWORDS.has(w)) continue;
+        if (seen.has(w)) continue;
+        seen.add(w);
+        freq.set(w, (freq.get(w) || 0) + 1);
+      }
+
+      // AI Tags (from summary line "Tags: ...")
+      for (const w of (item._tagTokens || [])) {
         if (!w) continue;
         if (w.length < 4) continue;
         if (STOPWORDS.has(w)) continue;
@@ -1292,7 +1178,7 @@ Output:
     const tStart = todayStartMs();
 
     state.filteredItems = state.allItems.filter(item => {
-      const matchesTab = (state.tab !== "today") || ((item.modified || 0) >= tStart);
+      const matchesTab = (state.tab !== "today") || (getAddedTs(item) >= tStart);
       const matchesText = !q || matchQuery(item, parsed);
 
       const matchesTopic = state.selectedTopics.size === 0 || (() => {
@@ -1335,11 +1221,11 @@ Output:
         case "name_za":
           return titleKey(b).localeCompare(titleKey(a));
         case "added_oldest":
-          return (a.modified || 0) - (b.modified || 0);
+          return (getAddedTs(a) || 0) - (getAddedTs(b) || 0);
         case "added_newest":
         case "newest":
         default:
-          return (b.modified || 0) - (a.modified || 0);
+          return (getAddedTs(b) || 0) - (getAddedTs(a) || 0) || (getUpdatedTs(b) || 0) - (getUpdatedTs(a) || 0);
       }
     }
 
@@ -1367,6 +1253,8 @@ Output:
     const title = escapeHtml(item.title || "Untitled");
     const summary = escapeHtml(item.summary || "");
     const year = item.year || "";
+    const addedAt = getAddedTs(item);
+    const updatedAt = getUpdatedTs(item);
     const cats = (item.categories || [])
       .slice(0, 3)
       .map(c => `<span class="px-2 py-0.5 border rounded-full bg-gray-50">${escapeHtml(c)}</span>`)
@@ -1395,7 +1283,14 @@ Output:
                      onerror="this.onerror=null;this.src='https://via.placeholder.com/260x360?text=PDF';"
                      class="w-full h-auto object-cover cursor-pointer group-hover:opacity-80 transition">
               </button>
-              
+              ${summary ? `
+                <div class="tooltip-summary absolute left-0 top-0 z-20 w-80 md:w-96 bg-white/95
+                            text-xs text-gray-800 p-3 opacity-0 group-hover:opacity-100
+                            transition-opacity duration-200 shadow-lg ring-1 ring-black/10">
+                  <div class="font-semibold mb-1">Summary</div>
+                  <div class="leading-snug whitespace-normal">${summary}</div>
+                </div>
+              ` : ""}
             </div>
           </div>
 
@@ -1416,6 +1311,13 @@ Output:
             </a>
 
             <div class="mt-3 flex flex-wrap gap-2 text-xs text-gray-500">${cats}</div>
+
+            <div class="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
+              ${addedAt ? `<span title="Added (stable: not affected by rename)">Added ${escapeHtml(formatAgo(addedAt))}</span>` : ``}
+              ${addedAt && updatedAt ? `<span class="text-gray-300">•</span>` : ``}
+              ${updatedAt ? `<span title="Updated in Drive (rename also updates this)">Updated ${escapeHtml(formatAgo(updatedAt))}</span>` : ``}
+            </div>
+
 
             <div class="mt-4 flex flex-wrap gap-2">
               <button data-action="reading" data-id="${escapeHtml(item.id)}"
@@ -1534,58 +1436,17 @@ Output:
 
     modal.classList.remove("hidden");
     document.body.style.overflow = "hidden";
-  document.body.classList.add("dd-overlay-open");
-    }
+  }
 
   function closePdfModal() {
     const modal = document.getElementById("pdfModal");
     const frame = document.getElementById("pdfModalFrame");
     frame.src = "";
     modal.classList.add("hidden");
-    document.body.classList.remove("dd-overlay-open");
     document.body.style.overflow = "";
   }
 
-  
-  // --------- Compare Modal ----------
-  function openCompareModal(leftId, rightId) {
-    const modal = document.getElementById("compareModal");
-    const frame = document.getElementById("compareModalFrame");
-    const openPage = document.getElementById("compareModalOpenPage");
-    if (!modal || !frame) return;
-
-    const qs = new URLSearchParams();
-    qs.set("left", leftId);
-    qs.set("right", rightId);
-    qs.set("embed", "1");
-    const src = "compare.html?" + qs.toString();
-
-    frame.src = src;
-    if (openPage) openPage.href = src;
-
-    modal.classList.remove("hidden");
-  document.body.style.overflow = "hidden";
-    document.body.classList.add("dd-overlay-open");
-    }
-  function closeCompareModalUIOnly() {
-    const modal = document.getElementById("compareModal");
-    const frame = document.getElementById("compareModalFrame");
-    if (!modal || modal.classList.contains("hidden")) return;
-    if (frame) frame.src = "";
-    modal.classList.add("hidden");
-  document.body.style.overflow = "";
-    document.body.classList.remove("dd-overlay-open");
-    }
-
-  function closeCompareModalAndClear() {
-    // Close the modal and reset selections so users can start a fresh compare.
-    closeCompareModalUIOnly();
-    compareSet([]);
-    renderCompare();
-    render();
-  }
-
-function openPdfModalById(id) {
+  function openPdfModalById(id) {
     const item = state.allItems.find(x => String(x.id) === String(id));
     if (item) openPdfModal(item);
   }
@@ -1894,24 +1755,27 @@ function setLiveHeaderStatus({ updatedAt, newCount }) {
 }
 
 function computeNewCountSinceLastVisit(items, commit = true) {
-  // Uses max "modified" timestamp from last visit as baseline.
+  // Uses max "addedAt" timestamp from last visit as baseline.
+  // This avoids false "new" markers when a file is renamed (Drive modified time changes).
   let lastSeenMax = 0;
   try {
-    lastSeenMax = Number(localStorage.getItem(LAST_SEEN_MAX_MOD_KEY) || 0) || 0;
+    lastSeenMax = Number(localStorage.getItem(LAST_SEEN_MAX_ADD_KEY) || 0) || 0;
+    if (!lastSeenMax) lastSeenMax = Number(localStorage.getItem(LAST_SEEN_MAX_MOD_KEY) || 0) || 0; // legacy fallback
   } catch {}
 
-  let newest = 0;
   let newCount = 0;
+  let newest = 0;
 
   for (const it of (items || [])) {
-    const m = Number(it.modified || 0) || 0;
-    if (m > newest) newest = m;
-    if (lastSeenMax && m > lastSeenMax) newCount += 1;
+    const a = getAddedTs(it);
+    if (a > newest) newest = a;
+    if (lastSeenMax && a > lastSeenMax) newCount += 1;
   }
 
-  // Save newest as "seen" for next visit (after we compute)
+  // Save newest as "seen" for next visit
   if (commit && newest) {
-    try { localStorage.setItem(LAST_SEEN_MAX_MOD_KEY, String(newest)); } catch {}
+    try { localStorage.setItem(LAST_SEEN_MAX_ADD_KEY, String(newest)); } catch {}
+    try { localStorage.setItem(LAST_SEEN_MAX_MOD_KEY, String(newest)); } catch {} // keep legacy in sync
   }
 
   // On first-ever visit, lastSeenMax = 0, we show no "new items" badge (avoids confusion)
@@ -1923,7 +1787,10 @@ function computeNewCountSinceLastVisit(items, commit = true) {
 function ensureNewBaseline_() {
   if (typeof state.lastSeenBaseline === "number") return state.lastSeenBaseline;
   let v = 0;
-  try { v = Number(localStorage.getItem(LAST_SEEN_MAX_MOD_KEY) || 0) || 0; } catch {}
+  try {
+    v = Number(localStorage.getItem(LAST_SEEN_MAX_ADD_KEY) || 0) || 0;
+    if (!v) v = Number(localStorage.getItem(LAST_SEEN_MAX_MOD_KEY) || 0) || 0; // legacy fallback
+  } catch {}
   state.lastSeenBaseline = v;
   return v;
 }
@@ -1932,11 +1799,13 @@ function computeNewMarkers_(items) {
   const baseline = ensureNewBaseline_();
   const set = new Set();
   let newest = 0;
+
   for (const it of (items || [])) {
-    const m = Number(it.modified || 0) || 0;
-    if (m > newest) newest = m;
-    if (baseline && m > baseline) set.add(String(it.id));
+    const a = getAddedTs(it);
+    if (a > newest) newest = a;
+    if (baseline && a > baseline) set.add(String(it.id));
   }
+
   state.newIds = set;
   return { newCount: baseline ? set.size : 0, newest };
 }
@@ -1945,7 +1814,8 @@ function commitSeenMaxOnce_(items) {
   if (state._seenCommitted) return;
   const { newest } = computeNewMarkers_(items);
   if (newest) {
-    try { localStorage.setItem(LAST_SEEN_MAX_MOD_KEY, String(newest)); } catch {}
+    try { localStorage.setItem(LAST_SEEN_MAX_ADD_KEY, String(newest)); } catch {}
+    try { localStorage.setItem(LAST_SEEN_MAX_MOD_KEY, String(newest)); } catch {} // keep legacy in sync
   }
   state._seenCommitted = true;
 }
@@ -1989,125 +1859,6 @@ function setupNewPostsBtn_() {
     const searchClearBtn = document.getElementById("searchClearBtn");
     const searchSuggestPanel = document.getElementById("searchSuggestPanel");
     const searchWrap = document.getElementById("searchWrap");
-
-    // Sticky search dock (desktop)
-    const searchSection = document.getElementById("searchSection");
-    const stickyDock = document.getElementById("stickySearchDock");
-    const stickyInput = document.getElementById("stickySearchInput");
-    const stickyBtn = document.getElementById("stickySearchBtn");
-    const stickyClearBtn = document.getElementById("stickySearchClearBtn");
-
-    // Sidebar toggle (desktop)
-    const sidebar = document.getElementById("sidebar");
-    const catalogue = document.getElementById("catalogue");
-    const sidebarHideBtn = document.getElementById("sidebarHideBtn");
-    const sidebarShowBtn = document.getElementById("sidebarShowBtn");
-
-    function showOnDesktop_(el, displayClass) {
-      if (!el) return;
-      el.classList.remove("md:hidden");
-      if (displayClass) el.classList.add(displayClass);
-    }
-    function hideOnDesktop_(el, displayClass) {
-      if (!el) return;
-      if (displayClass) el.classList.remove(displayClass);
-      el.classList.add("md:hidden");
-    }
-
-    function setSidebarCollapsed(collapsed) {
-      if (!sidebar || !catalogue) return;
-      sidebar.classList.toggle("md:hidden", !!collapsed);
-
-      // Expand catalogue when sidebar is hidden (desktop)
-      if (collapsed) {
-        catalogue.classList.remove("md:col-span-9");
-        catalogue.classList.add("md:col-span-12");
-        showOnDesktop_(sidebarShowBtn, "md:flex");
-      } else {
-        catalogue.classList.remove("md:col-span-12");
-        catalogue.classList.add("md:col-span-9");
-        hideOnDesktop_(sidebarShowBtn, "md:flex");
-      }
-      try { localStorage.setItem("dotdock_sidebar_collapsed_v1", collapsed ? "1" : "0"); } catch(e) {}
-    }
-
-    // Restore previous sidebar state (desktop)
-    try {
-      const prev = localStorage.getItem("dotdock_sidebar_collapsed_v1");
-      if (prev === "1") setSidebarCollapsed(true);
-      else hideOnDesktop_(sidebarShowBtn, "md:flex");
-    } catch(e) {}
-
-    if (sidebarHideBtn) sidebarHideBtn.addEventListener("click", () => setSidebarCollapsed(true));
-    if (sidebarShowBtn) sidebarShowBtn.addEventListener("click", () => setSidebarCollapsed(false));
-    // Align floating UI (sticky search + sidebar show button) to the main content column
-    const mainContainer = document.querySelector("main#top") || document.querySelector("main");
-    function updateDockPositions_() {
-      if (!mainContainer) return;
-      const rect = mainContainer.getBoundingClientRect();
-      const left = Math.max(8, Math.round(rect.left) + 8);
-      const right = Math.max(8, Math.round(window.innerWidth - rect.right) + 8);
-      if (sidebarShowBtn) sidebarShowBtn.style.left = left + "px";
-      if (stickyDock) stickyDock.style.right = right + "px";
-    }
-    window.addEventListener("resize", updateDockPositions_, { passive: true });
-    setTimeout(updateDockPositions_, 0);
-
-
-    // Compare modal controls
-    const compareBackdrop = document.getElementById("compareModalBackdrop");
-    const compareCloseBtn = document.getElementById("compareModalClose");
-    if (compareBackdrop) compareBackdrop.addEventListener("click", closeCompareModalAndClear);
-    if (compareCloseBtn) compareCloseBtn.addEventListener("click", closeCompareModalAndClear);
-
-    // Keep sticky dock in sync with main search
-    function syncStickyFromMain_() {
-      if (!stickyInput) return;
-      stickyInput.value = searchInput.value;
-      if (stickyClearBtn) stickyClearBtn.classList.toggle("hidden", stickyInput.value.length === 0);
-    }
-    function syncMainFromSticky_(doRunSearch) {
-      if (!stickyInput) return;
-      searchInput.value = stickyInput.value;
-      searchClearBtn.classList.toggle("hidden", searchInput.value.length === 0);
-      if (doRunSearch) doSearch({ remember: true, closeSuggest: true });
-    }
-
-    if (stickyInput) {
-      stickyInput.addEventListener("input", () => {
-        if (stickyClearBtn) stickyClearBtn.classList.toggle("hidden", stickyInput.value.length === 0);
-        syncMainFromSticky_(false);
-      });
-      stickyInput.addEventListener("keydown", (ev) => {
-        if (ev.key === "Enter") { ev.preventDefault(); syncMainFromSticky_(true); }
-      });
-    }
-    if (stickyBtn) stickyBtn.addEventListener("click", () => syncMainFromSticky_(true));
-    if (stickyClearBtn) stickyClearBtn.addEventListener("click", () => {
-      if (stickyInput) stickyInput.value = "";
-      syncMainFromSticky_(true);
-      stickyClearBtn.classList.add("hidden");
-      if (stickyInput) stickyInput.focus();
-    });
-
-    // Show sticky search after scrolling past the main search section (desktop)
-    function updateStickySearchDock_() {
-      if (!stickyDock || !searchSection) return;
-      const y = window.scrollY || 0;
-      const threshold = searchSection.offsetTop + searchSection.offsetHeight + 20;
-      const on = y > threshold;
-
-      if (on) {
-        showOnDesktop_(stickyDock, "md:block");
-        stickyDock.classList.add("is-on");
-        syncStickyFromMain_();
-      } else {
-        hideOnDesktop_(stickyDock, "md:block");
-        stickyDock.classList.remove("is-on");
-      }
-      updateDockPositions_();
-    }
-
     const clearBtn = document.getElementById("clearFilters");
     const refreshBtn = document.getElementById("userRefreshBtn");
     const refreshStatus = document.getElementById("userRefreshStatus");
@@ -2152,23 +1903,6 @@ function setupNewPostsBtn_() {
     });
     document.getElementById("helpModalBackdrop").addEventListener("click", closeHelpModal);
     document.getElementById("helpModalClose").addEventListener("click", closeHelpModal);
-    // Summary modal handlers
-    const summaryBackdrop = document.getElementById("summaryModalBackdrop");
-    const summaryCloseBtn = document.getElementById("summaryModalClose");
-    const summaryCopyBtn = document.getElementById("summaryCopyBtn");
-
-    if (summaryBackdrop) summaryBackdrop.addEventListener("click", closeSummaryModal);
-    if (summaryCloseBtn) summaryCloseBtn.addEventListener("click", closeSummaryModal);
-    if (summaryCopyBtn) summaryCopyBtn.addEventListener("click", async () => {
-      if (!_currentSummaryText) return;
-      try {
-        await navigator.clipboard.writeText(_currentSummaryText);
-        showToast("Summary copied.");
-      } catch (e) {
-        showToast("Copy failed.");
-      }
-    });
-
 
     function setToggleState(btn, panel, open) {
       if (!btn || !panel) return;
@@ -2495,7 +2229,6 @@ setInterval(async () => {
       compareSet([]);
       renderCompare();
       render();
-      closeCompareModalUIOnly();
     });
 
     refreshBtn.addEventListener("click", async () => {
@@ -2530,15 +2263,8 @@ setInterval(async () => {
     window.addEventListener("scroll", () => {
       if (window.scrollY > 300) backToTopBtn.classList.remove("hidden");
       else backToTopBtn.classList.add("hidden");
-
-      // Sticky search dock (desktop)
-      updateStickySearchDock_();
     });
     backToTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
-
-    // Initialize sticky dock once
-    updateStickySearchDock_();
-
 
     // Event delegation for card actions + reading list preview buttons
     document.getElementById("cardsContainer").addEventListener("click", async (e) => {
@@ -2562,7 +2288,7 @@ setInterval(async () => {
       }
 
       if (action === "notebooklm" && item) openInNotebookLM(item);
-      if (action === "aisummary" && item) openSummaryModal(item);
+      if (action === "aisummary" && item) openInChatGPT(item);
 
       if (action === "like") {
         try {
@@ -2721,9 +2447,7 @@ remoteCommentsPrime_({ useCache: true }).catch(() => {});
       if (e.key === "Escape") {
         closePdfModal();
         closeHelpModal();
-        closeSummaryModal();
         helpDd.classList.add("hidden");
-        closeCompareModalAndClear();
       }
     });
 
