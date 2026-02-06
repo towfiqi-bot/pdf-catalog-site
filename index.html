@@ -27,7 +27,12 @@
       aside::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 999px; }
       aside::-webkit-scrollbar-track { background: transparent; }
     }
-  </style>
+  
+    /* --- UX tweaks (2026-02) --- */
+    #stickySearchDock { transition: transform 180ms ease, opacity 180ms ease; transform: translateY(-6px); opacity: 0; }
+    #stickySearchDock.is-on { transform: translateY(0); opacity: 1; }
+    #searchSection { scroll-margin-top: 96px; }
+</style>
 </head>
 
 <body class="bg-gray-50" id="top">
@@ -94,16 +99,16 @@
       </div>
     </div>
   </header>
-<div class="max-w-6xl mx-auto px-8 mt-8">
+<div class="max-w-6xl mx-auto px-4 mt-4 mb-2">
   <div class="text-center text-sm md:text-base text-gray-600">
     A living intelligence library: curated reports, tracked updates, and faster answers—so you never miss what matters.
   </div>
 </div>
   <!-- Main layout -->
-  <main class="max-w-6xl mx-auto px-4 py-6" id="top">
+  <main class="max-w-6xl mx-auto px-4 py-4" id="top">
     <!-- Top search -->
-    <section class="mb-6">
-      <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+    <section id="searchSection" class="mb-4">
+      <div class="bg-white border border-gray-200 rounded-lg p-3 md:p-4 shadow-sm">
         <div class="max-w-3xl mx-auto">
           <div id="searchWrap" class="relative">
           <div class="flex items-center gap-3 bg-white border border-gray-300 rounded-full px-5 py-3 shadow-sm focus-within:ring-2 focus-within:ring-amber-200">
@@ -136,7 +141,21 @@
     <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
 
       <!-- Sidebar -->
-      <aside class="md:col-span-3 space-y-6 md:sticky md:top-28 self-start md:max-h-[calc(100vh-7rem)] md:overflow-auto md:pr-1">
+      <aside id="sidebar" class="md:col-span-3 space-y-6 md:sticky md:top-28 self-start md:max-h-[calc(100vh-7rem)] md:overflow-auto md:pr-1">
+
+        <!-- Sidebar collapse (desktop) -->
+        <div class="hidden md:flex items-center justify-end -mt-1">
+          <button id="sidebarHideBtn" type="button"
+                  class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  aria-label="Hide sidebar">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 6H20"></path>
+              <path d="M10 12H20"></path>
+              <path d="M10 18H20"></path>
+              <path d="M6 6l-3 3 3 3"></path>
+            </svg>
+          </button>
+        </div>
 
         <!-- Filters -->
         <section class="bg-white rounded-lg border border-gray-200 p-4">
@@ -273,7 +292,7 @@
       </aside>
 
       <!-- Catalogue -->
-      <section class="md:col-span-9">
+      <section id="catalogue" class="md:col-span-9">
         <div class="flex items-center justify-between gap-3 mb-3">
           <p id="resultsInfo" class="text-sm text-gray-600">Loading publications…</p>
           <div class="flex items-center gap-2">
@@ -307,14 +326,51 @@
   <!-- Toast -->
   <div id="toast" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] bg-gray-900 text-white text-sm px-4 py-2 rounded shadow-lg"></div>
 
+  <!-- Sticky Search Dock (desktop): appears after scrolling past the main search -->
+  <div id="stickySearchDock" class="hidden md:hidden fixed top-20 right-4 z-[65]">
+    <div class="bg-white/95 backdrop-blur border border-gray-200 rounded-full shadow-lg px-3 py-2 flex items-center gap-2">
+      <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="M21 21l-4.3-4.3"></path>
+      </svg>
+      <input id="stickySearchInput" type="text"
+             class="w-56 lg:w-72 outline-none text-sm"
+             placeholder="Search title or summary…" />
+      <button id="stickySearchClearBtn" type="button" aria-label="Clear"
+              class="hidden shrink-0 p-1.5 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 6L6 18"></path>
+          <path d="M6 6l12 12"></path>
+        </svg>
+      </button>
+      <button id="stickySearchBtn" type="button"
+              class="shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full bg-amber-600 text-white hover:bg-amber-700">
+        Search
+      </button>
+    </div>
+  </div>
+
+  <!-- Sidebar show button (desktop): appears when sidebar is collapsed -->
+  <button id="sidebarShowBtn" type="button"
+          class="hidden md:hidden fixed top-28 left-3 z-[65] items-center justify-center w-10 h-10 rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm hover:bg-gray-50"
+          aria-label="Show sidebar">
+    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M14 6H4"></path>
+      <path d="M14 12H4"></path>
+      <path d="M14 18H4"></path>
+      <path d="M18 9l3 3-3 3"></path>
+    </svg>
+  </button>
+
+
   <!-- PDF Modal -->
   <div id="pdfModal" class="hidden fixed inset-0 z-50">
     <div class="absolute inset-0 bg-black/60" id="pdfModalBackdrop"></div>
 
-    <div class="relative mx-auto h-full p-0 md:p-3 flex flex-col">
-      <div class="bg-white shadow-xl overflow-hidden flex flex-col h-full rounded-none md:rounded-lg md:max-w-none md:w-[96vw] md:h-[92vh] md:mx-auto">
-        <div class="flex items-center gap-3 px-3 md:px-4 py-2 border-b border-gray-200">
-          <div class="font-semibold text-gray-900 truncate" id="pdfModalTitle">Report</div>
+    <div class="relative mx-auto h-full p-0 md:p-2 flex flex-col">
+      <div class="bg-white shadow-xl overflow-hidden flex flex-col h-full rounded-none md:rounded-lg md:max-w-none md:w-[98vw] md:h-[96vh] md:mx-auto">
+        <div class="flex items-center gap-3 px-3 md:px-4 py-1.5 md:py-2 border-b border-gray-200">
+          <div class="font-semibold text-gray-900 truncate text-sm md:text-base" id="pdfModalTitle">Report</div>
           <div class="ml-auto flex gap-2">
             <a id="pdfModalView"
                target="_blank" rel="noopener"
@@ -351,6 +407,31 @@
       </div>
     </div>
   </div>
+  <!-- Compare Modal (opens automatically when 2 items are selected) -->
+  <div id="compareModal" class="hidden fixed inset-0 z-[85]">
+    <div class="absolute inset-0 bg-black/50" id="compareModalBackdrop"></div>
+
+    <div class="relative h-full w-full p-0 md:p-4 flex items-center justify-center">
+      <div class="bg-white w-full h-full md:rounded-xl md:shadow-2xl overflow-hidden md:w-[96vw] md:h-[92vh] flex flex-col">
+        <div class="flex items-center gap-3 px-3 md:px-4 py-2 border-b border-gray-200">
+          <div class="font-semibold text-gray-900 truncate">Compare</div>
+          <div class="ml-auto flex items-center gap-2">
+            <a id="compareModalOpenPage" href="compare.html" target="_blank" rel="noopener"
+               class="px-3 py-1.5 text-xs md:text-sm font-semibold rounded-md bg-amber-600 text-white hover:bg-amber-700">
+              Open
+            </a>
+            <button id="compareModalClose" type="button"
+                    class="px-3 py-1.5 text-xs md:text-sm font-semibold rounded-md border border-gray-200 hover:bg-gray-50">
+              Close
+            </button>
+          </div>
+        </div>
+
+        <iframe id="compareModalFrame" class="w-full flex-1" src="" title="Compare" loading="lazy"></iframe>
+      </div>
+    </div>
+  </div>
+
 
   <!-- Summary Modal (AI-generated catalog summary) -->
   <div id="summaryModal" class="hidden fixed inset-0 z-[80]" aria-hidden="true">
@@ -589,6 +670,10 @@
     compareSet(next);
     renderCompare();
     render(); // update button states
+
+    // Auto-open Compare when exactly 2 items are selected.
+    if (next.length === 2) openCompareModal(next[0], next[1]);
+    else closeCompareModal();
   }
   function isCompared(id) {
     return compareGet().includes(String(id));
@@ -1452,7 +1537,34 @@ Output:
     document.body.style.overflow = "";
   }
 
-  function openPdfModalById(id) {
+  
+  // --------- Compare Modal ----------
+  function openCompareModal(leftId, rightId) {
+    const modal = document.getElementById("compareModal");
+    const frame = document.getElementById("compareModalFrame");
+    const openPage = document.getElementById("compareModalOpenPage");
+    if (!modal || !frame) return;
+
+    const qs = new URLSearchParams();
+    qs.set("left", leftId);
+    qs.set("right", rightId);
+    const src = "compare.html?" + qs.toString();
+
+    frame.src = src;
+    if (openPage) openPage.href = src;
+
+    modal.classList.remove("hidden");
+  }
+
+  function closeCompareModal() {
+    const modal = document.getElementById("compareModal");
+    const frame = document.getElementById("compareModalFrame");
+    if (!modal || modal.classList.contains("hidden")) return;
+    if (frame) frame.src = "";
+    modal.classList.add("hidden");
+  }
+
+function openPdfModalById(id) {
     const item = state.allItems.find(x => String(x.id) === String(id));
     if (item) openPdfModal(item);
   }
@@ -1856,6 +1968,111 @@ function setupNewPostsBtn_() {
     const searchClearBtn = document.getElementById("searchClearBtn");
     const searchSuggestPanel = document.getElementById("searchSuggestPanel");
     const searchWrap = document.getElementById("searchWrap");
+
+    // Sticky search dock (desktop)
+    const searchSection = document.getElementById("searchSection");
+    const stickyDock = document.getElementById("stickySearchDock");
+    const stickyInput = document.getElementById("stickySearchInput");
+    const stickyBtn = document.getElementById("stickySearchBtn");
+    const stickyClearBtn = document.getElementById("stickySearchClearBtn");
+
+    // Sidebar toggle (desktop)
+    const sidebar = document.getElementById("sidebar");
+    const catalogue = document.getElementById("catalogue");
+    const sidebarHideBtn = document.getElementById("sidebarHideBtn");
+    const sidebarShowBtn = document.getElementById("sidebarShowBtn");
+
+    function showOnDesktop_(el, displayClass) {
+      if (!el) return;
+      el.classList.remove("md:hidden");
+      if (displayClass) el.classList.add(displayClass);
+    }
+    function hideOnDesktop_(el, displayClass) {
+      if (!el) return;
+      if (displayClass) el.classList.remove(displayClass);
+      el.classList.add("md:hidden");
+    }
+
+    function setSidebarCollapsed(collapsed) {
+      if (!sidebar || !catalogue) return;
+      sidebar.classList.toggle("md:hidden", !!collapsed);
+
+      // Expand catalogue when sidebar is hidden (desktop)
+      if (collapsed) {
+        catalogue.classList.remove("md:col-span-9");
+        catalogue.classList.add("md:col-span-12");
+        showOnDesktop_(sidebarShowBtn, "md:flex");
+      } else {
+        catalogue.classList.remove("md:col-span-12");
+        catalogue.classList.add("md:col-span-9");
+        hideOnDesktop_(sidebarShowBtn, "md:flex");
+      }
+      try { localStorage.setItem("dotdock_sidebar_collapsed_v1", collapsed ? "1" : "0"); } catch(e) {}
+    }
+
+    // Restore previous sidebar state (desktop)
+    try {
+      const prev = localStorage.getItem("dotdock_sidebar_collapsed_v1");
+      if (prev === "1") setSidebarCollapsed(true);
+      else hideOnDesktop_(sidebarShowBtn, "md:flex");
+    } catch(e) {}
+
+    if (sidebarHideBtn) sidebarHideBtn.addEventListener("click", () => setSidebarCollapsed(true));
+    if (sidebarShowBtn) sidebarShowBtn.addEventListener("click", () => setSidebarCollapsed(false));
+
+    // Compare modal controls
+    const compareBackdrop = document.getElementById("compareModalBackdrop");
+    const compareCloseBtn = document.getElementById("compareModalClose");
+    if (compareBackdrop) compareBackdrop.addEventListener("click", closeCompareModal);
+    if (compareCloseBtn) compareCloseBtn.addEventListener("click", closeCompareModal);
+
+    // Keep sticky dock in sync with main search
+    function syncStickyFromMain_() {
+      if (!stickyInput) return;
+      stickyInput.value = searchInput.value;
+      if (stickyClearBtn) stickyClearBtn.classList.toggle("hidden", stickyInput.value.length === 0);
+    }
+    function syncMainFromSticky_(doRunSearch) {
+      if (!stickyInput) return;
+      searchInput.value = stickyInput.value;
+      searchClearBtn.classList.toggle("hidden", searchInput.value.length === 0);
+      if (doRunSearch) doSearch({ remember: true, closeSuggest: true });
+    }
+
+    if (stickyInput) {
+      stickyInput.addEventListener("input", () => {
+        if (stickyClearBtn) stickyClearBtn.classList.toggle("hidden", stickyInput.value.length === 0);
+        syncMainFromSticky_(false);
+      });
+      stickyInput.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter") { ev.preventDefault(); syncMainFromSticky_(true); }
+      });
+    }
+    if (stickyBtn) stickyBtn.addEventListener("click", () => syncMainFromSticky_(true));
+    if (stickyClearBtn) stickyClearBtn.addEventListener("click", () => {
+      if (stickyInput) stickyInput.value = "";
+      syncMainFromSticky_(true);
+      stickyClearBtn.classList.add("hidden");
+      if (stickyInput) stickyInput.focus();
+    });
+
+    // Show sticky search after scrolling past the main search section (desktop)
+    function updateStickySearchDock_() {
+      if (!stickyDock || !searchSection) return;
+      const y = window.scrollY || 0;
+      const threshold = searchSection.offsetTop + searchSection.offsetHeight + 20;
+      const on = y > threshold;
+
+      if (on) {
+        showOnDesktop_(stickyDock, "md:block");
+        stickyDock.classList.add("is-on");
+        syncStickyFromMain_();
+      } else {
+        hideOnDesktop_(stickyDock, "md:block");
+        stickyDock.classList.remove("is-on");
+      }
+    }
+
     const clearBtn = document.getElementById("clearFilters");
     const refreshBtn = document.getElementById("userRefreshBtn");
     const refreshStatus = document.getElementById("userRefreshStatus");
@@ -2243,6 +2460,7 @@ setInterval(async () => {
       compareSet([]);
       renderCompare();
       render();
+      closeCompareModal();
     });
 
     refreshBtn.addEventListener("click", async () => {
@@ -2277,8 +2495,15 @@ setInterval(async () => {
     window.addEventListener("scroll", () => {
       if (window.scrollY > 300) backToTopBtn.classList.remove("hidden");
       else backToTopBtn.classList.add("hidden");
+
+      // Sticky search dock (desktop)
+      updateStickySearchDock_();
     });
     backToTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+    // Initialize sticky dock once
+    updateStickySearchDock_();
+
 
     // Event delegation for card actions + reading list preview buttons
     document.getElementById("cardsContainer").addEventListener("click", async (e) => {
