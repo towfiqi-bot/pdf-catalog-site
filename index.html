@@ -411,15 +411,11 @@
   <div id="compareModal" class="hidden fixed inset-0 z-[85]">
     <div class="absolute inset-0 bg-black/50" id="compareModalBackdrop"></div>
 
-    <div class="relative h-full w-full p-0 md:p-4 flex items-center justify-center">
-      <div class="bg-white w-full h-full md:rounded-xl md:shadow-2xl overflow-hidden md:w-[96vw] md:h-[92vh] flex flex-col">
-        <div class="flex items-center gap-3 px-3 md:px-4 py-2 border-b border-gray-200">
+    <div class="relative h-full w-full p-0 md:p-2 flex items-center justify-center">
+      <div class="bg-white w-full h-full md:rounded-xl md:shadow-2xl overflow-hidden md:w-[99vw] md:h-[96vh] flex flex-col">
+        <div class="flex items-center gap-3 px-3 md:px-4 py-1.5 border-b border-gray-200">
           <div class="font-semibold text-gray-900 truncate">Compare</div>
           <div class="ml-auto flex items-center gap-2">
-            <a id="compareModalOpenPage" href="compare.html" target="_blank" rel="noopener"
-               class="px-3 py-1.5 text-xs md:text-sm font-semibold rounded-md bg-amber-600 text-white hover:bg-amber-700">
-              Open
-            </a>
             <button id="compareModalClose" type="button"
                     class="px-3 py-1.5 text-xs md:text-sm font-semibold rounded-md border border-gray-200 hover:bg-gray-50">
               Close
@@ -673,7 +669,7 @@
 
     // Auto-open Compare when exactly 2 items are selected.
     if (next.length === 2) openCompareModal(next[0], next[1]);
-    else closeCompareModal();
+    else closeCompareModalUIOnly();
   }
   function isCompared(id) {
     return compareGet().includes(String(id));
@@ -1555,13 +1551,20 @@ Output:
 
     modal.classList.remove("hidden");
   }
-
-  function closeCompareModal() {
+  function closeCompareModalUIOnly() {
     const modal = document.getElementById("compareModal");
     const frame = document.getElementById("compareModalFrame");
     if (!modal || modal.classList.contains("hidden")) return;
     if (frame) frame.src = "";
     modal.classList.add("hidden");
+  }
+
+  function closeCompareModalAndClear() {
+    // Close the modal and reset selections so users can start a fresh compare.
+    closeCompareModalUIOnly();
+    compareSet([]);
+    renderCompare();
+    render();
   }
 
 function openPdfModalById(id) {
@@ -2023,8 +2026,8 @@ function setupNewPostsBtn_() {
     // Compare modal controls
     const compareBackdrop = document.getElementById("compareModalBackdrop");
     const compareCloseBtn = document.getElementById("compareModalClose");
-    if (compareBackdrop) compareBackdrop.addEventListener("click", closeCompareModal);
-    if (compareCloseBtn) compareCloseBtn.addEventListener("click", closeCompareModal);
+    if (compareBackdrop) compareBackdrop.addEventListener("click", closeCompareModalAndClear);
+    if (compareCloseBtn) compareCloseBtn.addEventListener("click", closeCompareModalAndClear);
 
     // Keep sticky dock in sync with main search
     function syncStickyFromMain_() {
@@ -2460,7 +2463,7 @@ setInterval(async () => {
       compareSet([]);
       renderCompare();
       render();
-      closeCompareModal();
+      closeCompareModalUIOnly();
     });
 
     refreshBtn.addEventListener("click", async () => {
@@ -2688,6 +2691,7 @@ remoteCommentsPrime_({ useCache: true }).catch(() => {});
         closeHelpModal();
         closeSummaryModal();
         helpDd.classList.add("hidden");
+        closeCompareModalAndClear();
       }
     });
 
