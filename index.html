@@ -32,13 +32,20 @@
     #stickySearchDock { transition: transform 180ms ease, opacity 180ms ease; transform: translateY(-6px); opacity: 0; }
     #stickySearchDock.is-on { transform: translateY(0); opacity: 1; }
     #searchSection { scroll-margin-top: 96px; }
+
+    /* Hide sticky UI while an overlay (PDF/Compare) is open */
+    body.dd-overlay-open #stickySearchDock,
+    body.dd-overlay-open #sidebarShowBtn {
+      display: none !important;
+    }
+
 </style>
 </head>
 
 <body class="bg-gray-50" id="top">
   <!-- Header -->
   <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto px-4 py-4">
+    <div class="max-w-[1600px] mx-auto px-4 py-4">
       <div class="flex flex-col gap-3">
         <div class="flex items-center gap-4">
           <a href="index.html" class="block" aria-label="Back to top">
@@ -99,13 +106,13 @@
       </div>
     </div>
   </header>
-<div class="max-w-6xl mx-auto px-4 mt-4 mb-2">
+<div class="max-w-[1600px] mx-auto px-4 mt-4 mb-2">
   <div class="text-center text-sm md:text-base text-gray-600">
     A living intelligence library: curated reports, tracked updates, and faster answers—so you never miss what matters.
   </div>
 </div>
   <!-- Main layout -->
-  <main class="max-w-6xl mx-auto px-4 py-4" id="top">
+  <main class="max-w-[1600px] mx-auto px-4 py-4" id="top">
     <!-- Top search -->
     <section id="searchSection" class="mb-4">
       <div class="bg-white border border-gray-200 rounded-lg p-3 md:p-4 shadow-sm">
@@ -368,7 +375,7 @@
     <div class="absolute inset-0 bg-black/60" id="pdfModalBackdrop"></div>
 
     <div class="relative mx-auto h-full p-0 md:p-2 flex flex-col">
-      <div class="bg-white shadow-xl overflow-hidden flex flex-col h-full rounded-none md:rounded-lg md:max-w-none md:w-[98vw] md:h-[96vh] md:mx-auto">
+      <div class="bg-white shadow-xl overflow-hidden flex flex-col h-full rounded-none md:rounded-lg md:max-w-none md:w-[98vw] md:h-[98vh] md:mx-auto">
         <div class="flex items-center gap-3 px-3 md:px-4 py-1.5 md:py-2 border-b border-gray-200">
           <div class="font-semibold text-gray-900 truncate text-sm md:text-base" id="pdfModalTitle">Report</div>
           <div class="ml-auto flex gap-2">
@@ -412,7 +419,7 @@
     <div class="absolute inset-0 bg-black/50" id="compareModalBackdrop"></div>
 
     <div class="relative h-full w-full p-0 md:p-2 flex items-center justify-center">
-      <div class="bg-white w-full h-full md:rounded-xl md:shadow-2xl overflow-hidden md:w-[99vw] md:h-[96vh] flex flex-col">
+      <div class="bg-white w-full h-full md:rounded-xl md:shadow-2xl overflow-hidden md:w-[99vw] md:h-[98vh] flex flex-col">
         <div class="flex items-center gap-3 px-3 md:px-4 py-1.5 border-b border-gray-200">
           <div class="font-semibold text-gray-900 truncate">Compare</div>
           <div class="ml-auto flex items-center gap-2">
@@ -993,6 +1000,8 @@ Output:
     }
 
     modal.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+    document.body.classList.add("dd-overlay-open");
     modal.setAttribute("aria-hidden", "false");
     document.body.classList.add("modal-open");
   }
@@ -1000,6 +1009,8 @@ Output:
   function closeSummaryModal() {
     const modal = document.getElementById("summaryModal");
     modal.classList.add("hidden");
+    document.body.style.overflow = "";
+    document.body.classList.remove("dd-overlay-open");
     modal.setAttribute("aria-hidden", "true");
     document.body.classList.remove("modal-open");
   }
@@ -1523,13 +1534,15 @@ Output:
 
     modal.classList.remove("hidden");
     document.body.style.overflow = "hidden";
-  }
+  document.body.classList.add("dd-overlay-open");
+    }
 
   function closePdfModal() {
     const modal = document.getElementById("pdfModal");
     const frame = document.getElementById("pdfModalFrame");
     frame.src = "";
     modal.classList.add("hidden");
+    document.body.classList.remove("dd-overlay-open");
     document.body.style.overflow = "";
   }
 
@@ -1544,20 +1557,25 @@ Output:
     const qs = new URLSearchParams();
     qs.set("left", leftId);
     qs.set("right", rightId);
+    qs.set("embed", "1");
     const src = "compare.html?" + qs.toString();
 
     frame.src = src;
     if (openPage) openPage.href = src;
 
     modal.classList.remove("hidden");
-  }
+  document.body.style.overflow = "hidden";
+    document.body.classList.add("dd-overlay-open");
+    }
   function closeCompareModalUIOnly() {
     const modal = document.getElementById("compareModal");
     const frame = document.getElementById("compareModalFrame");
     if (!modal || modal.classList.contains("hidden")) return;
     if (frame) frame.src = "";
     modal.classList.add("hidden");
-  }
+  document.body.style.overflow = "";
+    document.body.classList.remove("dd-overlay-open");
+    }
 
   function closeCompareModalAndClear() {
     // Close the modal and reset selections so users can start a fresh compare.
@@ -2022,6 +2040,19 @@ function setupNewPostsBtn_() {
 
     if (sidebarHideBtn) sidebarHideBtn.addEventListener("click", () => setSidebarCollapsed(true));
     if (sidebarShowBtn) sidebarShowBtn.addEventListener("click", () => setSidebarCollapsed(false));
+    // Align floating UI (sticky search + sidebar show button) to the main content column
+    const mainContainer = document.querySelector("main#top") || document.querySelector("main");
+    function updateDockPositions_() {
+      if (!mainContainer) return;
+      const rect = mainContainer.getBoundingClientRect();
+      const left = Math.max(8, Math.round(rect.left) + 8);
+      const right = Math.max(8, Math.round(window.innerWidth - rect.right) + 8);
+      if (sidebarShowBtn) sidebarShowBtn.style.left = left + "px";
+      if (stickyDock) stickyDock.style.right = right + "px";
+    }
+    window.addEventListener("resize", updateDockPositions_, { passive: true });
+    setTimeout(updateDockPositions_, 0);
+
 
     // Compare modal controls
     const compareBackdrop = document.getElementById("compareModalBackdrop");
@@ -2074,6 +2105,7 @@ function setupNewPostsBtn_() {
         hideOnDesktop_(stickyDock, "md:block");
         stickyDock.classList.remove("is-on");
       }
+      updateDockPositions_();
     }
 
     const clearBtn = document.getElementById("clearFilters");

@@ -13,12 +13,36 @@
   <style>
     body { font-family: 'Inter', system-ui, -apple-system, Segoe UI, sans-serif; }
     .brand-title { font-family: 'Playfair Display', serif; letter-spacing: 0.03em; }
-  </style>
+  
+    /* Bigger reading area */
+    .pdfFrame { height: 78vh; }
+
+    @media (min-width: 1024px) {
+      .pdfFrame { height: 82vh; }
+    }
+
+    /* Embed mode (used inside dotdock overlay): maximize PDF area */
+    body.embed header,
+    body.embed #mobileTabs,
+    body.embed #notesSection {
+      display: none !important;
+    }
+
+    body.embed main {
+      max-width: none !important;
+      padding: 0.5rem !important;
+    }
+
+    body.embed .pdfFrame {
+      height: calc(100vh - 1rem) !important;
+    }
+
+</style>
 </head>
 
 <body class="bg-gray-50">
   <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto px-4 py-4">
+    <div class="max-w-[1600px] mx-auto px-4 py-3">
       <div class="flex flex-col md:flex-row md:items-center gap-3">
         <div class="flex items-center gap-4">
           <a href="index.html" class="block" aria-label="Back to catalog">
@@ -46,7 +70,7 @@
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto px-4 py-6">
+  <main class="max-w-[1600px] mx-auto px-4 py-4">
     <div id="missing" class="hidden bg-white border border-gray-200 rounded-lg p-4 text-sm text-gray-700">
       Missing compare IDs. Go back to <a class="text-amber-700 font-semibold underline" href="index.html">catalog</a> and select two reports using “Compare”.
     </div>
@@ -67,7 +91,7 @@
               <a id="openLeftView" class="px-2 py-1 text-xs font-semibold bg-amber-600 text-white rounded hover:bg-amber-700" href="#" target="_blank" rel="noopener">View</a>
             </div>
           </div>
-          <iframe id="leftFrame" class="w-full" style="height: 70vh;" title="Left PDF" loading="lazy"></iframe>
+          <iframe id="leftFrame" class="w-full rounded-b-lg pdfFrame" title="Left PDF" loading="lazy"></iframe>
         </div>
       </section>
 
@@ -80,12 +104,12 @@
               <a id="openRightView" class="px-2 py-1 text-xs font-semibold bg-amber-600 text-white rounded hover:bg-amber-700" href="#" target="_blank" rel="noopener">View</a>
             </div>
           </div>
-          <iframe id="rightFrame" class="w-full" style="height: 70vh;" title="Right PDF" loading="lazy"></iframe>
+          <iframe id="rightFrame" class="w-full rounded-b-lg pdfFrame" title="Right PDF" loading="lazy"></iframe>
         </div>
       </section>
 
       <!-- Notes -->
-      <section class="lg:col-span-12">
+      <section id="notesSection" class="lg:col-span-12">
         <div class="bg-white border border-gray-200 rounded-lg p-4">
           <div class="flex items-center justify-between">
             <h2 class="text-sm font-semibold text-gray-800">Comparison notes</h2>
@@ -108,6 +132,11 @@
 
 <script>
   function qs(name){ return new URLSearchParams(location.search).get(name) || ""; }
+
+  // Embed mode: when used inside the catalog overlay, maximize PDF space
+  if (qs("embed") === "1") {
+    document.body.classList.add("embed");
+  }
   function drivePreviewUrl(fileId){ return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`; }
   function viewUrl(fileId){ return `report.html?id=${encodeURIComponent(fileId)}&view=1`; }
   function reportUrl(fileId){ return `report.html?id=${encodeURIComponent(fileId)}`; }
