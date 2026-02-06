@@ -45,18 +45,67 @@
 
       <!-- Share -->
       <div id="shareWrap" class="flex flex-wrap gap-2">
-        <button id="copyLinkBtn" class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">
-          Copy link
+        <button id="copyLinkBtn"
+                class="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500/40">
+          <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1"></path>
+            <path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1"></path>
+          </svg>
+          <span class="shareText">Copy link</span>
         </button>
+
         <a id="shareX" target="_blank" rel="noopener"
-           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">X</a>
+           class="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500/40">
+          <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4L20 20"></path>
+            <path d="M20 4L4 20"></path>
+          </svg>
+          <span>X</span>
+        </a>
+
         <a id="shareLI" target="_blank" rel="noopener"
-           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">LinkedIn</a>
+           class="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500/40">
+          <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+            <path d="M8 11v7"></path>
+            <path d="M8 8h.01"></path>
+            <path d="M12 11v7"></path>
+            <path d="M12 14a2 2 0 0 1 4 0v4"></path>
+          </svg>
+          <span>LinkedIn</span>
+        </a>
+
         <a id="shareFB" target="_blank" rel="noopener"
-           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">Facebook</a>
+           class="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500/40">
+          <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+          </svg>
+          <span>Facebook</span>
+        </a>
+
         <a id="shareWA" target="_blank" rel="noopener"
-           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">WhatsApp</a>
-        <a id="shareEmail" class="px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">Email</a>
+           class="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500/40">
+          <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 11.5a8.5 8.5 0 1 1-15.2 5.3L3 21l4.2-1.8A8.5 8.5 0 0 1 21 11.5z"></path>
+            <path d="M9 10.5c.6 2.1 2.4 3.9 4.5 4.5"></path>
+          </svg>
+          <span>WhatsApp</span>
+        </a>
+
+        <a id="shareEmail"
+           class="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500/40">
+          <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path>
+            <path d="m22 6-10 7L2 6"></path>
+          </svg>
+          <span>Email</span>
+        </a>
       </div>
     </div>
 
@@ -616,8 +665,12 @@
     copyBtn.addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(window.location.href.split("#")[0]);
-        copyBtn.textContent = "Copied!";
-        setTimeout(() => (copyBtn.textContent = "Copy link"), 1200);
+        const t = copyBtn.querySelector(".shareText");
+        if (t) t.textContent = "Copied!"; else copyBtn.textContent = "Copied!";
+        setTimeout(() => {
+          const t2 = copyBtn.querySelector(".shareText");
+          if (t2) t2.textContent = "Copy link"; else copyBtn.textContent = "Copy link";
+        }, 1200);
       } catch {
         showToast("Copy failed — you can copy from the address bar.");
       }
