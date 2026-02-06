@@ -14,16 +14,6 @@
     body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     .brand-title { font-family: 'Playfair Display', serif; letter-spacing: 0.03em; }
     .brand-tagline { font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; }
-    .tooltip-summary { pointer-events: none; }
-
-    /* Summary clamp (2 lines) */
-    .dd-clamp-2 {
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 2;
-      overflow: hidden;
-    }
-
     /* Help dropdown */
     .dd-shadow { box-shadow: 0 12px 30px rgba(0,0,0,0.10); }
 
@@ -37,15 +27,6 @@
       aside::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 999px; }
       aside::-webkit-scrollbar-track { background: transparent; }
     }
-  
-    /* Sticky search bar (keeps search usable while scrolling) */
-    #searchSection { position: sticky; top: 96px; z-index: 40; }
-    #searchInner { transition: max-width .18s ease, margin .18s ease; }
-    #searchCard { transition: padding .18s ease, box-shadow .18s ease; }
-    #searchSection.compact #searchInner { max-width: 520px; margin-left: auto; margin-right: 0; }
-    #searchSection.compact #searchCard { padding: 10px; box-shadow: 0 12px 30px rgba(0,0,0,0.10); }
-    #searchSection.compact #searchHelpText { display: none; }
-
   </style>
 </head>
 
@@ -121,9 +102,9 @@
   <!-- Main layout -->
   <main class="max-w-6xl mx-auto px-4 py-6" id="top">
     <!-- Top search -->
-    <section id="searchSection" class="mb-6">
-      <div id="searchCard" class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-        <div id="searchInner" class="max-w-3xl mx-auto">
+    <section class="mb-6">
+      <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+        <div class="max-w-3xl mx-auto">
           <div id="searchWrap" class="relative">
           <div class="flex items-center gap-3 bg-white border border-gray-300 rounded-full px-5 py-3 shadow-sm focus-within:ring-2 focus-within:ring-amber-200">
             <svg class="h-5 w-5 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -145,7 +126,7 @@
           <div id="searchSuggestPanel"
                class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50"></div>
         </div>
-          <p id="searchHelpText" class="mt-2 text-xs text-gray-500 text-center">
+          <p class="mt-2 text-xs text-gray-500 text-center">
             Strong search across <span class="font-semibold">title</span> + <span class="font-semibold">summary</span> (not inside PDF pages yet).
           </p>
         </div>
@@ -370,6 +351,28 @@
       </div>
     </div>
   </div>
+
+  <!-- Summary Modal (AI-generated catalog summary) -->
+  <div id="summaryModal" class="hidden fixed inset-0 z-[80]" aria-hidden="true">
+    <div id="summaryModalBackdrop" class="absolute inset-0 bg-black/60"></div>
+    <div class="relative max-w-2xl mx-auto mt-10 md:mt-14 p-3 modal-anim">
+      <div class="bg-white rounded-lg border border-gray-200 shadow-xl overflow-hidden">
+        <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-200">
+          <div class="min-w-0">
+            <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Summary</div>
+            <div id="summaryModalTitle" class="font-semibold text-gray-900 truncate">—</div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button id="summaryCopyBtn" class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">Copy</button>
+            <button id="summaryModalClose" class="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50">Close</button>
+          </div>
+        </div>
+        <div id="summaryModalBody" class="px-4 py-4 text-sm text-gray-700 whitespace-pre-wrap max-h-[70vh] overflow-auto"></div>
+        <div id="summaryModalHint" class="px-4 pb-4 text-[11px] text-gray-500"></div>
+      </div>
+    </div>
+  </div>
+
 
 <script>
   const DATA_URL = "https://script.google.com/macros/s/AKfycbxme0FmUWdOmNG5EVHKxkQkbm0alqCo6vWJgESo8SBzwIQunlTU0f9MdGlEqu2AqkQa/exec";
@@ -607,29 +610,6 @@
 
   // Remote likes state
   const DEVICE_ID_KEY = "dotdock_device_id_v1";
-
-  const USER_NAME_KEY = "dotdock_comment_name_v1";
-  function getUserName_(promptIfMissing=false) {
-    try {
-      let v = localStorage.getItem(USER_NAME_KEY) || "";
-      if (v === "__anon__") return "";
-      v = String(v).trim();
-      if (v) return v;
-
-      if (!promptIfMissing) return "";
-
-      let entered = (prompt("Display name for comments (optional). Leave blank to stay Anonymous:", "") || "").trim();
-      entered = entered.slice(0, 40);
-      if (entered) {
-        localStorage.setItem(USER_NAME_KEY, entered);
-        return entered;
-      }
-      localStorage.setItem(USER_NAME_KEY, "__anon__");
-      return "";
-    } catch {
-      return "";
-    }
-  }
   let REMOTE_LIKES_READY = false;
   let REMOTE_LIKE_COUNTS = new Map();
   let REMOTE_COMMENT_COUNTS = new Map();
@@ -901,7 +881,50 @@ Output:
     }
   }
 
-  // --------- NotebookLM UX ----------
+  
+  // --------- Summary modal UX (shows catalog summary without extra clicks) ----------
+  let _currentSummaryText = "";
+
+  function openSummaryModal(item) {
+    const modal = document.getElementById("summaryModal");
+    const titleEl = document.getElementById("summaryModalTitle");
+    const bodyEl = document.getElementById("summaryModalBody");
+    const hintEl = document.getElementById("summaryModalHint");
+    const copyBtn = document.getElementById("summaryCopyBtn");
+
+    const title = String(item?.title || "Untitled report");
+    const summary = String(item?.summary || "").trim();
+
+    titleEl.textContent = title;
+
+    if (summary) {
+      _currentSummaryText = summary;
+      bodyEl.textContent = summary;
+      hintEl.textContent = "AI-generated catalog summary.";
+      copyBtn.disabled = false;
+      copyBtn.classList.remove("opacity-50");
+    } else {
+      _currentSummaryText = "";
+      bodyEl.textContent = "Summary not available yet.";
+      hintEl.textContent = "This will appear automatically once the summary worker processes this PDF.";
+      copyBtn.disabled = true;
+      copyBtn.classList.add("opacity-50");
+    }
+
+    modal.classList.remove("hidden");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
+  }
+
+  function closeSummaryModal() {
+    const modal = document.getElementById("summaryModal");
+    modal.classList.add("hidden");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
+  }
+
+
+// --------- NotebookLM UX ----------
   async function openInNotebookLM(item) {
     const link = driveShareUrl(item.id);
     try {
@@ -1250,8 +1273,7 @@ Output:
   function renderCard(item) {
     const thumb = item.thumbUrl || "https://via.placeholder.com/260x360?text=PDF";
     const title = escapeHtml(item.title || "Untitled");
-    const summaryRaw = String(item.summary || "").replace(/\s+/g, " ").trim();
-    const summary = escapeHtml(summaryRaw);
+    const summary = escapeHtml(item.summary || "");
     const year = item.year || "";
     const cats = (item.categories || [])
       .slice(0, 3)
@@ -1281,15 +1303,7 @@ Output:
                      onerror="this.onerror=null;this.src='https://via.placeholder.com/260x360?text=PDF';"
                      class="w-full h-auto object-cover cursor-pointer group-hover:opacity-80 transition">
               </button>
-              ${summary ? `
-                <div class="tooltip-summary absolute inset-x-0 bottom-0 z-20 bg-white/95
-                            text-xs text-gray-800 p-3 opacity-0 group-hover:opacity-100
-                            transition-opacity duration-150 shadow-md ring-1 ring-black/10 rounded-b
-                            max-h-28 overflow-hidden">
-                  <div class="font-semibold mb-1">Summary</div>
-                  <div class="leading-snug whitespace-normal">${summary}</div>
-                </div>
-              ` : ""}
+              
             </div>
           </div>
 
@@ -1308,8 +1322,6 @@ Output:
                class="mt-1 text-base md:text-lg font-semibold text-amber-700 hover:underline">
               ${title}
             </a>
-
-            ${summary ? `<div class="mt-2 text-sm text-gray-600 leading-snug dd-clamp-2" title="${summary}">${summary}</div>` : ``}
 
             <div class="mt-3 flex flex-wrap gap-2 text-xs text-gray-500">${cats}</div>
 
@@ -1888,6 +1900,23 @@ function setupNewPostsBtn_() {
     });
     document.getElementById("helpModalBackdrop").addEventListener("click", closeHelpModal);
     document.getElementById("helpModalClose").addEventListener("click", closeHelpModal);
+    // Summary modal handlers
+    const summaryBackdrop = document.getElementById("summaryModalBackdrop");
+    const summaryCloseBtn = document.getElementById("summaryModalClose");
+    const summaryCopyBtn = document.getElementById("summaryCopyBtn");
+
+    if (summaryBackdrop) summaryBackdrop.addEventListener("click", closeSummaryModal);
+    if (summaryCloseBtn) summaryCloseBtn.addEventListener("click", closeSummaryModal);
+    if (summaryCopyBtn) summaryCopyBtn.addEventListener("click", async () => {
+      if (!_currentSummaryText) return;
+      try {
+        await navigator.clipboard.writeText(_currentSummaryText);
+        showToast("Summary copied.");
+      } catch (e) {
+        showToast("Copy failed.");
+      }
+    });
+
 
     function setToggleState(btn, panel, open) {
       if (!btn || !panel) return;
@@ -2132,19 +2161,6 @@ setInterval(async () => {
       searchClearBtn.addEventListener("click", () => {
         searchInput.value = "";
         syncSearchClearBtn();
-
-    // Sticky search: optionally compact the bar after scrolling
-    const searchSectionEl = document.getElementById("searchSection");
-    let _searchCompact = false;
-    function syncSearchCompact_() {
-      if (!searchSectionEl) return;
-      const want = window.scrollY > 220;
-      if (want === _searchCompact) return;
-      _searchCompact = want;
-      searchSectionEl.classList.toggle("compact", want);
-    }
-    window.addEventListener("scroll", syncSearchCompact_, { passive: true });
-    syncSearchCompact_();
         hideSuggest();
         doSearch();
         searchInput.focus();
@@ -2286,7 +2302,7 @@ setInterval(async () => {
       }
 
       if (action === "notebooklm" && item) openInNotebookLM(item);
-      if (action === "aisummary" && item) openInChatGPT(item);
+      if (action === "aisummary" && item) openSummaryModal(item);
 
       if (action === "like") {
         try {
@@ -2348,7 +2364,7 @@ setInterval(async () => {
         if (!text) { showToast("Write a comment first."); return; }
         btn.disabled = true;
         try {
-          await remoteCommentAdd_(id, text, getUserName_(true));
+          await remoteCommentAdd_(id, text, "");
           if (ta) ta.value = "";
           updateCommentCountBadges_();
           await loadCommentsPreview_(id, true);
@@ -2445,6 +2461,7 @@ remoteCommentsPrime_({ useCache: true }).catch(() => {});
       if (e.key === "Escape") {
         closePdfModal();
         closeHelpModal();
+        closeSummaryModal();
         helpDd.classList.add("hidden");
       }
     });
