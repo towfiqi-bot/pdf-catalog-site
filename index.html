@@ -15,7 +15,14 @@
     .brand-title { font-family: 'Playfair Display', serif; letter-spacing: 0.03em; }
     .brand-tagline { font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; }
     .tooltip-summary { pointer-events: none; }
-    .group:hover .tooltip-summary { pointer-events: auto; }
+
+    /* Summary clamp (2 lines) */
+    .dd-clamp-2 {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
+    }
 
     /* Help dropdown */
     .dd-shadow { box-shadow: 0 12px 30px rgba(0,0,0,0.10); }
@@ -1243,7 +1250,8 @@ Output:
   function renderCard(item) {
     const thumb = item.thumbUrl || "https://via.placeholder.com/260x360?text=PDF";
     const title = escapeHtml(item.title || "Untitled");
-    const summary = escapeHtml(item.summary || "");
+    const summaryRaw = String(item.summary || "").replace(/\s+/g, " ").trim();
+    const summary = escapeHtml(summaryRaw);
     const year = item.year || "";
     const cats = (item.categories || [])
       .slice(0, 3)
@@ -1274,9 +1282,10 @@ Output:
                      class="w-full h-auto object-cover cursor-pointer group-hover:opacity-80 transition">
               </button>
               ${summary ? `
-                <div class="tooltip-summary absolute left-0 top-0 z-20 w-80 md:w-96 bg-white/95
+                <div class="tooltip-summary absolute inset-x-0 bottom-0 z-20 bg-white/95
                             text-xs text-gray-800 p-3 opacity-0 group-hover:opacity-100
-                            transition-opacity duration-200 shadow-lg ring-1 ring-black/10">
+                            transition-opacity duration-150 shadow-md ring-1 ring-black/10 rounded-b
+                            max-h-28 overflow-hidden">
                   <div class="font-semibold mb-1">Summary</div>
                   <div class="leading-snug whitespace-normal">${summary}</div>
                 </div>
@@ -1299,6 +1308,8 @@ Output:
                class="mt-1 text-base md:text-lg font-semibold text-amber-700 hover:underline">
               ${title}
             </a>
+
+            ${summary ? `<div class="mt-2 text-sm text-gray-600 leading-snug dd-clamp-2" title="${summary}">${summary}</div>` : ``}
 
             <div class="mt-3 flex flex-wrap gap-2 text-xs text-gray-500">${cats}</div>
 
