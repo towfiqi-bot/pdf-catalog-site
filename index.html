@@ -106,45 +106,8 @@
       </div>
     </div>
   </header>
-<div class="max-w-[1600px] mx-auto px-4 mt-4 mb-2">
-  <div class="text-center text-sm md:text-base text-gray-600">
-    A living intelligence library: curated reports, tracked updates, and faster answers—so you never miss what matters.
-  </div>
-</div>
   <!-- Main layout -->
   <main class="max-w-[1600px] mx-auto px-4 py-4" id="top">
-    <!-- Top search -->
-    <section id="searchSection" class="mb-4">
-      <div class="bg-white border border-gray-200 rounded-lg p-3 md:p-4 shadow-sm">
-        <div class="max-w-3xl mx-auto">
-          <div id="searchWrap" class="relative">
-          <div class="flex items-center gap-3 bg-white border border-gray-300 rounded-full px-5 py-3 shadow-sm focus-within:ring-2 focus-within:ring-amber-200">
-            <svg class="h-5 w-5 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="7"></circle>
-              <path d="M21 21l-4.3-4.3"></path>
-            </svg>
-            <input id="searchInput" type="text"
-                   class="w-full outline-none text-base md:text-lg"
-                   placeholder="Search reports by title or summary… (try: AI + Education)" />
-            <button id="searchClearBtn" type="button" aria-label="Clear search"
-                    class="hidden shrink-0 p-2 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100">
-              &#10005;
-            </button>
-            <button id="searchBtn"
-                    class="shrink-0 px-5 py-2 text-sm font-semibold uppercase tracking-wide bg-amber-600 text-white rounded-full hover:bg-amber-700">
-              Search
-            </button>
-          </div>
-          <div id="searchSuggestPanel"
-               class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50"></div>
-        </div>
-          <p class="mt-2 text-xs text-gray-500 text-center">
-            Strong search across <span class="font-semibold">title</span> + <span class="font-semibold">summary</span> (not inside PDF pages yet).
-          </p>
-        </div>
-      </div>
-    </section>
-
     <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
 
       <!-- Sidebar -->
@@ -245,20 +208,37 @@
           </div>
         </section>
 
-        <!-- Compare -->
+        <!-- Search and compare -->
         <section class="bg-white rounded-lg border border-gray-200 p-4">
           <div class="flex items-center justify-between">
-            <h2 class="text-sm font-semibold text-gray-700">Compare</h2>
+            <h2 class="text-sm font-semibold text-gray-700">Search and compare</h2>
             <button id="clearCompareBtn" class="text-xs font-semibold text-amber-700 hover:underline">Clear</button>
           </div>
-          <div class="text-xs text-gray-500 mt-1">Select 2 reports to compare side-by-side.</div>
+          <div class="text-xs text-gray-500 mt-1">Pick 1 left + 1 right report to compare side-by-side.</div>
+
+          <div class="mt-3 space-y-3">
+            <div class="relative">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Left</label>
+              <input id="compareSearchLeft" type="text" autocomplete="off"
+                     class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                     placeholder="Search left report…" />
+              <div id="compareSuggestLeft" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50"></div>
+            </div>
+            <div class="relative">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Right</label>
+              <input id="compareSearchRight" type="text" autocomplete="off"
+                     class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                     placeholder="Search right report…" />
+              <div id="compareSuggestRight" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50"></div>
+            </div>
+          </div>
 
           <div id="compareWrap" class="mt-3 space-y-2"></div>
 
           <a id="openCompareBtn"
              class="hidden mt-3 w-full text-center block px-3 py-2 text-sm font-semibold bg-amber-600 text-white rounded hover:bg-amber-700"
              href="#">
-            Open compare
+            Compare
           </a>
         </section>
 
@@ -300,12 +280,50 @@
 
       <!-- Catalogue -->
       <section id="catalogue" class="md:col-span-9">
+        <div class="mb-3 text-center text-sm md:text-base text-gray-600">
+          A living intelligence library: curated reports, tracked updates, and faster answers—so you never miss what matters.
+        </div>
+
+    <!-- Top search -->
+    <section id="searchSection" class="mb-4">
+      <div class="bg-white border border-gray-200 rounded-lg p-3 md:p-4 shadow-sm">
+        <div>
+          <div id="searchWrap" class="relative">
+          <div class="flex items-center gap-3 bg-white border border-gray-300 rounded-full px-5 py-3 shadow-sm focus-within:ring-2 focus-within:ring-amber-200">
+            <svg class="h-5 w-5 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="7"></circle>
+              <path d="M21 21l-4.3-4.3"></path>
+            </svg>
+            <input id="searchInput" type="text"
+                   class="w-full outline-none text-base md:text-lg"
+                   placeholder="Search reports by title or summary… (try: AI + Education)" />
+            <button id="searchClearBtn" type="button" aria-label="Clear search"
+                    class="hidden shrink-0 p-2 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100">
+              &#10005;
+            </button>
+            <button id="searchBtn"
+                    class="shrink-0 px-5 py-2 text-sm font-semibold uppercase tracking-wide bg-amber-600 text-white rounded-full hover:bg-amber-700">
+              Search
+            </button>
+          </div>
+          <div id="searchSuggestPanel"
+               class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50"></div>
+        </div>
+          <p class="mt-2 text-xs text-gray-500 text-center">
+            Strong search across <span class="font-semibold">title</span> + <span class="font-semibold">summary</span> (not inside PDF pages yet).
+          </p>
+        </div>
+      </div>
+    </section>
+
+
         <div class="flex items-center justify-between gap-3 mb-3">
           <p id="resultsInfo" class="text-sm text-gray-600">Loading publications…</p>
           <div class="flex items-center gap-2">
             <label for="sortSelect" class="text-xs text-gray-500 hidden sm:block">Sort</label>
             <select id="sortSelect" class="border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white">
               <option value="newest">Sort (Default - Newest)</option>
+              <option value="updated_newest">Recently Updated</option>
               <option value="liked">Most Liked</option>
               <option value="name_az">Sort By Name (A-Z)</option>
               <option value="name_za">Sort By Name (Z-A)</option>
@@ -547,6 +565,27 @@
     if (!t) return [];
     return t.split(/\s+/g).filter(Boolean);
   }
+
+  function extractAiTags(summaryText) {
+    const s = String(summaryText || "");
+    const m = s.match(/(?:^|\n)\s*tags\s*:\s*([^\n\r]+)/i);
+    if (!m) return [];
+
+    const raw = String(m[1] || "").trim();
+    if (!raw) return [];
+
+    const out = [];
+    const seen = new Set();
+    raw.split(",").forEach(part => {
+      const n = normalizeText(part);
+      if (!n) return;
+      if (seen.has(n)) return;
+      seen.add(n);
+      out.push(n);
+    });
+    return out;
+  }
+
 
   function todayStartMs() {
     const d = new Date();
@@ -1056,6 +1095,10 @@ Output:
       it._titleTokens = tokenizeLoose(t);
       it._allTokens = tokenizeLoose(t + " " + s);
       it._tokenSet = new Set(it._allTokens);
+
+      // AI tags (from summary line: "Tags:") for Topics filter
+      it._aiTags = extractAiTags(s);
+      it._topicSet = new Set([...(it._titleTokens || []), ...(it._aiTags || [])]);
     }
     return items;
   }
@@ -1173,6 +1216,8 @@ Output:
 
     for (const item of state.allItems) {
       const seen = new Set();
+
+      // Title-derived topics
       for (const w of (item._titleTokens || [])) {
         if (!w) continue;
         if (w.length < 4) continue;
@@ -1180,6 +1225,16 @@ Output:
         if (seen.has(w)) continue;
         seen.add(w);
         freq.set(w, (freq.get(w) || 0) + 1);
+      }
+
+      // AI tags extracted from summary ("Tags:") — may include multi-word phrases
+      for (const tag of (item._aiTags || [])) {
+        if (!tag) continue;
+        if (tag.length < 2) continue;
+        if (STOPWORDS.has(tag)) continue;
+        if (seen.has(tag)) continue;
+        seen.add(tag);
+        freq.set(tag, (freq.get(tag) || 0) + 1);
       }
     }
 
@@ -1292,12 +1347,12 @@ Output:
     const tStart = todayStartMs();
 
     state.filteredItems = state.allItems.filter(item => {
-      const matchesTab = (state.tab !== "today") || ((item.modified || 0) >= tStart);
+      const matchesTab = (state.tab !== "today") || (((item.addedAt || item.modified || 0)) >= tStart);
       const matchesText = !q || matchQuery(item, parsed);
 
       const matchesTopic = state.selectedTopics.size === 0 || (() => {
         for (const t of state.selectedTopics) {
-          if (item._tokenSet && item._tokenSet.has(String(t).toLowerCase())) return true;
+          if (item._topicSet && item._topicSet.has(normalizeText(t))) return true;
         }
         return false;
       })();
@@ -1335,11 +1390,14 @@ Output:
         case "name_za":
           return titleKey(b).localeCompare(titleKey(a));
         case "added_oldest":
-          return (a.modified || 0) - (b.modified || 0);
+          return (a.addedAt || 0) - (b.addedAt || 0);
         case "added_newest":
         case "newest":
+          return (b.addedAt || 0) - (a.addedAt || 0) || ((b.modified || 0) - (a.modified || 0));
+        case "updated_newest":
+          return (b.modified || 0) - (a.modified || 0) || ((b.addedAt || 0) - (a.addedAt || 0));
         default:
-          return (b.modified || 0) - (a.modified || 0);
+          return (b.addedAt || 0) - (a.addedAt || 0) || ((b.modified || 0) - (a.modified || 0));
       }
     }
 
@@ -1376,6 +1434,11 @@ Output:
     const status = wsStatus(item.id);
     const statusLabel = status ? status.charAt(0).toUpperCase() + status.slice(1) : "Unread";
 
+    const addedTs = Number(item.addedAt || 0) || Number(item.added || 0) || 0;
+    const updatedTs = Number(item.modified || 0) || 0;
+    const addedLabel = addedTs ? ("Added " + formatAgoWords(addedTs)) : "";
+    const updatedLabel = updatedTs ? ("Updated " + formatAgoWords(updatedTs)) : "";
+
     const addLabel = isInReadingList(item.id) ? "Remove from reading list" : "Add to reading list";
     const compareLabel = isCompared(item.id) ? "Compared" : "Compare";
     const pinLabel = pinned ? "Unpin" : "Pin";
@@ -1404,6 +1467,8 @@ Output:
               <span>${year}</span>
               <span class="text-gray-300">•</span>
               <span>${escapeHtml(statusLabel)}</span>
+              ${addedTs ? `<span class="text-gray-300">•</span><span>${escapeHtml(addedLabel)}</span>` : ``}
+              ${updatedTs ? `<span class="text-gray-300">•</span><span>${escapeHtml(updatedLabel)}</span>` : ``}
               ${isNew ? `<span class="ml-2 px-2 py-0.5 rounded-full border border-red-200 bg-red-50 text-red-700 text-[10px] font-bold tracking-wide">NEW</span>` : ``}
               ${pinned ? `<span class="text-amber-600 flex items-center gap-1 shrink-0 ml-auto" title="Pinned">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 2l-1 1v5.2l4.6 4.6-1.4 1.4L11 9.6V3l-1-1h4zM5 14l5 5v3H8v-2.2L3.4 15.4 5 14z"/></svg>
@@ -1627,26 +1692,59 @@ function openPdfModalById(id) {
   function renderCompare() {
     const wrap = document.getElementById("compareWrap");
     const openBtn = document.getElementById("openCompareBtn");
+    const leftInput = document.getElementById("compareSearchLeft");
+    const rightInput = document.getElementById("compareSearchRight");
+
     const ids = compareGet();
     const itemsById = new Map(state.allItems.map(it => [String(it.id), it]));
 
-    wrap.innerHTML = ids.map(id => {
+    function titleFor(id) {
       const it = itemsById.get(String(id));
-      const title = it ? (it.title || "Untitled") : id;
-      return `
-        <div class="border border-gray-200 rounded p-2 bg-gray-50 flex items-start gap-2">
-          <div class="text-sm font-semibold text-gray-800 truncate flex-1">${escapeHtml(title)}</div>
-          <button class="text-xs font-semibold text-amber-700 hover:underline" data-action="compare" data-id="${escapeHtml(id)}">Remove</button>
-        </div>
-      `;
-    }).join("");
+      return it ? (it.title || "Untitled") : String(id || "");
+    }
 
-    if (ids.length === 2) {
-      openBtn.classList.remove("hidden");
-      openBtn.href = `compare.html?left=${encodeURIComponent(ids[0])}&right=${encodeURIComponent(ids[1])}`;
-    } else {
-      openBtn.classList.add("hidden");
-      openBtn.href = "#";
+    if (wrap) {
+      wrap.innerHTML = ids.map((id, i) => {
+        const title = titleFor(id);
+        const side = (i === 0) ? "Left" : "Right";
+        return `
+          <div class="border border-gray-200 rounded p-2 bg-gray-50 flex items-start gap-2">
+            <div class="text-xs text-gray-500 mt-0.5">${side}</div>
+            <div class="text-sm font-semibold text-gray-800 truncate flex-1">${escapeHtml(title)}</div>
+            <button class="text-xs font-semibold text-amber-700 hover:underline" data-action="compare" data-id="${escapeHtml(id)}">Remove</button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    // Keep picker inputs in sync with current selection
+    if (leftInput) {
+      const selId = ids[0] ? String(ids[0]) : "";
+      leftInput.setAttribute("data-selected-id", selId);
+      if (!selId) {
+        leftInput.value = "";
+      } else if (document.activeElement !== leftInput) {
+        leftInput.value = titleFor(selId);
+      }
+    }
+    if (rightInput) {
+      const selId = ids[1] ? String(ids[1]) : "";
+      rightInput.setAttribute("data-selected-id", selId);
+      if (!selId) {
+        rightInput.value = "";
+      } else if (document.activeElement !== rightInput) {
+        rightInput.value = titleFor(selId);
+      }
+    }
+
+    if (openBtn) {
+      if (ids.length === 2) {
+        openBtn.classList.remove("hidden");
+        openBtn.href = `compare.html?left=${encodeURIComponent(ids[0])}&right=${encodeURIComponent(ids[1])}`;
+      } else {
+        openBtn.classList.add("hidden");
+        openBtn.href = "#";
+      }
     }
   }
 
@@ -1853,6 +1951,23 @@ Notes: ${p.notes}
     if (home) home.classList.toggle("text-amber-700", state.tab === "home");
     if (today) today.classList.toggle("text-amber-700", state.tab === "today");
   }
+function formatAgoWords(ts) {
+  if (!ts) return "—";
+  const diff = Date.now() - ts;
+
+  const sec = Math.floor(diff / 1000);
+  if (sec < 60) return `${sec} second${sec === 1 ? "" : "s"} ago`;
+
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min} minute${min === 1 ? "" : "s"} ago`;
+
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} hour${hr === 1 ? "" : "s"} ago`;
+
+  const day = Math.floor(hr / 24);
+  return `${day} day${day === 1 ? "" : "s"} ago`;
+}
+
 function formatAgo(ts) {
   if (!ts) return "—";
   const diff = Date.now() - ts;
@@ -1894,7 +2009,7 @@ function setLiveHeaderStatus({ updatedAt, newCount }) {
 }
 
 function computeNewCountSinceLastVisit(items, commit = true) {
-  // Uses max "modified" timestamp from last visit as baseline.
+  // Uses max "addedAt" timestamp from last visit as baseline (stable).
   let lastSeenMax = 0;
   try {
     lastSeenMax = Number(localStorage.getItem(LAST_SEEN_MAX_MOD_KEY) || 0) || 0;
@@ -1904,7 +2019,7 @@ function computeNewCountSinceLastVisit(items, commit = true) {
   let newCount = 0;
 
   for (const it of (items || [])) {
-    const m = Number(it.modified || 0) || 0;
+    const m = Number(it.addedAt || it.modified || 0) || 0;
     if (m > newest) newest = m;
     if (lastSeenMax && m > lastSeenMax) newCount += 1;
   }
@@ -1933,7 +2048,7 @@ function computeNewMarkers_(items) {
   const set = new Set();
   let newest = 0;
   for (const it of (items || [])) {
-    const m = Number(it.modified || 0) || 0;
+    const m = Number(it.addedAt || it.modified || 0) || 0;
     if (m > newest) newest = m;
     if (baseline && m > baseline) set.add(String(it.id));
   }
@@ -2228,7 +2343,6 @@ setInterval(async () => {
       const { newCount } = computeNewMarkers_(data);
       setLiveHeaderStatus({ updatedAt: Date.now(), newCount });
       commitSeenMaxOnce_(data);
-      commitSeenMaxOnce_(data);
       buildFacetFilters();
       refreshSearchSuggestData();
       applyFilters(true); // keep page/scroll logic steadier
@@ -2498,6 +2612,162 @@ setInterval(async () => {
       closeCompareModalUIOnly();
     });
 
+    // Compare picker (search and compare panel)
+    const compareLeftInput = document.getElementById("compareSearchLeft");
+    const compareRightInput = document.getElementById("compareSearchRight");
+    const compareLeftPanel = document.getElementById("compareSuggestLeft");
+    const compareRightPanel = document.getElementById("compareSuggestRight");
+    const openCompareBtn = document.getElementById("openCompareBtn");
+
+    function buildCompareSuggestions_(query, excludeId) {
+      const qn = normalizeText(query || "");
+      const arr = (state.allItems || []).slice();
+      // Prefer newest by addedAt when query is empty
+      arr.sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+
+      const out = [];
+      for (const it of arr) {
+        if (!it) continue;
+        const id = String(it.id);
+        if (excludeId && String(excludeId) === id) continue;
+        const t = String(it.title || "");
+        if (qn) {
+          if (!normalizeText(t).includes(qn)) continue;
+        }
+        out.push({ id, title: t });
+        if (out.length >= 8) break;
+      }
+      return out;
+    }
+
+    function hideCompareSuggest_(panel) {
+      if (!panel) return;
+      panel.classList.add("hidden");
+      panel.innerHTML = "";
+    }
+
+    function renderCompareSuggest_(side) {
+      const input = (side === "left") ? compareLeftInput : compareRightInput;
+      const panel = (side === "left") ? compareLeftPanel : compareRightPanel;
+      if (!input || !panel) return;
+
+      const other = (side === "left") ? (compareRightInput?.getAttribute("data-selected-id") || "") : (compareLeftInput?.getAttribute("data-selected-id") || "");
+      const items = buildCompareSuggestions_(input.value, other);
+
+      if (!items.length) {
+        hideCompareSuggest_(panel);
+        return;
+      }
+
+      panel.innerHTML = items.map(it =>
+        `<button type="button" data-cpid="${escapeHtml(it.id)}" data-cpside="${side}" class="w-full text-left px-3 py-2 hover:bg-gray-50">
+           <div class="text-sm text-gray-800 truncate">${escapeHtml(it.title || it.id)}</div>
+         </button>`
+      ).join("");
+
+      panel.classList.remove("hidden");
+    }
+
+    function setCompareSide_(side, id, title) {
+      const cur = compareGet();
+      let left = cur[0] || "";
+      let right = cur[1] || "";
+
+      // compareSet() cannot represent a right-only selection; if the first pick happens on the right, treat it as the left pick.
+      if (side === "right" && !left && !right) side = "left";
+
+      if (side === "left") left = String(id || "");
+      else right = String(id || "");
+
+      if (left && right && String(left) === String(right)) {
+        // avoid comparing the same report to itself
+        if (side === "left") right = "";
+        else left = "";
+      }
+
+      const next = [];
+      if (left) next.push(left);
+      if (right) next.push(right);
+      compareSet(next);
+      renderCompare();
+      render();
+      closeCompareModalUIOnly();
+
+      if (side === "left" && compareLeftInput) {
+        compareLeftInput.value = String(title || "");
+        compareLeftInput.setAttribute("data-selected-id", left);
+        hideCompareSuggest_(compareLeftPanel);
+      }
+      if (side === "right" && compareRightInput) {
+        compareRightInput.value = String(title || "");
+        compareRightInput.setAttribute("data-selected-id", right);
+        hideCompareSuggest_(compareRightPanel);
+      }
+    }
+
+    function setupComparePickers_() {
+      if (compareLeftInput) {
+        compareLeftInput.addEventListener("focus", () => renderCompareSuggest_("left"));
+        compareLeftInput.addEventListener("input", () => renderCompareSuggest_("left"));
+        compareLeftInput.addEventListener("keydown", (ev) => {
+          if (ev.key === "Escape") hideCompareSuggest_(compareLeftPanel);
+        });
+      }
+
+      if (compareRightInput) {
+        compareRightInput.addEventListener("focus", () => renderCompareSuggest_("right"));
+        compareRightInput.addEventListener("input", () => renderCompareSuggest_("right"));
+        compareRightInput.addEventListener("keydown", (ev) => {
+          if (ev.key === "Escape") hideCompareSuggest_(compareRightPanel);
+        });
+      }
+
+      if (compareLeftPanel) {
+        compareLeftPanel.addEventListener("click", (e) => {
+          const btn = e.target.closest("[data-cpid]");
+          if (!btn) return;
+          const id = btn.getAttribute("data-cpid") || "";
+          const side = btn.getAttribute("data-cpside") || "left";
+          const title = btn.textContent.trim();
+          setCompareSide_(side, id, title);
+        });
+      }
+
+      if (compareRightPanel) {
+        compareRightPanel.addEventListener("click", (e) => {
+          const btn = e.target.closest("[data-cpid]");
+          if (!btn) return;
+          const id = btn.getAttribute("data-cpid") || "";
+          const side = btn.getAttribute("data-cpside") || "right";
+          const title = btn.textContent.trim();
+          setCompareSide_(side, id, title);
+        });
+      }
+
+      document.addEventListener("click", (e) => {
+        if (compareLeftPanel && compareLeftInput && !compareLeftPanel.contains(e.target) && e.target !== compareLeftInput) {
+          hideCompareSuggest_(compareLeftPanel);
+        }
+        if (compareRightPanel && compareRightInput && !compareRightPanel.contains(e.target) && e.target !== compareRightInput) {
+          hideCompareSuggest_(compareRightPanel);
+        }
+      });
+
+      // Compare button opens the existing compare overlay modal
+      if (openCompareBtn) {
+        openCompareBtn.addEventListener("click", (e) => {
+          const ids = compareGet();
+          if (ids.length === 2) {
+            e.preventDefault();
+            openCompareModal(ids[0], ids[1]);
+          }
+        });
+      }
+    }
+
+    setupComparePickers_();
+
+
     refreshBtn.addEventListener("click", async () => {
       refreshStatus.textContent = "Refreshing…";
       try {
@@ -2509,7 +2779,6 @@ setInterval(async () => {
 
         const { newCount } = computeNewMarkers_(data);
         setLiveHeaderStatus({ updatedAt: Date.now(), newCount });
-      commitSeenMaxOnce_(data);
       commitSeenMaxOnce_(data);
 
         if (ENABLE_REMOTE_LIKES) {
@@ -2696,7 +2965,6 @@ remoteCommentsPrime_({ useCache: true }).catch(() => {});
 
       const { newCount } = computeNewMarkers_(data);
       setLiveHeaderStatus({ updatedAt: Date.now(), newCount });
-      commitSeenMaxOnce_(data);
       commitSeenMaxOnce_(data);
 
       if (ENABLE_REMOTE_LIKES) {
