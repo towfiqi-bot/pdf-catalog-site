@@ -939,7 +939,7 @@ function commentsCountsCacheSet_(countsObj) {
     const c = Number(data.count || 0) || 0;
     REMOTE_COMMENT_COUNTS.set(String(id), c);
     return data;
-
+}
   // --------- In-PDF Search + AI Mode (A/B) ----------
   async function remoteInPdfSearchIds_(q, limit = 60) {
     const base = DATA_URL + (DATA_URL.includes("?") ? "&" : "?");
@@ -981,8 +981,6 @@ function commentsCountsCacheSet_(countsObj) {
     state.overrideIds = null;
     state.overrideOrderMap = null;
     state.overrideLabel = "";
-  }
-
   }
 
   function commentCount(id) {
