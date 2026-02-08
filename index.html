@@ -289,8 +289,8 @@
       <div class="bg-white border border-gray-200 rounded-lg p-3 md:p-4 shadow-sm">
         <div>
           <div id="searchWrap" class="relative">
-          <div class="flex flex-col sm:flex-row sm:items-center gap-3 bg-white border border-gray-300 rounded-full px-5 py-3 shadow-sm focus-within:ring-2 focus-within:ring-amber-200">
-            <div class="flex items-center gap-3 w-full flex-1 min-w-0">
+          <div class="flex flex-col sm:flex-row sm:items-center gap-2 bg-white border border-gray-300 rounded-full px-5 py-3 shadow-sm focus-within:ring-2 focus-within:ring-amber-200">
+            <div class="flex items-center gap-3 w-full">
             <svg class="h-5 w-5 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="7"></circle>
               <path d="M21 21l-4.3-4.3"></path>
@@ -302,9 +302,8 @@
                     class="hidden shrink-0 p-2 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100">
               &#10005;
             </button>
-            
             </div>
-            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <div class="flex items-center gap-2 justify-end sm:justify-start">
             <button id="aiModeBtn" type="button" aria-pressed="false"
                     class="shrink-0 px-3 py-2 text-xs font-semibold rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50">
               AI Mode
@@ -378,7 +377,6 @@
           <path d="M6 6l12 12"></path>
         </svg>
       </button>
-      
       <button id="stickyAiModeBtn" type="button" aria-pressed="false"
               class="shrink-0 px-2.5 py-1.5 text-[11px] font-semibold rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-50">
         AI
@@ -535,11 +533,15 @@
     selectedCategories: new Set(),
     selectedYears: new Set(),
     searchQuery: "",
-    inPdfMode: false,
+    // Progressive In-PDF enrichment (background)
+    inPdfMode: false,            // (legacy toggle; UI removed)
     aiMode: false,
-    inPdfExtraQuery: "",
-    inPdfExtraIds: new Set(),
+    inPdfIds: null,              // Set<string> of IDs matched inside PDFs for current query
+    inPdfQueryKey: "",           // normalized query for inPdfIds
+    inPdfSearching: false,       // true when queued or in-flight
     inPdfAdditionalCount: 0,
+    localResultCount: 0,
+    inPdfAbort: null,
     overrideIds: null,          // Set<string> when showing A/B results
     overrideOrderMap: null,     // Map<string, number> to preserve rerank order
     overrideLabel: "",
@@ -942,18 +944,74 @@ function commentsCountsCacheSet_(countsObj) {
   }
 
   // --------- In-PDF Search + AI Mode (A/B) ----------
-  async function remoteInPdfSearchIds_(q, limit = 60) {
+  async function remoteInPdfSearchIds_(q, limit = 60, signal) {
     const base = DATA_URL + (DATA_URL.includes("?") ? "&" : "?");
     const url = base +
       "action=search_pdf&q=" + encodeURIComponent(String(q || "")) +
       "&limit=" + encodeURIComponent(String(limit)) +
       "&cb=" + Date.now();
 
-    const res = await fetch(url, { cache: "no-store", mode: "cors", credentials: "omit" });
+    const res = await fetch(url, { cache: "no-store", mode: "cors", credentials: "omit", signal });
     if (!res.ok) throw new Error("search_pdf failed: " + res.status);
     const data = await res.json();
     if (!data || data.ok !== true) throw new Error(data?.error || "search_pdf returned invalid payload");
     return Array.isArray(data.ids) ? data.ids.map(String) : [];
+  }
+
+  function normalizeQueryKey_(q) {
+    return String(q || "").trim().toLowerCase().replace(/\s+/g, " ");
+  }
+
+  function clearInPdfState_() {
+    if (state.inPdfAbort) {
+      try { state.inPdfAbort.abort(); } catch (e) {}
+    }
+    state.inPdfAbort = null;
+    state.inPdfIds = null;
+    state.inPdfQueryKey = "";
+    state.inPdfSearching = false;
+    state.inPdfAdditionalCount = 0;
+  }
+
+  async function runInPdfBackground_(q, opts = {}) {
+    const raw = String(q || "");
+    const key = normalizeQueryKey_(raw);
+
+    if (key.length < 3) {
+      clearInPdfState_();
+      return;
+    }
+
+    // Mark as searching immediately so users know something is happening.
+    state.inPdfSearching = true;
+
+    // Cancel any previous in-flight request
+    if (state.inPdfAbort) {
+      try { state.inPdfAbort.abort(); } catch (e) {}
+    }
+
+    const ac = new AbortController();
+    state.inPdfAbort = ac;
+    state.inPdfQueryKey = key;
+
+    try {
+      const ids = await remoteInPdfSearchIds_(raw, 60, ac.signal);
+      if (ac.signal.aborted) return;
+
+      // Ignore stale responses
+      if (normalizeQueryKey_(state.searchQuery) !== key) return;
+
+      state.inPdfIds = new Set((ids || []).map(String));
+    } catch (e) {
+      // Silent failure (keep local results)
+      if (ac.signal && ac.signal.aborted) return;
+      state.inPdfIds = null;
+    } finally {
+      if (state.inPdfAbort === ac) state.inPdfAbort = null;
+      if (normalizeQueryKey_(state.searchQuery) === key) {
+        state.inPdfSearching = false;
+      }
+    }
   }
 
   async function remoteAiSearchIds_(q, candidateIds, limit = 30) {
@@ -1165,6 +1223,10 @@ Output:
 
       // AI tags (from summary line: "Tags:") for Topics filter
       it._aiTags = extractAiTags(s);
+      // Include AI tags in local search
+      if (Array.isArray(it._aiTags) && it._aiTags.length) {
+        it._searchText = (it._searchText + " " + it._aiTags.join(" ")).trim();
+      }
       it._topicSet = new Set([...(it._titleTokens || []), ...(it._aiTags || [])]);
     }
     return items;
@@ -1405,11 +1467,10 @@ Output:
     const q = state.searchQuery.trim();
     const parsed = parseQuery(q);
     state.scoreById = new Map();
+    state.inPdfAdditionalCount = 0;
+    state.localResultCount = 0;
     const overrideOn = (state.overrideIds instanceof Set) && state.overrideIds.size > 0;
     const oMap = state.overrideOrderMap;
-
-    const inPdfOn = !!q && (state.inPdfExtraQuery === q) && (state.inPdfExtraIds instanceof Set) && state.inPdfExtraIds.size > 0;
-    let inPdfExtraCount = 0;
 
     const tagNeedles = state.wsTagFilter
       .split(",")
@@ -1420,13 +1481,13 @@ Output:
 
     state.filteredItems = state.allItems.filter(item => {
       const matchesTab = (state.tab !== "today") || (((item.addedAt || item.modified || 0)) >= tStart);
-      const idStr = String(item.id);
-      const matchesOverride = !overrideOn || state.overrideIds.has(idStr);
-      const localHit = (!overrideOn && q) ? matchQuery(item, parsed) : false;
-      const inPdfHit = (!overrideOn && q && inPdfOn) ? state.inPdfExtraIds.has(idStr) : false;
-      const matchesText = overrideOn ? true : (!q || localHit || inPdfHit);
+      const matchesOverride = !overrideOn || state.overrideIds.has(String(item.id));
 
-      const matchesTopic = state.selectedTopics.size === 0 || (() => {
+      const idStr = String(item.id);
+      const localHit = (!q) || matchQuery(item, parsed);
+      const pdfHit = (!overrideOn && q && state.inPdfIds instanceof Set) ? state.inPdfIds.has(idStr) : false;
+      const matchesText = overrideOn ? true : (!q || localHit || pdfHit);
+const matchesTopic = state.selectedTopics.size === 0 || (() => {
         for (const t of state.selectedTopics) {
           if (item._topicSet && item._topicSet.has(normalizeText(t))) return true;
         }
@@ -1446,16 +1507,23 @@ Output:
       const tags = wsTags(item.id);
       const matchesTags = tagNeedles.length === 0 || tagNeedles.every(t => tags.includes(t));
 
-      if (!overrideOn && q && localHit) {
-        state.scoreById.set(idStr, scoreQuery(item, parsed));
+      const passes = matchesTab && matchesOverride && matchesTopic && matchesCat && matchesYear && matchesStatus && matchesTags;
+      if (!passes) return false;
+      if (!matchesText) return false;
+
+      if (!overrideOn && q) {
+        if (localHit) {
+          state.localResultCount++;
+          state.scoreById.set(idStr, scoreQuery(item, parsed));
+        } else if (pdfHit) {
+          state.inPdfAdditionalCount++;
+          // pdf-only hits get a neutral score so they don't outrank strong local matches
+          state.scoreById.set(idStr, 0);
+        }
       }
 
-      const ok = matchesTab && matchesOverride && matchesText && matchesTopic && matchesCat && matchesYear && matchesStatus && matchesTags;
-      if (ok && q && !overrideOn && inPdfHit && !localHit) inPdfExtraCount++;
-      return ok;
+      return true;
     });
-
-    state.inPdfAdditionalCount = inPdfExtraCount;
 
     function titleKey(it) {
       return String(it.title || "").toLowerCase();
@@ -1668,10 +1736,21 @@ Output:
     const itemsToShow = state.filteredItems.slice(0, maxShown);
 
     const label = (state.tab === "today") ? "Added today" : "publications";
-    const inPdfExtraMsg = (!state.overrideLabel && (state.inPdfAdditionalCount > 0) && (state.searchQuery.trim().length >= 3))
-      ? ` — +${state.inPdfAdditionalCount} additional matches found inside PDFs`
-      : "";
-    info.textContent = `${total} ${label} found${state.overrideLabel ? " — " + state.overrideLabel : ""}${inPdfExtraMsg}`;
+    {
+      const base = `${total} ${label} found${state.overrideLabel ? " — " + state.overrideLabel : ""}`;
+
+      // Progressive in-PDF enrichment label (only for normal mode)
+      const extra = (!state.overrideLabel && state.inPdfAdditionalCount > 0)
+        ? ` — +${state.inPdfAdditionalCount} additional matches found inside PDFs`
+        : "";
+
+      const qLen = String(state.searchQuery || "").trim().length;
+      const searching = (!state.overrideLabel && state.inPdfSearching && qLen >= 3)
+        ? ` <span class="inline-flex items-center gap-1 text-amber-600 ml-1"><svg class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" opacity="0.25"></circle><path d="M21 12a9 9 0 0 1-9 9" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path></svg><span class="text-xs">searching PDFs…</span></span>`
+        : "";
+
+      info.innerHTML = base + extra + searching;
+    }
 
     container.innerHTML = itemsToShow.map(renderCard).join("");
       updateCommentCountBadges_();
@@ -2606,17 +2685,31 @@ setInterval(async () => {
 
       const q = state.searchQuery;
 
-      // Normal search: live-as-you-type remains unchanged unless In-PDF or AI Mode is enabled.
+      // Empty query -> reset
       if (!q) {
         clearOverrideResults_();
+        clearInPdfState_();
         applyFilters();
         return;
       }
 
-      // AI Mode takes precedence if enabled
+      // Click/Search/Enter means user is done typing: kick off in-PDF immediately (no debounce)
+      if (q.length >= 3) {
+        // show "searching PDFs…" immediately; results will merge when ready
+        state.inPdfSearching = true;
+        runInPdfBackground_(q).then(() => {
+          // merge results (keep page)
+          applyFilters(true);
+        });
+      } else {
+        clearInPdfState_();
+      }
+
+      // AI Mode: run AI rerank on demand (Search/Enter)
       if (state.aiMode) {
         try {
           showToast("AI Mode: searching…");
+
           // Candidate set from local strong search (title+summary+tags)
           const parsed = parseQuery(q);
           const scored = state.allItems
@@ -2625,21 +2718,18 @@ setInterval(async () => {
             .sort((a,b) => b.s - a.s)
             .slice(0, 50);
 
-          const candidates = scored.map(x => String(x.it.id));
+          let candidates = scored.map(x => String(x.it.id));
 
-          // If In-PDF is also enabled, expand candidates with in-PDF hits (optional)
-          let merged = candidates.slice();
-          if (state.inPdfMode) {
-            try {
-              const inIds = await remoteInPdfSearchIds_(q, 50);
-              const set = new Set(merged);
-              for (const id of inIds) { if (!set.has(id)) { merged.push(id); set.add(id); } }
-            } catch (e) {
-              // ignore in-PDF enrichment failure
+          // If we already have in-PDF hits for this query, expand candidates (best-effort)
+          const key = normalizeQueryKey_(q);
+          if (state.inPdfIds instanceof Set && state.inPdfQueryKey === key) {
+            const set = new Set(candidates);
+            for (const id of state.inPdfIds) {
+              if (!set.has(id)) { candidates.push(id); set.add(id); }
             }
           }
 
-          const out = await remoteAiSearchIds_(q, merged, 30);
+          const out = await remoteAiSearchIds_(q, candidates, 30);
 
           if (out.ok === true && Array.isArray(out.ids)) {
             setOverrideResults_(out.ids, "AI Mode");
@@ -2647,9 +2737,8 @@ setInterval(async () => {
             return;
           }
 
-          // Quota / config fallback
           if (out && out.quota) {
-            showToast(out.message || "AI Mode quota reached.");
+            showToast(out.message || "AI Mode daily limit reached.");
           } else {
             showToast(out.message || "AI Mode unavailable. Showing normal results.");
           }
@@ -2664,86 +2753,51 @@ setInterval(async () => {
         }
       }
 
-      // In-PDF mode: run ONLY on Enter/Search click (handlers call doSearch with remember/closeSuggest)
-      if (state.inPdfMode) {
-        try {
-          showToast("Searching inside PDFs…");
-          const ids = await remoteInPdfSearchIds_(q, 60);
-          setOverrideResults_(ids, "In-PDF");
-          applyFilters();
-          if (!ids.length) showToast("No in-PDF matches found.");
-          return;
-        } catch (e) {
-          showToast("In-PDF search failed. Showing normal results.");
-          clearOverrideResults_();
-          applyFilters();
-          return;
-        }
-      }
-
-      // Default: normal search (local)
+      // Normal mode: local results are already filtered live; just ensure UI is updated.
       clearOverrideResults_();
       applyFilters();
     }
     searchBtn.addEventListener("click", () => doSearch({ remember: true, closeSuggest: true }));
     searchInput.addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch({ remember: true, closeSuggest: true }); });
 
-    function clearInPdfExtras_() {
-      state.inPdfExtraQuery = "";
-      state.inPdfExtraIds = new Set();
-      state.inPdfAdditionalCount = 0;
-    }
-
-    function withTimeout_(p, ms) {
-      return Promise.race([
-        p,
-        new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))
-      ]);
-    }
-
-    let inPdfBgTimeout = null;
-    let inPdfBgSeq = 0;
-
-    // Progressive search:
-    // - instant local results as you type
-    // - after 700ms pause, run in-PDF search in background (only if query length >= 3)
+    let inPdfTimeout = null;
     searchInput.addEventListener("input", () => {
-      if (state.aiMode) return; // keep AI Mode behavior: runs only on Enter / Search click
+      syncSearchClearBtn();
 
-      // Clear any prior in-PDF extras so results always match the current query
-      clearInPdfExtras_();
+      // Always show local results instantly while typing
+      state.searchQuery = searchInput.value.trim();
 
-      // Instant local search
-      doSearch();
+      // While typing, show normal results (clear any AI override)
+      if (state.overrideLabel) clearOverrideResults_();
 
-      // Debounced background in-PDF search
-      clearTimeout(inPdfBgTimeout);
-      const q = searchInput.value.trim();
-      if (q.length < 3) { inPdfBgSeq++; return; }
+      // New query -> clear old in-PDF hits
+      const key = normalizeQueryKey_(state.searchQuery);
+      if (state.inPdfQueryKey && state.inPdfQueryKey !== key) {
+        state.inPdfIds = null;
+        state.inPdfAdditionalCount = 0;
+      }
 
-      const mySeq = ++inPdfBgSeq;
-      inPdfBgTimeout = setTimeout(async () => {
-        // Ignore if user typed again or switched modes
-        if (mySeq !== inPdfBgSeq) return;
-        if (state.aiMode) return;
+      applyFilters();
 
-        const nowQ = searchInput.value.trim();
-        if (nowQ.length < 3 || nowQ !== q) return;
+      clearTimeout(inPdfTimeout);
 
-        try {
-          const ids = await withTimeout_(remoteInPdfSearchIds_(nowQ, 60), 8000);
-          if (mySeq !== inPdfBgSeq) return;
-          if (state.aiMode) return;
+      if (!state.searchQuery || state.searchQuery.length < 3) {
+        clearInPdfState_();
+        return;
+      }
 
-          const latestQ = searchInput.value.trim();
-          if (latestQ !== nowQ) return;
+      // Queue background in-PDF search after 700ms of inactivity
+      state.inPdfSearching = true;
+      applyFilters(true);
 
-          state.inPdfExtraQuery = nowQ;
-          state.inPdfExtraIds = new Set((Array.isArray(ids) ? ids : []).map(String));
-          applyFilters(true); // keep page/scroll steady
-        } catch (e) {
-          // Silent: keep local results only
-        }
+      inPdfTimeout = setTimeout(async () => {
+        const q = state.searchQuery.trim();
+        const k = normalizeQueryKey_(q);
+        if (q.length < 3) return;
+
+        await runInPdfBackground_(q);
+        // Merge without resetting page
+        if (normalizeQueryKey_(state.searchQuery) === k) applyFilters(true);
       }, 700);
     });
 
@@ -2751,11 +2805,6 @@ setInterval(async () => {
       searchClearBtn.addEventListener("click", () => {
         searchInput.value = "";
         syncSearchClearBtn();
-
-        // cancel any pending in-PDF background search
-        clearTimeout(inPdfBgTimeout);
-        inPdfBgSeq++;
-        clearInPdfExtras_();
 
         hideSuggest();
         doSearch();
@@ -2830,9 +2879,8 @@ setInterval(async () => {
       }
       syncModeUi_();
     }
-
-    if (inPdfBtn) inPdfBtn.addEventListener("click", () => { setInPdfMode_(!state.inPdfMode); });
-    if (stickyInPdfBtn) stickyInPdfBtn.addEventListener("click", () => { setInPdfMode_(!state.inPdfMode); });
+});
+});
 
     if (aiModeBtn) aiModeBtn.addEventListener("click", () => { setAiMode_(!state.aiMode); });
     if (stickyAiModeBtn) stickyAiModeBtn.addEventListener("click", () => { setAiMode_(!state.aiMode); });
