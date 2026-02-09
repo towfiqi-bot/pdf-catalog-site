@@ -2155,6 +2155,17 @@ function formatAgo(ts) {
   return `${day}d ago`;
 }
 
+function catalogMaxTimestamp_(items) {
+  let newest = 0;
+  for (const it of (items || [])) {
+    const a = Number((it && it.addedAt) || 0) || 0;
+    const m = Number((it && it.modified) || 0) || 0;
+    const v = Math.max(a, m);
+    if (v > newest) newest = v;
+  }
+  return newest;
+}
+
 function setLiveHeaderStatus({ updatedAt, newCount }) {
   const wrap = document.getElementById("liveStatus");
   const updatedEl = document.getElementById("liveUpdatedText");
@@ -2168,7 +2179,7 @@ function setLiveHeaderStatus({ updatedAt, newCount }) {
   wrap.setAttribute("data-updated-at", String(ts));
   wrap.setAttribute("data-new-count", String(nc));
 
-  updatedEl.textContent = `Updated ${formatAgo(ts)}`;
+  updatedEl.textContent = `Catalog updated ${formatAgo(ts)}`;
 
   if (nc > 0) {
     newEl.textContent = `New: ${nc}`;
@@ -2511,7 +2522,7 @@ setInterval(async () => {
       state.allItems = data;
       cacheSet(data);
       const { newCount } = computeNewMarkers_(data);
-      setLiveHeaderStatus({ updatedAt: Date.now(), newCount });
+      setLiveHeaderStatus({ updatedAt: catalogMaxTimestamp_(data), newCount });
       commitSeenMaxOnce_(data);
       buildFacetFilters();
       refreshSearchSuggestData();
@@ -3102,7 +3113,7 @@ setInterval(async () => {
         refreshSearchSuggestData();
 
         const { newCount } = computeNewMarkers_(data);
-        setLiveHeaderStatus({ updatedAt: Date.now(), newCount });
+        setLiveHeaderStatus({ updatedAt: catalogMaxTimestamp_(data), newCount });
       commitSeenMaxOnce_(data);
 
         if (ENABLE_REMOTE_LIKES) {
@@ -3259,7 +3270,7 @@ setInterval(async () => {
 
       // Header pills: show cache time + "new" count without advancing baseline yet
       const peekNew = (computeNewMarkers_(state.allItems).newCount || 0);
-      setLiveHeaderStatus({ updatedAt: cachedMeta?.time || 0, newCount: peekNew });
+      setLiveHeaderStatus({ updatedAt: catalogMaxTimestamp_(state.allItems), newCount: peekNew });
 
       if (ENABLE_REMOTE_LIKES) {
   remoteLikesPrime_().then(() => {
@@ -3288,7 +3299,7 @@ remoteCommentsPrime_({ useCache: true }).catch(() => {});
       refreshSearchSuggestData();
 
       const { newCount } = computeNewMarkers_(data);
-      setLiveHeaderStatus({ updatedAt: Date.now(), newCount });
+      setLiveHeaderStatus({ updatedAt: catalogMaxTimestamp_(data), newCount });
       commitSeenMaxOnce_(data);
 
       if (ENABLE_REMOTE_LIKES) {
